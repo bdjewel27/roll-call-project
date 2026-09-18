@@ -61,6 +61,8 @@ const AttendanceStudentAvatar = React.memo(({ student }) => {
         <img
           src={avatarSrc}
           alt={student.name || 'Student'}
+          width="36"
+          height="36"
           loading="lazy"
           decoding="async"
           onLoad={() => loadedImageCache.add(avatarSrc)}
@@ -494,7 +496,48 @@ export const MarkAttendance = () => {
           </div>
         }
       >
-        {filteredStudents.length === 0 ? (
+        {loading ? (
+          <div className="table-responsive">
+            <table style={{ width: '100%' }}>
+              <thead>
+                <tr>
+                  <th style={{ width: '90px' }}>Roll #</th>
+                  <th>Student Name</th>
+                  <th style={{ minWidth: '320px' }}>Attendance Status</th>
+                  <th style={{ minWidth: '220px' }}>Remarks / Reason</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[1, 2, 3, 4, 5].map((idx) => (
+                  <tr key={idx} className="animate-pulse">
+                    <td>
+                      <div style={{ width: '40px', height: '16px', borderRadius: '4px', backgroundColor: 'var(--border-color)' }} />
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: 'var(--border-color)', flexShrink: 0 }} />
+                        <div>
+                          <div style={{ width: '120px', height: '16px', borderRadius: '4px', backgroundColor: 'var(--border-color)', marginBottom: '4px' }} />
+                          <div style={{ width: '60px', height: '12px', borderRadius: '4px', backgroundColor: 'var(--border-color)' }} />
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', gap: '0.35rem' }}>
+                        {[1, 2, 3, 4].map((pill) => (
+                          <div key={pill} style={{ width: '70px', height: '30px', borderRadius: '6px', backgroundColor: 'var(--border-color)' }} />
+                        ))}
+                      </div>
+                    </td>
+                    <td>
+                      <div style={{ width: '100%', height: '36px', borderRadius: '6px', backgroundColor: 'var(--border-color)' }} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : filteredStudents.length === 0 ? (
           <EmptyState
             title="No students match criteria"
             description="Try clearing your search query or switching your status filter tab."

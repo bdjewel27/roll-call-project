@@ -106,6 +106,8 @@ const StudentAvatar = React.memo(({ student }) => {
       <img
         src={avatarSrc}
         alt={student.name || 'Student'}
+        width="36"
+        height="36"
         loading="lazy"
         decoding="async"
         onLoad={() => loadedImageCache.add(avatarSrc)}
@@ -385,9 +387,58 @@ export const StudentManagement = () => {
       {/* Student List */}
       <Card
         title="Enrolled Students"
-        subtitle={`Showing ${filteredStudents.length} students`}
+        subtitle={loading ? 'Loading students...' : `Showing ${filteredStudents.length} students`}
       >
-        {filteredStudents.length === 0 ? (
+        {loading ? (
+          <div className="table-responsive">
+            <table style={{ width: '100%' }}>
+              <thead>
+                <tr>
+                  <th style={{ width: '90px' }}>Roll #</th>
+                  <th>Student Name</th>
+                  <th>Gender</th>
+                  <th>Enrolled Class</th>
+                  <th>Guardian</th>
+                  <th>Contact</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[1, 2, 3, 4, 5].map((idx) => (
+                  <tr key={idx} className="animate-pulse">
+                    <td>
+                      <div style={{ width: '40px', height: '16px', borderRadius: '4px', backgroundColor: 'var(--border-color)' }} />
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: 'var(--border-color)', flexShrink: 0 }} />
+                        <div style={{ width: '120px', height: '16px', borderRadius: '4px', backgroundColor: 'var(--border-color)' }} />
+                      </div>
+                    </td>
+                    <td>
+                      <div style={{ width: '50px', height: '16px', borderRadius: '4px', backgroundColor: 'var(--border-color)' }} />
+                    </td>
+                    <td>
+                      <div style={{ width: '80px', height: '16px', borderRadius: '4px', backgroundColor: 'var(--border-color)' }} />
+                    </td>
+                    <td>
+                      <div style={{ width: '90px', height: '16px', borderRadius: '4px', backgroundColor: 'var(--border-color)' }} />
+                    </td>
+                    <td>
+                      <div style={{ width: '100px', height: '16px', borderRadius: '4px', backgroundColor: 'var(--border-color)' }} />
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      <div style={{ display: 'inline-flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                        <div style={{ width: '28px', height: '28px', borderRadius: '4px', backgroundColor: 'var(--border-color)' }} />
+                        <div style={{ width: '28px', height: '28px', borderRadius: '4px', backgroundColor: 'var(--border-color)' }} />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : filteredStudents.length === 0 ? (
           <EmptyState
             icon={GraduationCap}
             title="No students found"
