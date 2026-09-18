@@ -16,6 +16,56 @@ import {
   RotateCcw,
 } from 'lucide-react';
 
+const AttendanceStudentAvatar = ({ student }) => {
+  const [hasError, setHasError] = useState(false);
+  const avatarSrc = (student.avatar_url || student.avatarUrl);
+
+  return (
+    <div
+      style={{
+        width: '36px',
+        height: '36px',
+        minWidth: '36px',
+        minHeight: '36px',
+        borderRadius: '9999px',
+        overflow: 'hidden',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: 'var(--bg-subtle)',
+        border: '1px solid var(--border-color)',
+        flexShrink: 0,
+      }}
+    >
+      {avatarSrc && typeof avatarSrc === 'string' && avatarSrc.trim() !== '' && !hasError ? (
+        <img
+          src={avatarSrc}
+          alt={student.name || 'Student'}
+          onError={() => setHasError(true)}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            borderRadius: '9999px',
+          }}
+        />
+      ) : (
+        <span
+          style={{
+            fontSize: '0.85rem',
+            fontWeight: 700,
+            color: 'var(--primary)',
+            lineHeight: 1,
+            textTransform: 'uppercase',
+          }}
+        >
+          {student.name ? student.name.charAt(0).toUpperCase() : 'S'}
+        </span>
+      )}
+    </div>
+  );
+};
+
 export const MarkAttendance = () => {
   const { user } = useAuth();
   const { showToast } = useToast();
@@ -73,6 +123,8 @@ export const MarkAttendance = () => {
             rollNo: std.rollNo,
             name: std.name,
             gender: std.gender,
+            avatarUrl: std.avatarUrl || std.avatar_url || null,
+            avatar_url: std.avatar_url || std.avatarUrl || null,
             status: recorded?.status || ATTENDANCE_STATUS.PRESENT,
             remark: recorded?.remark || '',
           };
@@ -86,6 +138,8 @@ export const MarkAttendance = () => {
           rollNo: std.rollNo,
           name: std.name,
           gender: std.gender,
+          avatarUrl: std.avatarUrl || std.avatar_url || null,
+          avatar_url: std.avatar_url || std.avatarUrl || null,
           status: ATTENDANCE_STATUS.PRESENT,
           remark: '',
         }));
@@ -438,11 +492,16 @@ export const MarkAttendance = () => {
                         {student.rollNo}
                       </td>
                       <td>
-                        <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
-                          {student.name}
-                        </div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                          {student.gender || 'Student'}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                          <AttendanceStudentAvatar student={student} />
+                          <div>
+                            <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                              {student.name}
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                              {student.gender || 'Student'}
+                            </div>
+                          </div>
                         </div>
                       </td>
                       <td>
