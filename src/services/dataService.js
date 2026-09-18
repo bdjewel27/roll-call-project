@@ -177,9 +177,10 @@ export const dataService = {
 
   // --- STUDENTS ---
   async getStudents(classId = null) {
+    const columns = 'id, roll_no, full_name, gender, class_id, guardian_name, guardian_phone, avatar_url';
     let query = supabase
       .from('students')
-      .select('*')
+      .select(columns)
       .eq('is_active', true)
       .order('roll_no');
 
@@ -187,7 +188,20 @@ export const dataService = {
       query = query.eq('class_id', classId);
     }
 
-    const { data, error } = await query;
+    let { data, error } = await query;
+
+    // Fallback if avatar_url column is not present in legacy schema
+    if (error && error.message?.includes('avatar_url')) {
+      const fallbackQuery = supabase
+        .from('students')
+        .select('id, roll_no, full_name, gender, class_id, guardian_name, guardian_phone')
+        .eq('is_active', true)
+        .order('roll_no');
+      const res = classId ? await fallbackQuery.eq('class_id', classId) : await fallbackQuery;
+      data = res.data;
+      error = res.error;
+    }
+
     if (error) {
       console.error('[RollCall] Error fetching students:', error.message);
       return [];
@@ -202,6 +216,7 @@ export const dataService = {
       guardianName: s.guardian_name,
       guardianPhone: s.guardian_phone,
       avatarUrl: s.avatar_url || null,
+      avatar_url: s.avatar_url || null,
     }));
   },
 
