@@ -17,6 +17,28 @@ import {
   X,
 } from 'lucide-react';
 
+const StudentAvatar = ({ student }) => {
+  const [hasError, setHasError] = useState(false);
+  const avatarSrc = (student.avatar_url || student.avatarUrl);
+
+  if (avatarSrc && typeof avatarSrc === 'string' && avatarSrc.trim() !== '' && !hasError) {
+    return (
+      <img
+        src={avatarSrc}
+        alt={student.name || 'Student'}
+        onError={() => setHasError(true)}
+        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+      />
+    );
+  }
+
+  return (
+    <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--primary)' }}>
+      {student.name ? student.name.charAt(0).toUpperCase() : 'S'}
+    </span>
+  );
+};
+
 export const StudentManagement = () => {
   const { showToast } = useToast();
   const [classes, setClasses] = useState([]);
@@ -83,6 +105,7 @@ export const StudentManagement = () => {
 
   const handleOpenEdit = (std) => {
     setEditingStudent(std);
+    const existingAvatar = std.avatar_url || std.avatarUrl || '';
     setFormData({
       rollNo: std.rollNo,
       name: std.name,
@@ -90,10 +113,10 @@ export const StudentManagement = () => {
       classId: std.classId || (classes[0]?.id || ''),
       guardianName: std.guardianName || '',
       guardianPhone: std.guardianPhone || '',
-      avatarUrl: std.avatarUrl || '',
+      avatarUrl: existingAvatar,
     });
     setAvatarFile(null);
-    setAvatarPreview(std.avatarUrl || null);
+    setAvatarPreview(existingAvatar || null);
     setIsModalOpen(true);
   };
 
@@ -336,17 +359,7 @@ export const StudentManagement = () => {
                               flexShrink: 0,
                             }}
                           >
-                            {std.avatarUrl ? (
-                              <img
-                                src={std.avatarUrl}
-                                alt={std.name}
-                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                              />
-                            ) : (
-                              <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--primary)' }}>
-                                {std.name ? std.name.charAt(0).toUpperCase() : 'S'}
-                              </span>
-                            )}
+                            <StudentAvatar student={std} />
                           </div>
                           <div>
                             <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{std.name}</div>
