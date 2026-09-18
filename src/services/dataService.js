@@ -1,9 +1,32 @@
 import { supabase, createAuthClient } from './supabaseClient';
 import { ATTENDANCE_STATUS } from '../constants/attendanceStatus';
 
+// --- 60-SECOND IN-MEMORY CACHE ---
+const CACHE_TTL_MS = 60 * 1000;
+const memoryCache = {
+  classes: { data: null, timestamp: 0 },
+  students: new Map(), // key: classId || 'ALL' -> { data, timestamp }
+};
+
+export const invalidateCache = (type = null) => {
+  if (!type || type === 'classes') {
+    memoryCache.classes = { data: null, timestamp: 0 };
+  }
+  if (!type || type === 'students') {
+    memoryCache.students.clear();
+  }
+};
+
 export const dataService = {
+  invalidateCache,
+
   // --- CLASSES ---
-  async getClasses() {
+  async getClasses(forceRefresh = false) {
+    const now = Date.now();
+    if (!forceRefresh && memoryCache.classes.data && (now - memoryCache.classes.timestamp < CACHE_TTL_MS)) {
+      return memoryCache.classes.data;
+    }
+
     const { data: classes, error } = await supabase
       .from('classes')
       .select('*')
@@ -43,6 +66,7 @@ export const dataService = {
       })
     );
 
+    memoryCache.classes = { data: classesWithCount, timestamp: now };
     return classesWithCount;
   },
 
@@ -77,6 +101,7 @@ export const dataService = {
       .single();
 
     if (error) throw error;
+    invalidateCache('classes');
     return {
       ...data,
       academicYear: data.academic_year,
@@ -100,6 +125,7 @@ export const dataService = {
       .select();
 
     if (error) throw error;
+    invalidateCache('classes');
 
     const row = Array.isArray(data) ? data[0] : data;
     return {
@@ -118,6 +144,7 @@ export const dataService = {
       .eq('id', id);
 
     if (error) throw error;
+    invalidateCache('classes');
     return true;
   },
 
@@ -135,6 +162,7 @@ export const dataService = {
     if (error && error.code !== '23505') {
       throw error;
     }
+    invalidateCache('classes');
     return true;
   },
 
@@ -146,6 +174,7 @@ export const dataService = {
       .eq('teacher_id', teacherId);
 
     if (error) throw error;
+    invalidateCache('classes');
     return true;
   },
 
@@ -176,7 +205,14 @@ export const dataService = {
   },
 
   // --- STUDENTS ---
-  async getStudents(classId = null) {
+  async getStudents(classId = null, forceRefresh = false) {
+    const cacheKey = classId || 'ALL';
+    const now = Date.now();
+    const cached = memoryCache.students.get(cacheKey);
+    if (!forceRefresh && cached && (now - cached.timestamp < CACHE_TTL_MS)) {
+      return cached.data;
+    }
+
     const columns = 'id, roll_no, full_name, gender, class_id, guardian_name, guardian_phone, avatar_url';
     let query = supabase
       .from('students')
@@ -207,7 +243,7 @@ export const dataService = {
       return [];
     }
 
-    return (data || []).map((s) => ({
+    const result = (data || []).map((s) => ({
       id: s.id,
       rollNo: s.roll_no,
       name: s.full_name,
@@ -218,6 +254,9 @@ export const dataService = {
       avatarUrl: s.avatar_url || null,
       avatar_url: s.avatar_url || null,
     }));
+
+    memoryCache.students.set(cacheKey, { data: result, timestamp: now });
+    return result;
   },
 
   async createStudent(studentData) {
@@ -264,6 +303,8 @@ export const dataService = {
     }
 
     if (error) throw error;
+    invalidateCache('students');
+    invalidateCache('classes');
     return {
       id: data.id,
       rollNo: data.roll_no,
@@ -320,6 +361,8 @@ export const dataService = {
     }
 
     if (error) throw error;
+    invalidateCache('students');
+    invalidateCache('classes');
 
     const row = Array.isArray(data) ? data[0] : data;
     return {
@@ -342,6 +385,8 @@ export const dataService = {
       .eq('id', id);
 
     if (error) throw error;
+    invalidateCache('students');
+    invalidateCache('classes');
     return true;
   },
 
