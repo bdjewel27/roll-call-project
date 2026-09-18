@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Card } from '../../components/common/Card';
 import { ConfirmModal } from '../../components/common/ConfirmModal';
 import { EmptyState } from '../../components/common/EmptyState';
@@ -186,6 +186,120 @@ export const MarkAttendance = () => {
     loadRosterAndAttendance();
   }, [loadRosterAndAttendance]);
 
+  const hasPushedHistoryRef = useRef(false);
+
+  // Warn on browser tab close or refresh when unsaved changes exist
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (!hasUnsavedChanges) return;
+      e.preventDefault();
+      e.returnValue = '';
+      return '';
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [hasUnsavedChanges]);
+
+  // Intercept in-app link navigation (e.g. sidebar NavLinks, logout button) when unsaved changes exist
+  useEffect(() => {
+    if (!hasUnsavedChanges) return;
+
+    const handleNavigationClick = (e) => {
+      const anchor = e.target.closest ? e.target.closest('a') : null;
+      const logoutBtn = e.target.closest ? e.target.closest('button[title="Logout"]') : null;
+
+      if (anchor) {
+        const href = anchor.getAttribute('href');
+        if (!href || href === window.location.hash || href === '#') return;
+
+        const confirmLeave = window.confirm(
+          'You have unsaved attendance changes. Are you sure you want to leave without saving?'
+        );
+        if (!confirmLeave) {
+          e.preventDefault();
+          e.stopPropagation();
+          e.stopImmediatePropagation();
+        } else {
+          setHasUnsavedChanges(false);
+        }
+      } else if (logoutBtn) {
+        const confirmLeave = window.confirm(
+          'You have unsaved attendance changes. Are you sure you want to leave without saving?'
+        );
+        if (!confirmLeave) {
+          e.preventDefault();
+          e.stopPropagation();
+          e.stopImmediatePropagation();
+        } else {
+          setHasUnsavedChanges(false);
+        }
+      }
+    };
+
+    document.addEventListener('click', handleNavigationClick, true);
+    return () => {
+      document.removeEventListener('click', handleNavigationClick, true);
+    };
+  }, [hasUnsavedChanges]);
+
+  // Intercept browser back/forward navigation when unsaved changes exist
+  useEffect(() => {
+    if (!hasUnsavedChanges) {
+      hasPushedHistoryRef.current = false;
+      return;
+    }
+
+    if (!hasPushedHistoryRef.current) {
+      hasPushedHistoryRef.current = true;
+      window.history.pushState(null, '', window.location.href);
+    }
+
+    const handlePopState = () => {
+      const confirmLeave = window.confirm(
+        'You have unsaved attendance changes. Are you sure you want to leave without saving?'
+      );
+      if (!confirmLeave) {
+        window.history.pushState(null, '', window.location.href);
+      } else {
+        hasPushedHistoryRef.current = false;
+        setHasUnsavedChanges(false);
+        window.history.back();
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [hasUnsavedChanges]);
+
+  // Warn before switching classes with unsaved changes
+  const handleClassChange = (newClassId) => {
+    if (newClassId === selectedClassId) return;
+    if (hasUnsavedChanges) {
+      const confirmLeave = window.confirm(
+        'You have unsaved attendance changes. Are you sure you want to switch classes without saving?'
+      );
+      if (!confirmLeave) return;
+    }
+    setSelectedClassId(newClassId);
+  };
+
+  // Warn before changing dates with unsaved changes
+  const handleDateChange = (newDate) => {
+    if (newDate === selectedDate) return;
+    if (hasUnsavedChanges) {
+      const confirmLeave = window.confirm(
+        'You have unsaved attendance changes. Are you sure you want to change the date without saving?'
+      );
+      if (!confirmLeave) return;
+    }
+    setSelectedDate(newDate);
+  };
+
   // Handle single student status change
   const handleStatusChange = (studentId, status) => {
     setRosterAttendance((prev) =>
@@ -335,7 +449,7 @@ export const MarkAttendance = () => {
             </label>
             <select
               value={selectedClassId}
-              onChange={(e) => setSelectedClassId(e.target.value)}
+              onChange={(e) => handleClassChange(e.target.value)}
               style={{ width: '100%' }}
             >
               {classes.map((cls) => (
@@ -353,7 +467,7 @@ export const MarkAttendance = () => {
             <input
               type="date"
               value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
+              onChange={(e) => handleDateChange(e.target.value)}
               style={{ width: '100%' }}
             />
           </div>
