@@ -16,9 +16,29 @@ import {
   RotateCcw,
 } from 'lucide-react';
 
-const AttendanceStudentAvatar = ({ student }) => {
-  const [hasError, setHasError] = useState(false);
+// In-memory cache for avatar fetch statuses
+const loadedImageCache = new Set();
+const failedImageCache = new Set();
+
+const areAttendanceAvatarPropsEqual = (prevProps, nextProps) => {
+  const prevStudent = prevProps.student || {};
+  const nextStudent = nextProps.student || {};
+  const prevSrc = prevStudent.avatar_url || prevStudent.avatarUrl;
+  const nextSrc = nextStudent.avatar_url || nextStudent.avatarUrl;
+  return (
+    prevStudent.id === nextStudent.id &&
+    prevSrc === nextSrc &&
+    prevStudent.name === nextStudent.name
+  );
+};
+
+const AttendanceStudentAvatar = React.memo(({ student }) => {
   const avatarSrc = (student.avatar_url || student.avatarUrl);
+  const [hasError, setHasError] = useState(() => failedImageCache.has(avatarSrc));
+
+  useEffect(() => {
+    setHasError(failedImageCache.has(avatarSrc));
+  }, [avatarSrc]);
 
   return (
     <div
@@ -41,7 +61,13 @@ const AttendanceStudentAvatar = ({ student }) => {
         <img
           src={avatarSrc}
           alt={student.name || 'Student'}
-          onError={() => setHasError(true)}
+          loading="lazy"
+          decoding="async"
+          onLoad={() => loadedImageCache.add(avatarSrc)}
+          onError={() => {
+            failedImageCache.add(avatarSrc);
+            setHasError(true);
+          }}
           style={{
             width: '100%',
             height: '100%',
@@ -64,7 +90,7 @@ const AttendanceStudentAvatar = ({ student }) => {
       )}
     </div>
   );
-};
+}, areAttendanceAvatarPropsEqual);
 
 export const MarkAttendance = () => {
   const { user } = useAuth();
