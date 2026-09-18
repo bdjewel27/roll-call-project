@@ -1,4 +1,4 @@
-import { supabase } from './supabaseClient';
+import { supabase, createAuthClient } from './supabaseClient';
 import { ATTENDANCE_STATUS } from '../constants/attendanceStatus';
 
 export const dataService = {
@@ -271,28 +271,70 @@ export const dataService = {
   },
 
   async createTeacher(teacherData) {
-    // Creates profile row directly if profile trigger/auth handled separately
-    const { data, error } = await supabase
-      .from('profiles')
-      .insert([
-        {
-          full_name: teacherData.name,
-          email: teacherData.email,
-          phone: teacherData.phone || null,
-          subject: teacherData.subject || null,
-          role: 'teacher',
-        },
-      ])
-      .select()
-      .single();
+    if (!teacherData.password || teacherData.password.length < 6) {
+      throw new Error('Temporary password must be at least 6 characters.');
+    }
 
-    if (error) throw error;
+    const email = teacherData.email.trim();
+    const fullName = teacherData.name.trim();
+
+    // 1. Create teacher account in Supabase Auth using isolated client so admin session is not replaced
+    const authClient = createAuthClient();
+    const { data: authData, error: authError } = await authClient.auth.signUp({
+      email,
+      password: teacherData.password,
+      options: {
+        data: {
+          full_name: fullName,
+          role: 'teacher',
+          phone: teacherData.phone?.trim() || null,
+          subject: teacherData.subject?.trim() || null,
+        },
+      },
+    });
+
+    if (authError) {
+      throw authError;
+    }
+
+    const userId = authData?.user?.id;
+    if (!userId) {
+      throw new Error('Failed to create teacher in Supabase Auth: No user ID returned.');
+    }
+
+    // Check if user already exists (Supabase returns empty identities when user already exists)
+    if (authData.user.identities && authData.user.identities.length === 0) {
+      throw new Error('A user with this email address already exists in Supabase Auth.');
+    }
+
+    // 2. Ensure profile record is created/upserted in public.profiles table
+    const profilePayload = {
+      id: userId,
+      full_name: fullName,
+      email: email,
+      phone: teacherData.phone?.trim() || null,
+      subject: teacherData.subject?.trim() || null,
+      role: 'teacher',
+    };
+
+    const { data: profileRow, error: profileError } = await supabase
+      .from('profiles')
+      .upsert(profilePayload, { onConflict: 'id' })
+      .select()
+      .maybeSingle();
+
+    if (profileError) {
+      console.warn('[RollCall] Note on profiles upsert:', profileError.message);
+      // Fallback direct insert if upsert is restricted
+      await supabase.from('profiles').insert([profilePayload]);
+    }
+
     return {
-      id: data.id,
-      name: data.full_name,
-      email: data.email,
-      phone: data.phone || '',
-      subject: data.subject || '',
+      id: profileRow?.id || userId,
+      name: profileRow?.full_name || fullName,
+      email: profileRow?.email || email,
+      phone: profileRow?.phone || teacherData.phone || '',
+      subject: profileRow?.subject || teacherData.subject || '',
       assignedClassIds: [],
     };
   },

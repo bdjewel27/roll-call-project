@@ -22,6 +22,7 @@ export const TeacherManagement = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    password: '',
     phone: '',
     subject: '',
   });
@@ -48,6 +49,7 @@ export const TeacherManagement = () => {
     setFormData({
       name: '',
       email: '',
+      password: '',
       phone: '',
       subject: '',
     });
@@ -59,6 +61,7 @@ export const TeacherManagement = () => {
     setFormData({
       name: tch.name,
       email: tch.email,
+      password: '',
       phone: tch.phone || '',
       subject: tch.subject || '',
     });
@@ -70,6 +73,13 @@ export const TeacherManagement = () => {
     if (!formData.name.trim() || !formData.email.trim()) {
       showToast('Teacher name and email are required', 'error');
       return;
+    }
+
+    if (!editingTeacher) {
+      if (!formData.password || formData.password.length < 6) {
+        showToast('Temporary password must be at least 6 characters', 'error');
+        return;
+      }
     }
 
     if (formData.phone && formData.phone.trim().length !== 11) {
@@ -314,6 +324,26 @@ export const TeacherManagement = () => {
               style={{ width: '100%' }}
             />
           </div>
+
+          {!editingTeacher && (
+            <div>
+              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+                Temporary Password * (minimum 6 characters)
+              </label>
+              <input
+                type="password"
+                placeholder="Temporary login password"
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                required
+                minLength={6}
+                style={{ width: '100%' }}
+              />
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem', display: 'block' }}>
+                The teacher will use this password along with their email to log in at /login.
+              </span>
+            </div>
+          )}
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
             <div>
