@@ -377,12 +377,32 @@ export const dataService = {
   },
 
   async deleteTeacher(id) {
+    if (!id) {
+      throw new Error('Teacher ID is required to delete teacher.');
+    }
+
+    // Remove any assignments in teacher_class_assignments
+    const { error: assignError } = await supabase
+      .from('teacher_class_assignments')
+      .delete()
+      .eq('teacher_id', id);
+
+    if (assignError) {
+      console.error('[RollCall] Error removing teacher assignments:', assignError.message);
+      throw assignError;
+    }
+
+    // Remove profile from public.profiles where id matches
     const { error } = await supabase
       .from('profiles')
       .delete()
       .eq('id', id);
 
-    if (error) throw error;
+    if (error) {
+      console.error('[RollCall] Error deleting teacher profile:', error.message);
+      throw error;
+    }
+
     return true;
   },
 

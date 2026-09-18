@@ -103,12 +103,28 @@ export const TeacherManagement = () => {
     }
   };
 
+  const handleDeleteTeacher = async (id) => {
+    if (!id) return;
+    try {
+      await dataService.deleteTeacher(id);
+      setTeachers((prev) => prev.filter((t) => t.id !== id));
+      showToast('Teacher removed successfully', 'success');
+      loadData();
+    } catch (err) {
+      console.error(err);
+      showToast(err.message || 'Error removing teacher', 'error');
+    }
+  };
+
   const handleDeleteConfirm = async () => {
     if (deleteTargetTeacher) {
+      const targetId = deleteTargetTeacher.id;
+      const targetName = deleteTargetTeacher.name;
       try {
-        await dataService.deleteTeacher(deleteTargetTeacher.id);
-        showToast(`Teacher "${deleteTargetTeacher.name}" removed`, 'success');
+        await dataService.deleteTeacher(targetId);
+        setTeachers((prev) => prev.filter((t) => t.id !== targetId));
         setDeleteTargetTeacher(null);
+        showToast(`Teacher "${targetName}" removed`, 'success');
         loadData();
       } catch (err) {
         console.error(err);
