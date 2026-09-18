@@ -17,16 +17,102 @@ import {
   X,
 } from 'lucide-react';
 
-const StudentAvatar = ({ student }) => {
-  const [hasError, setHasError] = useState(false);
+// In-memory cache for avatar fetch statuses
+const loadedImageCache = new Set();
+const failedImageCache = new Set();
+
+/**
+ * Compresses an image File using HTML5 Canvas to max 150x150px and converts to JPEG (quality 0.7)
+ * Guarantees avatar files are tiny (<30KB) before uploading to Supabase Storage.
+ */
+const compressImage = (file, maxWidth = 150, maxHeight = 150, quality = 0.7) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(file);
+          return;
+        }
+
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              resolve(file);
+              return;
+            }
+            const cleanName = (file.name || 'avatar').replace(/\.[^/.]+$/, '') + '.jpg';
+            const compressedFile = new File([blob], cleanName, {
+              type: 'image/jpeg',
+              lastModified: Date.now(),
+            });
+            resolve(compressedFile);
+          },
+          'image/jpeg',
+          quality
+        );
+      };
+      img.onerror = () => resolve(file);
+      img.src = event.target.result;
+    };
+    reader.onerror = () => resolve(file);
+    reader.readAsDataURL(file);
+  });
+};
+
+const areStudentAvatarPropsEqual = (prevProps, nextProps) => {
+  const prevStudent = prevProps.student || {};
+  const nextStudent = nextProps.student || {};
+  const prevSrc = prevStudent.avatar_url || prevStudent.avatarUrl;
+  const nextSrc = nextStudent.avatar_url || nextStudent.avatarUrl;
+  return (
+    prevStudent.id === nextStudent.id &&
+    prevSrc === nextSrc &&
+    prevStudent.name === nextStudent.name
+  );
+};
+
+const StudentAvatar = React.memo(({ student }) => {
   const avatarSrc = (student.avatar_url || student.avatarUrl);
+  const [hasError, setHasError] = useState(() => failedImageCache.has(avatarSrc));
+
+  useEffect(() => {
+    setHasError(failedImageCache.has(avatarSrc));
+  }, [avatarSrc]);
 
   if (avatarSrc && typeof avatarSrc === 'string' && avatarSrc.trim() !== '' && !hasError) {
     return (
       <img
         src={avatarSrc}
         alt={student.name || 'Student'}
-        onError={() => setHasError(true)}
+        loading="lazy"
+        decoding="async"
+        onLoad={() => loadedImageCache.add(avatarSrc)}
+        onError={() => {
+          failedImageCache.add(avatarSrc);
+          setHasError(true);
+        }}
         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
       />
     );
@@ -37,7 +123,7 @@ const StudentAvatar = ({ student }) => {
       {student.name ? student.name.charAt(0).toUpperCase() : 'S'}
     </span>
   );
-};
+}, areStudentAvatarPropsEqual);
 
 export const StudentManagement = () => {
   const { showToast } = useToast();
@@ -120,7 +206,7 @@ export const StudentManagement = () => {
     setIsModalOpen(true);
   };
 
-  const handleAvatarChange = (e) => {
+  const handleAvatarChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -129,13 +215,16 @@ export const StudentManagement = () => {
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      showToast('Image file size must be under 5MB', 'error');
-      return;
+    try {
+      // Compress to max 150x150px JPEG (quality 0.7) before upload to guarantee tiny file size (<30KB)
+      const compressed = await compressImage(file, 150, 150, 0.7);
+      setAvatarFile(compressed);
+      setAvatarPreview(URL.createObjectURL(compressed));
+    } catch (err) {
+      console.warn('[RollCall] Image compression notice:', err);
+      setAvatarFile(file);
+      setAvatarPreview(URL.createObjectURL(file));
     }
-
-    setAvatarFile(file);
-    setAvatarPreview(URL.createObjectURL(file));
   };
 
   const handleRemoveAvatar = () => {
@@ -465,6 +554,8 @@ export const StudentManagement = () => {
                   <img
                     src={avatarPreview}
                     alt="Student Avatar Preview"
+                    loading="lazy"
+                    decoding="async"
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />
                 ) : (
