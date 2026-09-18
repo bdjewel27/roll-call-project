@@ -12,6 +12,9 @@ import {
   Edit2,
   Trash2,
   Phone,
+  Upload,
+  User,
+  X,
 } from 'lucide-react';
 
 export const StudentManagement = () => {
@@ -35,7 +38,11 @@ export const StudentManagement = () => {
     classId: '',
     guardianName: '',
     guardianPhone: '',
+    avatarUrl: '',
   });
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -67,7 +74,10 @@ export const StudentManagement = () => {
       classId: classes.length > 0 ? classes[0].id : '',
       guardianName: '',
       guardianPhone: '',
+      avatarUrl: '',
     });
+    setAvatarFile(null);
+    setAvatarPreview(null);
     setIsModalOpen(true);
   };
 
@@ -80,8 +90,35 @@ export const StudentManagement = () => {
       classId: std.classId || (classes[0]?.id || ''),
       guardianName: std.guardianName || '',
       guardianPhone: std.guardianPhone || '',
+      avatarUrl: std.avatarUrl || '',
     });
+    setAvatarFile(null);
+    setAvatarPreview(std.avatarUrl || null);
     setIsModalOpen(true);
+  };
+
+  const handleAvatarChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      showToast('Please select a valid image file (image/*)', 'error');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('Image file size must be under 5MB', 'error');
+      return;
+    }
+
+    setAvatarFile(file);
+    setAvatarPreview(URL.createObjectURL(file));
+  };
+
+  const handleRemoveAvatar = () => {
+    setAvatarFile(null);
+    setAvatarPreview(null);
+    setFormData((prev) => ({ ...prev, avatarUrl: '' }));
   };
 
   const handleSubmit = async (e) => {
@@ -101,12 +138,37 @@ export const StudentManagement = () => {
       return;
     }
 
+    let finalAvatarUrl = formData.avatarUrl;
+
+    if (avatarFile) {
+      setUploadingAvatar(true);
+      try {
+        const fileExt = avatarFile.name ? avatarFile.name.split('.').pop() : 'png';
+        const cleanExt = fileExt.replace(/[^a-z0-9]/gi, '').toLowerCase() || 'png';
+        const fileName = `student_${formData.rollNo || 'roll'}_${Date.now()}.${cleanExt}`;
+        finalAvatarUrl = await dataService.uploadAvatar(avatarFile, fileName);
+      } catch (uploadErr) {
+        console.warn('[RollCall] Storage upload error:', uploadErr);
+        showToast(
+          `Photo upload notice: ${uploadErr.message || 'Storage error'}. Saving student without photo.`,
+          'warning'
+        );
+      } finally {
+        setUploadingAvatar(false);
+      }
+    }
+
+    const payload = {
+      ...formData,
+      avatarUrl: finalAvatarUrl,
+    };
+
     try {
       if (editingStudent) {
-        await dataService.updateStudent(editingStudent.id, formData);
+        await dataService.updateStudent(editingStudent.id, payload);
         showToast('Student information updated!', 'success');
       } else {
-        await dataService.createStudent(formData);
+        await dataService.createStudent(payload);
         showToast('Student enrolled successfully!', 'success');
       }
       setIsModalOpen(false);
@@ -258,8 +320,39 @@ export const StudentManagement = () => {
                         {std.rollNo}
                       </td>
                       <td>
-                        <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{std.name}</div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>ID: {std.id}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                          <div
+                            style={{
+                              width: '36px',
+                              height: '36px',
+                              aspectRatio: '1 / 1',
+                              borderRadius: '8px',
+                              backgroundColor: 'var(--bg-subtle)',
+                              border: '1px solid var(--border-color)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              overflow: 'hidden',
+                              flexShrink: 0,
+                            }}
+                          >
+                            {std.avatarUrl ? (
+                              <img
+                                src={std.avatarUrl}
+                                alt={std.name}
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                              />
+                            ) : (
+                              <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--primary)' }}>
+                                {std.name ? std.name.charAt(0).toUpperCase() : 'S'}
+                              </span>
+                            )}
+                          </div>
+                          <div>
+                            <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{std.name}</div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>ID: {std.id}</div>
+                          </div>
+                        </div>
                       </td>
                       <td>{std.gender || '-'}</td>
                       <td>
@@ -333,6 +426,97 @@ export const StudentManagement = () => {
         maxWidth="520px"
       >
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          {/* Avatar Photo Field (1:1 Aspect Ratio) */}
+          <div>
+            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+              Student Photo / Avatar (1:1 Square)
+            </label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div
+                style={{
+                  width: '84px',
+                  height: '84px',
+                  aspectRatio: '1 / 1',
+                  borderRadius: '12px',
+                  border: '2px dashed var(--border-color)',
+                  backgroundColor: 'var(--bg-subtle)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  overflow: 'hidden',
+                  position: 'relative',
+                  flexShrink: 0,
+                }}
+              >
+                {avatarPreview ? (
+                  <img
+                    src={avatarPreview}
+                    alt="Student Avatar Preview"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                ) : (
+                  <div style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
+                    <User size={28} />
+                    <div style={{ fontSize: '0.65rem', marginTop: '2px', fontWeight: 600 }}>1:1</div>
+                  </div>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', flexGrow: 1 }}>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <label
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.4rem',
+                      padding: '0.4rem 0.8rem',
+                      borderRadius: '6px',
+                      backgroundColor: 'var(--bg-subtle)',
+                      border: '1px solid var(--border-color)',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.825rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <Upload size={14} />
+                    <span>{avatarPreview ? 'Change Photo' : 'Upload Photo'}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      style={{ display: 'none' }}
+                      onChange={handleAvatarChange}
+                    />
+                  </label>
+                  {avatarPreview && (
+                    <button
+                      type="button"
+                      onClick={handleRemoveAvatar}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.25rem',
+                        padding: '0.4rem 0.65rem',
+                        borderRadius: '6px',
+                        backgroundColor: 'var(--status-absent-bg)',
+                        color: 'var(--status-absent)',
+                        border: '1px solid var(--status-absent-border)',
+                        fontSize: '0.825rem',
+                        fontWeight: 500,
+                      }}
+                    >
+                      <X size={14} />
+                      <span>Remove</span>
+                    </button>
+                  )}
+                </div>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                  Accepts JPG, PNG, WEBP (image/*). Square 1:1 preview.
+                </span>
+              </div>
+            </div>
+          </div>
+
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '0.75rem' }}>
             <div>
               <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
@@ -445,12 +629,19 @@ export const StudentManagement = () => {
             </button>
             <button
               type="submit"
+              disabled={uploadingAvatar}
               style={{
                 backgroundColor: 'var(--primary)',
                 color: '#ffffff',
+                opacity: uploadingAvatar ? 0.7 : 1,
+                cursor: uploadingAvatar ? 'not-allowed' : 'pointer',
               }}
             >
-              {editingStudent ? 'Save Changes' : 'Enroll Student'}
+              {uploadingAvatar
+                ? 'Uploading Photo...'
+                : editingStudent
+                ? 'Save Changes'
+                : 'Enroll Student'}
             </button>
           </div>
         </form>

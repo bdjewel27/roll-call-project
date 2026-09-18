@@ -149,6 +149,32 @@ export const dataService = {
     return true;
   },
 
+  // --- AVATAR / STORAGE ---
+  async uploadAvatar(file, customFileName = null) {
+    if (!file) return null;
+    const fileExt = file.name ? file.name.split('.').pop() : 'png';
+    const cleanExt = fileExt.replace(/[^a-z0-9]/gi, '').toLowerCase() || 'png';
+    const fileName = customFileName || `avatar_${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${cleanExt}`;
+
+    const { data, error } = await supabase.storage
+      .from('avatars')
+      .upload(fileName, file, {
+        cacheControl: '3600',
+        upsert: true,
+      });
+
+    if (error) {
+      console.error('[RollCall] Error uploading avatar to Supabase storage:', error.message);
+      throw error;
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from('avatars')
+      .getPublicUrl(fileName);
+
+    return publicUrlData?.publicUrl || null;
+  },
+
   // --- STUDENTS ---
   async getStudents(classId = null) {
     let query = supabase
@@ -175,25 +201,52 @@ export const dataService = {
       classId: s.class_id,
       guardianName: s.guardian_name,
       guardianPhone: s.guardian_phone,
+      avatarUrl: s.avatar_url || null,
     }));
   },
 
   async createStudent(studentData) {
-    const { data, error } = await supabase
+    let avatarUrl = studentData.avatarUrl || null;
+    if (studentData.avatarFile) {
+      try {
+        const fileExt = studentData.avatarFile.name ? studentData.avatarFile.name.split('.').pop() : 'png';
+        const fileName = `student_${studentData.rollNo || Date.now()}_${Date.now()}.${fileExt}`;
+        avatarUrl = await this.uploadAvatar(studentData.avatarFile, fileName);
+      } catch (uploadErr) {
+        console.warn('[RollCall] Avatar upload note in createStudent:', uploadErr.message);
+      }
+    }
+
+    const payload = {
+      roll_no: studentData.rollNo,
+      full_name: studentData.name,
+      gender: studentData.gender,
+      class_id: studentData.classId,
+      guardian_name: studentData.guardianName || null,
+      guardian_phone: studentData.guardianPhone || null,
+      is_active: true,
+    };
+    if (avatarUrl !== undefined && avatarUrl !== null) {
+      payload.avatar_url = avatarUrl;
+    }
+
+    let { data, error } = await supabase
       .from('students')
-      .insert([
-        {
-          roll_no: studentData.rollNo,
-          full_name: studentData.name,
-          gender: studentData.gender,
-          class_id: studentData.classId,
-          guardian_name: studentData.guardianName || null,
-          guardian_phone: studentData.guardianPhone || null,
-          is_active: true,
-        },
-      ])
+      .insert([payload])
       .select()
       .single();
+
+    if (error && error.message?.includes('avatar_url')) {
+      console.warn('[RollCall] Column avatar_url does not exist on students table. Retrying insert without avatar_url.');
+      delete payload.avatar_url;
+      const retry = await supabase
+        .from('students')
+        .insert([payload])
+        .select()
+        .single();
+      data = retry.data;
+      error = retry.error;
+    }
 
     if (error) throw error;
     return {
@@ -204,10 +257,26 @@ export const dataService = {
       classId: data.class_id,
       guardianName: data.guardian_name,
       guardianPhone: data.guardian_phone,
+      avatarUrl: data.avatar_url || avatarUrl || null,
     };
   },
 
+  async addStudent(studentData) {
+    return this.createStudent(studentData);
+  },
+
   async updateStudent(id, updates) {
+    let avatarUrl = updates.avatarUrl;
+    if (updates.avatarFile) {
+      try {
+        const fileExt = updates.avatarFile.name ? updates.avatarFile.name.split('.').pop() : 'png';
+        const fileName = `student_${updates.rollNo || id}_${Date.now()}.${fileExt}`;
+        avatarUrl = await this.uploadAvatar(updates.avatarFile, fileName);
+      } catch (uploadErr) {
+        console.warn('[RollCall] Avatar upload note in updateStudent:', uploadErr.message);
+      }
+    }
+
     const payload = {};
     if (updates.rollNo !== undefined) payload.roll_no = updates.rollNo;
     if (updates.name !== undefined) payload.full_name = updates.name;
@@ -215,12 +284,25 @@ export const dataService = {
     if (updates.classId !== undefined) payload.class_id = updates.classId;
     if (updates.guardianName !== undefined) payload.guardian_name = updates.guardianName;
     if (updates.guardianPhone !== undefined) payload.guardian_phone = updates.guardianPhone;
+    if (avatarUrl !== undefined) payload.avatar_url = avatarUrl;
 
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from('students')
       .update(payload)
       .eq('id', id)
       .select();
+
+    if (error && error.message?.includes('avatar_url')) {
+      console.warn('[RollCall] Column avatar_url does not exist on students table. Retrying update without avatar_url.');
+      delete payload.avatar_url;
+      const retry = await supabase
+        .from('students')
+        .update(payload)
+        .eq('id', id)
+        .select();
+      data = retry.data;
+      error = retry.error;
+    }
 
     if (error) throw error;
 
@@ -233,6 +315,7 @@ export const dataService = {
       classId: row?.class_id || updates.classId,
       guardianName: row?.guardian_name || updates.guardianName,
       guardianPhone: row?.guardian_phone || updates.guardianPhone,
+      avatarUrl: row?.avatar_url || avatarUrl || updates.avatarUrl || null,
     };
   },
 
