@@ -91,6 +91,11 @@ export const StudentManagement = () => {
       return;
     }
 
+    if (!/^\d+$/.test(formData.rollNo.trim())) {
+      showToast('Roll number must be purely numeric', 'error');
+      return;
+    }
+
     if (formData.guardianPhone && formData.guardianPhone.trim().length !== 11) {
       showToast('Guardian emergency phone must be exactly 11 digits (e.g. 01XXXXXXXXX)', 'error');
       return;
@@ -335,9 +340,10 @@ export const StudentManagement = () => {
               </label>
               <input
                 type="text"
-                placeholder="e.g. 10-01"
+                inputMode="numeric"
+                placeholder="e.g. 101"
                 value={formData.rollNo}
-                onChange={(e) => setFormData({ ...formData, rollNo: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, rollNo: e.target.value.replace(/\D/g, '') })}
                 required
                 style={{ width: '100%' }}
               />
