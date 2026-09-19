@@ -196,10 +196,11 @@ export const TeacherReports = () => {
       <Card>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
           <div style={{ flex: 1, minWidth: '220px' }}>
-            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.35rem' }}>
+            <label htmlFor="teacher-reports-class-filter" style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.35rem' }}>
               Select Class for Report
             </label>
             <select
+              id="teacher-reports-class-filter"
               value={selectedClassId}
               onChange={(e) => setSelectedClassId(e.target.value)}
               style={{ width: '100%' }}

@@ -349,10 +349,11 @@ export const StudentManagement = () => {
       <Card>
         <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
           <div style={{ flex: 1, minWidth: '220px' }}>
-            <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.3rem' }}>
+            <label htmlFor="student-filter-class" style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.3rem' }}>
               Filter by Class
             </label>
             <select
+              id="student-filter-class"
               value={selectedClassFilter}
               onChange={(e) => setSelectedClassFilter(e.target.value)}
               style={{ width: '100%', height: '38px' }}
@@ -367,12 +368,13 @@ export const StudentManagement = () => {
           </div>
 
           <div style={{ flex: 2, minWidth: '260px' }}>
-            <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.3rem' }}>
+            <label htmlFor="student-search-input" style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.3rem' }}>
               Search Students
             </label>
             <div style={{ position: 'relative' }}>
               <Search size={16} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
               <input
+                id="student-search-input"
                 type="text"
                 placeholder="Search by student name, roll number, guardian..."
                 value={searchQuery}
@@ -620,6 +622,7 @@ export const StudentManagement = () => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', flexGrow: 1 }}>
                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                   <label
+                    htmlFor="student-avatar-file-input"
                     style={{
                       display: 'inline-flex',
                       alignItems: 'center',
@@ -637,6 +640,7 @@ export const StudentManagement = () => {
                     <Upload size={14} />
                     <span>{avatarPreview ? 'Change Photo' : 'Upload Photo'}</span>
                     <input
+                      id="student-avatar-file-input"
                       type="file"
                       accept="image/*"
                       style={{ display: 'none' }}
@@ -674,10 +678,11 @@ export const StudentManagement = () => {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '0.75rem' }}>
             <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+              <label htmlFor="student-roll-input" style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
                 Roll Number *
               </label>
               <input
+                id="student-roll-input"
                 type="text"
                 inputMode="numeric"
                 placeholder="e.g. 101"
@@ -689,10 +694,11 @@ export const StudentManagement = () => {
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+              <label htmlFor="student-name-input" style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
                 Full Name *
               </label>
               <input
+                id="student-name-input"
                 type="text"
                 placeholder="e.g. Alice Walker"
                 value={formData.name}
@@ -705,10 +711,11 @@ export const StudentManagement = () => {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
             <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+              <label htmlFor="student-gender-select" style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
                 Gender
               </label>
               <select
+                id="student-gender-select"
                 value={formData.gender}
                 onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
                 style={{ width: '100%' }}
@@ -720,10 +727,11 @@ export const StudentManagement = () => {
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+              <label htmlFor="student-class-select" style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
                 Assigned Class *
               </label>
               <select
+                id="student-class-select"
                 value={formData.classId}
                 onChange={(e) => setFormData({ ...formData, classId: e.target.value })}
                 required
@@ -740,10 +748,11 @@ export const StudentManagement = () => {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
             <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+              <label htmlFor="student-guardian-name-input" style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
                 Guardian / Parent
               </label>
               <input
+                id="student-guardian-name-input"
                 type="text"
                 placeholder="e.g. Robert Walker"
                 value={formData.guardianName}
@@ -753,10 +762,11 @@ export const StudentManagement = () => {
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+              <label htmlFor="student-guardian-phone-input" style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
                 Emergency Phone (11 digits)
               </label>
               <input
+                id="student-guardian-phone-input"
                 type="tel"
                 maxLength={11}
                 placeholder="01XXXXXXXXX"

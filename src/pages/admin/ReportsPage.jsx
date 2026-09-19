@@ -274,10 +274,11 @@ export const ReportsPage = () => {
       <Card>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', alignItems: 'flex-end' }}>
           <div>
-            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.35rem' }}>
+            <label htmlFor="admin-reports-class-filter" style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.35rem' }}>
               Filter by Class
             </label>
             <select
+              id="admin-reports-class-filter"
               value={selectedClassId}
               onChange={(e) => setSelectedClassId(e.target.value)}
               style={{ width: '100%' }}
@@ -292,10 +293,11 @@ export const ReportsPage = () => {
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.35rem' }}>
+            <label htmlFor="admin-reports-start-date" style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.35rem' }}>
               From Date
             </label>
             <input
+              id="admin-reports-start-date"
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
@@ -304,10 +306,11 @@ export const ReportsPage = () => {
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.35rem' }}>
+            <label htmlFor="admin-reports-end-date" style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.35rem' }}>
               To Date
             </label>
             <input
+              id="admin-reports-end-date"
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}

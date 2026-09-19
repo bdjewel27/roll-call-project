@@ -122,6 +122,7 @@ export const LoginPage = () => {
         >
           <button
             type="button"
+            aria-pressed={selectedRole === ROLES.ADMIN}
             onClick={() => setSelectedRole(ROLES.ADMIN)}
             style={{
               display: 'flex',
@@ -144,6 +145,7 @@ export const LoginPage = () => {
 
           <button
             type="button"
+            aria-pressed={selectedRole === ROLES.TEACHER}
             onClick={() => setSelectedRole(ROLES.TEACHER)}
             style={{
               display: 'flex',
@@ -167,10 +169,11 @@ export const LoginPage = () => {
 
         <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div>
-            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.35rem' }}>
+            <label htmlFor="login-email" style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.35rem' }}>
               Email Address
             </label>
             <input
+              id="login-email"
               type="email"
               required
               placeholder={selectedRole === ROLES.ADMIN ? 'admin@school.edu' : 'teacher@school.edu'}
@@ -181,10 +184,11 @@ export const LoginPage = () => {
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.35rem' }}>
+            <label htmlFor="login-password" style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.35rem' }}>
               Password
             </label>
             <input
+              id="login-password"
               type="password"
               required
               placeholder="••••••••"

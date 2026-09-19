@@ -152,6 +152,7 @@ export const ClassManagement = () => {
             <Search size={16} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
             <input
               type="text"
+              aria-label="Search classes"
               placeholder="Search by name, section, room..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -266,10 +267,11 @@ export const ClassManagement = () => {
       >
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div>
-            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+            <label htmlFor="class-name-input" style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
               Class Name *
             </label>
             <input
+              id="class-name-input"
               type="text"
               placeholder="e.g. Grade 10 - Section A"
               value={formData.name}
@@ -281,10 +283,11 @@ export const ClassManagement = () => {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
             <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+              <label htmlFor="class-grade-input" style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
                 Grade / Level
               </label>
               <input
+                id="class-grade-input"
                 type="text"
                 placeholder="e.g. 10"
                 value={formData.grade}
@@ -294,10 +297,11 @@ export const ClassManagement = () => {
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+              <label htmlFor="class-section-input" style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
                 Section / Stream
               </label>
               <input
+                id="class-section-input"
                 type="text"
                 placeholder="e.g. A or Science"
                 value={formData.section}
@@ -309,10 +313,11 @@ export const ClassManagement = () => {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
             <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+              <label htmlFor="class-room-input" style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
                 Room / Lab
               </label>
               <input
+                id="class-room-input"
                 type="text"
                 placeholder="e.g. Room 201"
                 value={formData.room}
@@ -322,10 +327,11 @@ export const ClassManagement = () => {
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+              <label htmlFor="class-academic-year-input" style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
                 Academic Year
               </label>
               <input
+                id="class-academic-year-input"
                 type="text"
                 placeholder="e.g. 2026-2027"
                 value={formData.academicYear}

@@ -180,6 +180,7 @@ export const TeacherManagement = () => {
             <Search size={16} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
             <input
               type="text"
+              aria-label="Search teachers"
               placeholder="Search by name, email, subject..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -314,10 +315,11 @@ export const TeacherManagement = () => {
       >
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div>
-            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+            <label htmlFor="teacher-name-input" style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
               Full Name *
             </label>
             <input
+              id="teacher-name-input"
               type="text"
               placeholder="e.g. Sarah Jenkins"
               value={formData.name}
@@ -328,10 +330,11 @@ export const TeacherManagement = () => {
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+            <label htmlFor="teacher-email-input" style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
               Email Address *
             </label>
             <input
+              id="teacher-email-input"
               type="email"
               placeholder="e.g. teacher@school.edu"
               value={formData.email}
@@ -343,10 +346,11 @@ export const TeacherManagement = () => {
 
           {!editingTeacher && (
             <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+              <label htmlFor="teacher-password-input" style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
                 Temporary Password * (minimum 6 characters)
               </label>
               <input
+                id="teacher-password-input"
                 type="password"
                 placeholder="Temporary login password"
                 value={formData.password}
@@ -363,10 +367,11 @@ export const TeacherManagement = () => {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
             <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+              <label htmlFor="teacher-phone-input" style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
                 Phone Number (11 digits)
               </label>
               <input
+                id="teacher-phone-input"
                 type="tel"
                 maxLength={11}
                 placeholder="01XXXXXXXXX"
@@ -380,10 +385,11 @@ export const TeacherManagement = () => {
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+              <label htmlFor="teacher-subject-input" style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
                 Subject / Dept
               </label>
               <input
+                id="teacher-subject-input"
                 type="text"
                 placeholder="e.g. Mathematics"
                 value={formData.subject}

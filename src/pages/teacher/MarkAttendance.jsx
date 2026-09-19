@@ -444,10 +444,11 @@ export const MarkAttendance = () => {
       <Card>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
           <div>
-            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.4rem' }}>
+            <label htmlFor="attendance-class-select" style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.4rem' }}>
               Select Class
             </label>
             <select
+              id="attendance-class-select"
               value={selectedClassId}
               onChange={(e) => handleClassChange(e.target.value)}
               style={{ width: '100%' }}
@@ -461,10 +462,11 @@ export const MarkAttendance = () => {
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.4rem' }}>
+            <label htmlFor="attendance-date-input" style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.4rem' }}>
               Attendance Date
             </label>
             <input
+              id="attendance-date-input"
               type="date"
               value={selectedDate}
               onChange={(e) => handleDateChange(e.target.value)}
@@ -591,6 +593,7 @@ export const MarkAttendance = () => {
                 <button
                   key={tab}
                   type="button"
+                  aria-pressed={statusFilter === tab}
                   onClick={() => setStatusFilter(tab)}
                   style={{
                     padding: '0.35rem 0.65rem',
@@ -693,6 +696,7 @@ export const MarkAttendance = () => {
                           {/* Present */}
                           <button
                             type="button"
+                            aria-pressed={student.status === ATTENDANCE_STATUS.PRESENT}
                             onClick={() => handleStatusChange(student.id, ATTENDANCE_STATUS.PRESENT)}
                             style={{
                               padding: '0.35rem 0.75rem',
@@ -720,6 +724,7 @@ export const MarkAttendance = () => {
                           {/* Absent */}
                           <button
                             type="button"
+                            aria-pressed={student.status === ATTENDANCE_STATUS.ABSENT}
                             onClick={() => handleStatusChange(student.id, ATTENDANCE_STATUS.ABSENT)}
                             style={{
                               padding: '0.35rem 0.75rem',
@@ -747,6 +752,7 @@ export const MarkAttendance = () => {
                           {/* Late */}
                           <button
                             type="button"
+                            aria-pressed={student.status === ATTENDANCE_STATUS.LATE}
                             onClick={() => handleStatusChange(student.id, ATTENDANCE_STATUS.LATE)}
                             style={{
                               padding: '0.35rem 0.75rem',
@@ -774,6 +780,7 @@ export const MarkAttendance = () => {
                           {/* Leave */}
                           <button
                             type="button"
+                            aria-pressed={student.status === ATTENDANCE_STATUS.LEAVE}
                             onClick={() => handleStatusChange(student.id, ATTENDANCE_STATUS.LEAVE)}
                             style={{
                               padding: '0.35rem 0.75rem',

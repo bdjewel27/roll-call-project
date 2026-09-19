@@ -163,10 +163,11 @@ export const AttendanceHistory = () => {
       <Card>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', alignItems: 'flex-end' }}>
           <div>
-            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.4rem' }}>
+            <label htmlFor="history-class-filter" style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.4rem' }}>
               Filter by Class
             </label>
             <select
+              id="history-class-filter"
               value={selectedClassId}
               onChange={(e) => setSelectedClassId(e.target.value)}
               style={{ width: '100%' }}
@@ -181,10 +182,11 @@ export const AttendanceHistory = () => {
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.4rem' }}>
+            <label htmlFor="history-start-date" style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.4rem' }}>
               From Date
             </label>
             <input
+              id="history-start-date"
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
@@ -193,10 +195,11 @@ export const AttendanceHistory = () => {
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.4rem' }}>
+            <label htmlFor="history-end-date" style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.4rem' }}>
               To Date
             </label>
             <input
+              id="history-end-date"
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
