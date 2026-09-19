@@ -243,7 +243,14 @@ export const AssignTeachers = () => {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '350px', overflowY: 'auto' }}>
               {teachers.map((tch) => {
-                const isAlreadyAssigned = (selectedClassForAssign.assignedTeacherIds || []).includes(tch.id);
+                const currentClass = classes.find((c) => c.id === selectedClassForAssign.id) || selectedClassForAssign;
+                const assignedTeacherIds = Array.from(
+                  new Set([
+                    ...(currentClass.assignedTeacherIds || []),
+                    ...(selectedClassForAssign.assignedTeacherIds || []),
+                  ])
+                );
+                const isAlreadyAssigned = assignedTeacherIds.includes(tch.id);
                 return (
                   <div
                     key={tch.id}
@@ -266,31 +273,31 @@ export const AssignTeachers = () => {
                       </div>
                     </div>
 
-                    {isAlreadyAssigned ? (
-                      <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--primary-text)' }}>
-                        ✓ Assigned
-                      </span>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          handleAssign(selectedClassForAssign.id, tch.id);
-                          setSelectedClassForAssign((prev) => ({
-                            ...prev,
-                            assignedTeacherIds: [...(prev.assignedTeacherIds || []), tch.id],
-                          }));
-                        }}
-                        style={{
-                          backgroundColor: 'var(--primary)',
-                          color: '#ffffff',
-                          padding: '0.35rem 0.75rem',
-                          fontSize: '0.8rem',
-                          fontWeight: 600,
-                        }}
-                      >
-                        Assign
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      disabled={isAlreadyAssigned}
+                      onClick={() => {
+                        if (isAlreadyAssigned) return;
+                        handleAssign(selectedClassForAssign.id, tch.id);
+                        setSelectedClassForAssign((prev) => ({
+                          ...prev,
+                          assignedTeacherIds: [...(prev.assignedTeacherIds || []), tch.id],
+                        }));
+                      }}
+                      style={{
+                        backgroundColor: isAlreadyAssigned ? 'var(--bg-subtle)' : 'var(--primary)',
+                        color: isAlreadyAssigned ? 'var(--text-muted)' : '#ffffff',
+                        border: isAlreadyAssigned ? '1px solid var(--border-color)' : 'none',
+                        padding: '0.35rem 0.75rem',
+                        fontSize: '0.8rem',
+                        fontWeight: 600,
+                        borderRadius: '6px',
+                        cursor: isAlreadyAssigned ? 'not-allowed' : 'pointer',
+                        opacity: isAlreadyAssigned ? 0.65 : 1,
+                      }}
+                    >
+                      {isAlreadyAssigned ? 'Assigned' : 'Assign'}
+                    </button>
                   </div>
                 );
               })}
