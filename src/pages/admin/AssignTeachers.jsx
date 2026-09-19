@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card } from '../../components/common/Card';
 import { Modal } from '../../components/common/Modal';
+import { ConfirmModal } from '../../components/common/ConfirmModal';
 import { EmptyState } from '../../components/common/EmptyState';
 import { useToast } from '../../context/ToastContext';
 import { dataService } from '../../services/dataService';
@@ -18,6 +19,7 @@ export const AssignTeachers = () => {
   const [teachers, setTeachers] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedClassForAssign, setSelectedClassForAssign] = useState(null);
+  const [unassignTarget, setUnassignTarget] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const loadData = useCallback(async () => {
@@ -63,6 +65,12 @@ export const AssignTeachers = () => {
       console.error(err);
       showToast('Error unassigning teacher from class', 'error');
     }
+  };
+
+  const handleConfirmUnassign = async () => {
+    if (!unassignTarget) return;
+    const { classId, teacherId } = unassignTarget;
+    await handleUnassign(classId, teacherId);
   };
 
   const filteredClasses = classes.filter(
@@ -187,8 +195,15 @@ export const AssignTeachers = () => {
                             <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>({tch.subject || 'Faculty'})</span>
                             <button
                               type="button"
-                              onClick={() => handleUnassign(cls.id, tch.id)}
-                              title="Unassign this teacher"
+                              onClick={() =>
+                                setUnassignTarget({
+                                  classId: cls.id,
+                                  className: cls.name,
+                                  teacherId: tch.id,
+                                  teacherName: tch.name,
+                                })
+                              }
+                              title={`Unassign ${tch.name} from ${cls.name}`}
                               style={{
                                 background: 'none',
                                 border: 'none',
@@ -297,6 +312,18 @@ export const AssignTeachers = () => {
           </div>
         )}
       </Modal>
+
+      {/* Unassign Confirmation Modal */}
+      <ConfirmModal
+        isOpen={!!unassignTarget}
+        onClose={() => setUnassignTarget(null)}
+        onConfirm={handleConfirmUnassign}
+        title="Unassign Teacher?"
+        message={`Are you sure you want to unassign "${unassignTarget?.teacherName}" from "${unassignTarget?.className}"? They will no longer have permission to take roll call for this class.`}
+        confirmText="Unassign"
+        cancelText="Cancel"
+        isDanger={true}
+      />
     </div>
   );
 };
