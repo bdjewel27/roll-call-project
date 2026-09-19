@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card } from '../../components/common/Card';
+import { EmptyState } from '../../components/common/EmptyState';
 import { useAuth } from '../../hooks/useAuth';
 import { dataService } from '../../services/dataService';
 import { ATTENDANCE_STATUS } from '../../constants/attendanceStatus';
@@ -231,9 +232,11 @@ export const TeacherDashboard = () => {
               Loading classes from Supabase...
             </p>
           ) : assignedClassesStatus.length === 0 ? (
-            <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '1.5rem' }}>
-              No classes found in database.
-            </p>
+            <EmptyState
+              icon={School}
+              title="No classes assigned"
+              description="You have not been assigned to any classes yet. Please contact an administrator to assign classes to your account."
+            />
           ) : (
             assignedClassesStatus.map((cls) => (
               <div
