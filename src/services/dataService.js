@@ -1,5 +1,6 @@
 import { supabase, createAuthClient } from './supabaseClient';
 import { ATTENDANCE_STATUS } from '../constants/attendanceStatus';
+import { calculateAttendanceStats } from '../utils/formatters';
 
 // --- 60-SECOND IN-MEMORY CACHE ---
 const CACHE_TTL_MS = 60 * 1000;
@@ -49,22 +50,24 @@ export const dataService = {
       assignmentMap[a.class_id].push(a.teacher_id);
     });
 
-    // প্রতি ক্লাসের শিক্ষার্থীদের সংখ্যা গণনা
-    const classesWithCount = await Promise.all(
-      (classes || []).map(async (cls) => {
-        const { count, error: countErr } = await supabase
-          .from('students')
-          .select('*', { count: 'exact', head: true })
-          .eq('class_id', cls.id)
-          .eq('is_active', true);
+    // Fetch active students in one query to avoid N+1 queries
+    const { data: activeStudents } = await supabase
+      .from('students')
+      .select('class_id')
+      .eq('is_active', true);
 
-        return {
-          ...cls,
-          studentCount: countErr ? 0 : (count || 0),
-          assignedTeacherIds: assignmentMap[cls.id] || [],
-        };
-      })
-    );
+    const studentCountMap = {};
+    (activeStudents || []).forEach((s) => {
+      if (s.class_id) {
+        studentCountMap[s.class_id] = (studentCountMap[s.class_id] || 0) + 1;
+      }
+    });
+
+    const classesWithCount = (classes || []).map((cls) => ({
+      ...cls,
+      studentCount: studentCountMap[cls.id] || 0,
+      assignedTeacherIds: assignmentMap[cls.id] || [],
+    }));
 
     memoryCache.classes = { data: classesWithCount, timestamp: now };
     return classesWithCount;
@@ -185,7 +188,7 @@ export const dataService = {
     const cleanExt = fileExt.replace(/[^a-z0-9]/gi, '').toLowerCase() || 'png';
     const fileName = customFileName || `avatar_${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${cleanExt}`;
 
-    const { data, error } = await supabase.storage
+    const { error } = await supabase.storage
       .from('avatars')
       .upload(fileName, file, {
         cacheControl: '3600',
@@ -260,16 +263,7 @@ export const dataService = {
   },
 
   async createStudent(studentData) {
-    let avatarUrl = studentData.avatarUrl || null;
-    if (studentData.avatarFile) {
-      try {
-        const fileExt = studentData.avatarFile.name ? studentData.avatarFile.name.split('.').pop() : 'png';
-        const fileName = `student_${studentData.rollNo || Date.now()}_${Date.now()}.${fileExt}`;
-        avatarUrl = await this.uploadAvatar(studentData.avatarFile, fileName);
-      } catch (uploadErr) {
-        console.warn('[RollCall] Avatar upload note in createStudent:', uploadErr.message);
-      }
-    }
+    const avatarUrl = studentData.avatarUrl || null;
 
     const payload = {
       roll_no: studentData.rollNo,
@@ -322,16 +316,7 @@ export const dataService = {
   },
 
   async updateStudent(id, updates) {
-    let avatarUrl = updates.avatarUrl;
-    if (updates.avatarFile) {
-      try {
-        const fileExt = updates.avatarFile.name ? updates.avatarFile.name.split('.').pop() : 'png';
-        const fileName = `student_${updates.rollNo || id}_${Date.now()}.${fileExt}`;
-        avatarUrl = await this.uploadAvatar(updates.avatarFile, fileName);
-      } catch (uploadErr) {
-        console.warn('[RollCall] Avatar upload note in updateStudent:', uploadErr.message);
-      }
-    }
+    const avatarUrl = updates.avatarUrl;
 
     const payload = {};
     if (updates.rollNo !== undefined) payload.roll_no = updates.rollNo;
@@ -591,6 +576,10 @@ export const dataService = {
       .eq('date', date)
       .maybeSingle();
 
+    if (sErr && sErr.code !== 'PGRST116') {
+      throw sErr;
+    }
+
     const isValidUuid = (str) =>
       typeof str === 'string' &&
       /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(str);
@@ -608,7 +597,12 @@ export const dataService = {
       session = newSession;
     }
 
-    await supabase.from('attendance_records').delete().eq('session_id', session.id);
+    const { error: delErr } = await supabase
+      .from('attendance_records')
+      .delete()
+      .eq('session_id', session.id);
+
+    if (delErr) throw delErr;
 
     const recordsToInsert = studentRecords.map((r) => ({
       session_id: session.id,
@@ -688,12 +682,7 @@ export const dataService = {
 
     return (sessions || []).map((session) => {
       const records = session.attendance_records || [];
-      const total = records.length;
-      const present = records.filter((r) => r.status === ATTENDANCE_STATUS.PRESENT).length;
-      const absent = records.filter((r) => r.status === ATTENDANCE_STATUS.ABSENT).length;
-      const late = records.filter((r) => r.status === ATTENDANCE_STATUS.LATE).length;
-      const leave = records.filter((r) => r.status === ATTENDANCE_STATUS.LEAVE).length;
-      const rate = total > 0 ? Math.round(((present + late) / total) * 100) : 0;
+      const stats = calculateAttendanceStats(records);
 
       const students = records.map((r) => ({
         id: r.id,
@@ -712,7 +701,7 @@ export const dataService = {
         date: session.date,
         markedBy: session.marked_by || 'Unknown',
         markedAt: session.marked_at,
-        stats: { total, present, absent, late, leave, rate },
+        stats,
         students,
       };
     });
@@ -723,24 +712,36 @@ export const dataService = {
     const students = await this.getStudents(classId && classId !== 'ALL' ? classId : null);
     const history = await this.getAttendanceHistory(classId && classId !== 'ALL' ? classId : null);
 
-    return students.map((std) => {
-      let total = 0;
-      let present = 0;
-      let absent = 0;
-      let late = 0;
-      let leave = 0;
+    const metricsMap = new Map();
 
-      history.forEach((session) => {
-        const studentLog = (session.students || []).find((s) => s.studentId === std.id);
-        if (studentLog) {
-          total++;
-          if (studentLog.status === ATTENDANCE_STATUS.PRESENT) present++;
-          else if (studentLog.status === ATTENDANCE_STATUS.ABSENT) absent++;
-          else if (studentLog.status === ATTENDANCE_STATUS.LATE) late++;
-          else if (studentLog.status === ATTENDANCE_STATUS.LEAVE) leave++;
+    history.forEach((session) => {
+      (session.students || []).forEach((studentLog) => {
+        if (!studentLog?.studentId) return;
+
+        let entry = metricsMap.get(studentLog.studentId);
+        if (!entry) {
+          entry = { total: 0, present: 0, absent: 0, late: 0, leave: 0 };
+          metricsMap.set(studentLog.studentId, entry);
         }
-      });
 
+        entry.total++;
+        if (studentLog.status === ATTENDANCE_STATUS.PRESENT) entry.present++;
+        else if (studentLog.status === ATTENDANCE_STATUS.ABSENT) entry.absent++;
+        else if (studentLog.status === ATTENDANCE_STATUS.LATE) entry.late++;
+        else if (studentLog.status === ATTENDANCE_STATUS.LEAVE) entry.leave++;
+      });
+    });
+
+    return students.map((std) => {
+      const entry = metricsMap.get(std.id) || {
+        total: 0,
+        present: 0,
+        absent: 0,
+        late: 0,
+        leave: 0,
+      };
+
+      const { total, present, absent, late, leave } = entry;
       const rate = total > 0 ? Math.round(((present + late) / total) * 100) : 100;
 
       return {

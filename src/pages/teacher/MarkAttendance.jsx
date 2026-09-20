@@ -7,7 +7,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../context/ToastContext';
 import { dataService } from '../../services/dataService';
 import { ATTENDANCE_STATUS } from '../../constants/attendanceStatus';
-import { getTodayDateString, formatDate } from '../../utils/formatters';
+import { getTodayDateString, formatDate, calculateAttendanceStats } from '../../utils/formatters';
 import { useLocation } from 'react-router-dom';
 import {
   Save,
@@ -292,13 +292,7 @@ export const MarkAttendance = () => {
 
   // Statistics calculation
   const stats = useMemo(() => {
-    const total = rosterAttendance.length;
-    const present = rosterAttendance.filter((s) => s.status === ATTENDANCE_STATUS.PRESENT).length;
-    const absent = rosterAttendance.filter((s) => s.status === ATTENDANCE_STATUS.ABSENT).length;
-    const late = rosterAttendance.filter((s) => s.status === ATTENDANCE_STATUS.LATE).length;
-    const leave = rosterAttendance.filter((s) => s.status === ATTENDANCE_STATUS.LEAVE).length;
-    const percentage = total > 0 ? Math.round(((present + late) / total) * 100) : 0;
-    return { total, present, absent, late, leave, percentage };
+    return calculateAttendanceStats(rosterAttendance);
   }, [rosterAttendance]);
 
   // Search and status tab filtering

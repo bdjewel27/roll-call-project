@@ -18,27 +18,34 @@ export const getTodayDateString = () => {
 };
 
 export const calculateAttendanceStats = (records = []) => {
-  const total = records.length;
+  const safeRecords = records || [];
+  const total = safeRecords.length;
   if (total === 0) {
-    return { total: 0, present: 0, absent: 0, late: 0, leave: 0, percentage: 0 };
+    return { total: 0, present: 0, absent: 0, late: 0, leave: 0, rate: 0, percentage: 0 };
   }
 
-  const counts = records.reduce(
-    (acc, record) => {
-      const status = record.status?.toLowerCase();
-      if (acc[status] !== undefined) {
-        acc[status]++;
-      }
-      return acc;
-    },
-    { present: 0, absent: 0, late: 0, leave: 0 }
-  );
+  let present = 0;
+  let absent = 0;
+  let late = 0;
+  let leave = 0;
 
-  const percentage = Math.round(((counts.present + counts.late) / total) * 100);
+  for (let i = 0; i < total; i++) {
+    const status = safeRecords[i]?.status?.toLowerCase();
+    if (status === 'present') present++;
+    else if (status === 'absent') absent++;
+    else if (status === 'late') late++;
+    else if (status === 'leave') leave++;
+  }
+
+  const rate = Math.round(((present + late) / total) * 100);
 
   return {
     total,
-    ...counts,
-    percentage,
+    present,
+    absent,
+    late,
+    leave,
+    rate,
+    percentage: rate,
   };
 };
