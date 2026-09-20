@@ -11,7 +11,6 @@ export const ClassManagement = () => {
   const { showToast } = useToast();
   const [classes, setClasses] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [loading, setLoading] = useState(false);
 
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -28,15 +27,12 @@ export const ClassManagement = () => {
   });
 
   const loadClasses = useCallback(async () => {
-    setLoading(true);
     try {
       const list = await dataService.getClasses();
       setClasses(list);
     } catch (err) {
       console.error(err);
       showToast('Failed to load classes', 'error');
-    } finally {
-      setLoading(false);
     }
   }, [showToast]);
 

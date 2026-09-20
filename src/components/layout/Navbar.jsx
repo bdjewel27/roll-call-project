@@ -1,8 +1,8 @@
 import React from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../context/ThemeContext';
-import { LogOut, Sun, Moon, Menu, User, ShieldCheck, GraduationCap } from 'lucide-react';
-import { ROLE_LABELS, ROLES } from '../../constants/roles';
+import { LogOut, Sun, Moon, Menu } from 'lucide-react';
+import { ROLE_LABELS } from '../../constants/roles';
 
 export const Navbar = ({ onToggleMobileNav }) => {
   const { user, logout, isAdmin } = useAuth();

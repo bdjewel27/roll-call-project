@@ -20,10 +20,8 @@ export const AssignTeachers = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedClassForAssign, setSelectedClassForAssign] = useState(null);
   const [unassignTarget, setUnassignTarget] = useState(null);
-  const [loading, setLoading] = useState(false);
 
   const loadData = useCallback(async () => {
-    setLoading(true);
     try {
       const [clsList, tchList] = await Promise.all([
         dataService.getClasses(),
@@ -34,8 +32,6 @@ export const AssignTeachers = () => {
     } catch (err) {
       console.error('[AssignTeachers] Error loading data:', err);
       showToast('Failed to load classes and teachers', 'error');
-    } finally {
-      setLoading(false);
     }
   }, [showToast]);
 
