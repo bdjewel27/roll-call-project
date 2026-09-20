@@ -4,6 +4,7 @@ import { EmptyState } from '../../components/common/EmptyState';
 import { useToast } from '../../context/ToastContext';
 import { dataService } from '../../services/dataService';
 import { formatDate } from '../../utils/formatters';
+import { exportAttendanceHistoryCSV } from '../../utils/csvExport';
 import {
   BarChart3,
   Download,
@@ -20,10 +21,8 @@ export const ReportsPage = () => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [historyLogs, setHistoryLogs] = useState([]);
-  const [loading, setLoading] = useState(false);
 
   const loadReports = useCallback(async () => {
-    setLoading(true);
     try {
       const logs = await dataService.getAttendanceHistory(
         selectedClassId === 'ALL' ? null : selectedClassId,
@@ -34,8 +33,6 @@ export const ReportsPage = () => {
     } catch (err) {
       console.error('[ReportsPage] Error loading reports:', err);
       showToast('Error loading attendance reports', 'error');
-    } finally {
-      setLoading(false);
     }
   }, [selectedClassId, startDate, endDate, showToast]);
 
@@ -96,51 +93,8 @@ export const ReportsPage = () => {
       return;
     }
 
-    const headers = ['Date', 'Class', 'Roll No', 'Student Name', 'Status', 'Remarks'];
-    const rows = [];
-
-    historyLogs.forEach((log) => {
-      const sessionDate = log.date;
-      const className = log.className;
-
-      if (log.students && log.students.length > 0) {
-        log.students.forEach((s) => {
-          rows.push([
-            `"${sessionDate}"`,
-            `"${className.replace(/"/g, '""')}"`,
-            `"${(s.rollNo || '').replace(/"/g, '""')}"`,
-            `"${(s.studentName || '').replace(/"/g, '""')}"`,
-            `"${(s.status || '').toUpperCase()}"`,
-            `"${(s.remark || '').replace(/"/g, '""')}"`,
-          ]);
-        });
-      } else {
-        rows.push([
-          `"${sessionDate}"`,
-          `"${className.replace(/"/g, '""')}"`,
-          '""',
-          '""',
-          '""',
-          '""',
-        ]);
-      }
-    });
-
-    const csvContent =
-      'data:text/csv;charset=utf-8,' +
-      [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
-
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute(
-      'download',
-      `School_Attendance_Report_${new Date().toISOString().split('T')[0]}.csv`
-    );
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
+    const filename = `School_Attendance_Report_${new Date().toISOString().split('T')[0]}.csv`;
+    exportAttendanceHistoryCSV(filename, historyLogs);
     showToast('Institutional report exported to CSV successfully!', 'success');
   };
 

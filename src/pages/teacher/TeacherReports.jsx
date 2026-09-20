@@ -4,6 +4,7 @@ import { EmptyState } from '../../components/common/EmptyState';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../context/ToastContext';
 import { dataService } from '../../services/dataService';
+import { exportStudentMetricsCSV } from '../../utils/csvExport';
 import {
   FileBarChart,
   Download,
@@ -17,10 +18,8 @@ export const TeacherReports = () => {
   const [classes, setClasses] = useState([]);
   const [selectedClassId, setSelectedClassId] = useState('ALL');
   const [studentMetrics, setStudentMetrics] = useState([]);
-  const [loading, setLoading] = useState(false);
 
   const loadMetrics = useCallback(async () => {
-    setLoading(true);
     try {
       const metrics = await dataService.getStudentAttendanceMetrics(
         selectedClassId === 'ALL' ? null : selectedClassId
@@ -29,8 +28,6 @@ export const TeacherReports = () => {
     } catch (err) {
       console.error('[TeacherReports] Error loading metrics:', err);
       showToast('Error loading attendance metrics', 'error');
-    } finally {
-      setLoading(false);
     }
   }, [selectedClassId, showToast]);
 
@@ -60,47 +57,8 @@ export const TeacherReports = () => {
       return;
     }
 
-    const headers = [
-      'Roll Number',
-      'Student Name',
-      'Class ID',
-      'Total Sessions',
-      'Present',
-      'Absent',
-      'Late',
-      'Leave',
-      'Attendance Rate (%)',
-      'Status Flag',
-    ];
-
-    const rows = studentMetrics.map((m) => [
-      `"${m.student.rollNo}"`,
-      `"${m.student.name}"`,
-      `"${m.student.classId}"`,
-      m.totalSessions,
-      m.present,
-      m.absent,
-      m.late,
-      m.leave,
-      `${m.rate}%`,
-      m.isAtRisk ? 'At Risk (< 75%)' : 'Good Standing',
-    ]);
-
-    const csvContent =
-      'data:text/csv;charset=utf-8,' +
-      [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
-
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute(
-      'download',
-      `Attendance_Report_${selectedClassId}_${new Date().toISOString().split('T')[0]}.csv`
-    );
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
+    const filename = `Attendance_Report_${selectedClassId}_${new Date().toISOString().split('T')[0]}.csv`;
+    exportStudentMetricsCSV(filename, studentMetrics);
     showToast('Attendance report exported to CSV successfully!', 'success');
   };
 

@@ -7,6 +7,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../context/ToastContext';
 import { dataService } from '../../services/dataService';
 import { formatDate } from '../../utils/formatters';
+import { exportAttendanceHistoryCSV } from '../../utils/csvExport';
 import { Link } from 'react-router-dom';
 import {
   History,
@@ -73,51 +74,8 @@ export const AttendanceHistory = () => {
       return;
     }
 
-    const headers = ['Date', 'Class', 'Roll No', 'Student Name', 'Status', 'Remarks'];
-    const rows = [];
-
-    historyLogs.forEach((log) => {
-      const sessionDate = log.date;
-      const className = log.className;
-
-      if (log.students && log.students.length > 0) {
-        log.students.forEach((s) => {
-          rows.push([
-            `"${sessionDate}"`,
-            `"${className.replace(/"/g, '""')}"`,
-            `"${(s.rollNo || '').replace(/"/g, '""')}"`,
-            `"${(s.studentName || '').replace(/"/g, '""')}"`,
-            `"${(s.status || '').toUpperCase()}"`,
-            `"${(s.remark || '').replace(/"/g, '""')}"`,
-          ]);
-        });
-      } else {
-        rows.push([
-          `"${sessionDate}"`,
-          `"${className.replace(/"/g, '""')}"`,
-          '""',
-          '""',
-          '""',
-          '""',
-        ]);
-      }
-    });
-
-    const csvContent =
-      'data:text/csv;charset=utf-8,' +
-      [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
-
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute(
-      'download',
-      `Attendance_History_${selectedClassId !== 'ALL' ? selectedClassId : 'All'}_${new Date().toISOString().split('T')[0]}.csv`
-    );
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
+    const filename = `Attendance_History_${selectedClassId !== 'ALL' ? selectedClassId : 'All'}_${new Date().toISOString().split('T')[0]}.csv`;
+    exportAttendanceHistoryCSV(filename, historyLogs);
     showToast('Attendance history exported to CSV successfully!', 'success');
   };
 
@@ -313,7 +271,7 @@ export const AttendanceHistory = () => {
 
                         <Link
                           to="/teacher/attendance"
-                          state={{ preselectedClassId: log.classId }}
+                          state={{ preselectedClassId: log.classId, preselectedDate: log.date }}
                           title="Edit Session in Take Attendance"
                           style={{
                             display: 'inline-flex',
