@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Roll Call Attendance System</title>
+    <script>
+      // Single Page Application redirect for GitHub Pages HashRouter
+      // Redirects non-hash route requests back into hash routing
+      (function() {
+        var path = window.location.pathname;
+        var search = window.location.search;
+        var hash = window.location.hash;
+        var segments = path.split('/').filter(Boolean);
+        var repo = segments.length > 0 ? '/' + segments[0] : '';
+        var route = segments.length > 1 ? '/' + segments.slice(1).join('/') : '';
+        if (route) {
+          window.location.replace(repo + '/#' + route + search + hash);
+        } else {
+          window.location.replace(repo + '/' + search + hash);
+        }
+      })();
+    </script>
+  </head>
+  <body></body>
+</html>
