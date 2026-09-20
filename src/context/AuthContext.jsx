@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { ROLES } from '../constants/roles';
 
@@ -7,6 +7,16 @@ const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const isLoggingInRef = useRef(false);
+
+  const normalizeRole = (role) => {
+    if (!role || typeof role !== 'string') return null;
+    const lower = role.trim().toLowerCase();
+    if (lower === ROLES.ADMIN || lower === ROLES.TEACHER) {
+      return lower;
+    }
+    return null;
+  };
 
   // Helper to fetch profile info from 'profiles' table for Supabase user
   const fetchProfile = async (authUser) => {
@@ -22,18 +32,24 @@ export const AuthProvider = ({ children }) => {
         console.warn('[RollCall Auth] Error fetching profile:', error.message);
       }
 
+      const role =
+        normalizeRole(profile?.role) ||
+        normalizeRole(authUser.user_metadata?.role) ||
+        null;
+
       return {
         id: authUser.id,
         email: authUser.email,
-        role: profile?.role || authUser.user_metadata?.role || ROLES.TEACHER,
+        role,
         fullName: profile?.full_name || authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
       };
     } catch (err) {
       console.warn('[RollCall Auth] Profile lookup exception:', err);
+      const role = normalizeRole(authUser.user_metadata?.role) || null;
       return {
         id: authUser.id,
         email: authUser.email,
-        role: authUser.user_metadata?.role || ROLES.TEACHER,
+        role,
         fullName: authUser.user_metadata?.full_name || 'User',
       };
     }
@@ -55,8 +71,12 @@ export const AuthProvider = ({ children }) => {
     });
 
     // 2. Listen to Auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
+      if (isLoggingInRef.current && event === 'SIGNED_IN') {
+        // Skip duplicate profile fetch and race condition; login() is actively handling it
+        return;
+      }
       if (session?.user) {
         const fullUser = await fetchProfile(session.user);
         if (mounted) setUser(fullUser);
@@ -78,21 +98,25 @@ export const AuthProvider = ({ children }) => {
       throw new Error('Email and password are required.');
     }
 
+    isLoggingInRef.current = true;
     setLoading(true);
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (error) {
+      if (error) {
+        throw error;
+      }
+
+      const fullUser = await fetchProfile(data.user);
+      setUser(fullUser);
+      return fullUser;
+    } finally {
       setLoading(false);
-      throw error;
+      isLoggingInRef.current = false;
     }
-
-    const fullUser = await fetchProfile(data.user);
-    setUser(fullUser);
-    setLoading(false);
-    return fullUser;
   };
 
   const logout = async () => {

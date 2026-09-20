@@ -19,6 +19,22 @@ export const LoginPage = () => {
 
   const from = location.state?.from?.pathname;
 
+  const getSafeRedirectPath = (fromPath, role) => {
+    if (role === ROLES.ADMIN) {
+      if (fromPath && (fromPath === '/admin' || fromPath.startsWith('/admin/'))) {
+        return fromPath;
+      }
+      return '/admin/dashboard';
+    }
+    if (role === ROLES.TEACHER) {
+      if (fromPath && (fromPath === '/teacher' || fromPath.startsWith('/teacher/'))) {
+        return fromPath;
+      }
+      return '/teacher/dashboard';
+    }
+    return '/unauthorized';
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
     if (!email.trim() || !password) {
@@ -30,8 +46,8 @@ export const LoginPage = () => {
     setSubmitting(true);
     try {
       const loggedUser = await login(selectedRole, email.trim(), password);
-      const fallbackPath = loggedUser.role === ROLES.ADMIN ? '/admin/dashboard' : '/teacher/dashboard';
-      navigate(from || fallbackPath, { replace: true });
+      const destination = getSafeRedirectPath(from, loggedUser?.role);
+      navigate(destination, { replace: true });
     } catch (err) {
       console.error(err);
       setErrorMsg(err.message || 'Invalid login credentials. Please check your email and password.');
