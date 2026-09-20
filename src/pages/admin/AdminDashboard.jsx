@@ -21,7 +21,6 @@ export const AdminDashboard = () => {
   const [students, setStudents] = useState([]);
   const [todayDate] = useState(getTodayDateString());
   const [classAttendanceStatus, setClassAttendanceStatus] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [breakdown, setBreakdown] = useState({
     present: 0,
     absent: 0,
@@ -31,17 +30,24 @@ export const AdminDashboard = () => {
   });
 
   const loadDashboardData = useCallback(async () => {
-    setLoading(true);
     try {
-      const [clsList, tchList, stdList] = await Promise.all([
+      const [clsList, tchList, stdList, todayLogs] = await Promise.all([
         dataService.getClasses(),
         dataService.getTeachers(),
         dataService.getStudents(),
+        dataService.getAttendanceHistory(null, todayDate, todayDate),
       ]);
 
       setClasses(clsList);
       setTeachers(tchList);
       setStudents(stdList);
+
+      const historyMap = {};
+      (todayLogs || []).forEach((log) => {
+        if (log.classId) {
+          historyMap[log.classId] = log;
+        }
+      });
 
       let pres = 0;
       let abs = 0;
@@ -49,26 +55,24 @@ export const AdminDashboard = () => {
       let lev = 0;
       let tot = 0;
 
-      const statuses = await Promise.all(
-        clsList.map(async (cls) => {
-          const record = await dataService.getAttendanceRecord(cls.id, todayDate);
-          const isMarked = !!record && Array.isArray(record.students) && record.students.length > 0;
-          if (isMarked) {
-            record.students.forEach((s) => {
-              tot++;
-              if (s.status === ATTENDANCE_STATUS.PRESENT) pres++;
-              else if (s.status === ATTENDANCE_STATUS.ABSENT) abs++;
-              else if (s.status === ATTENDANCE_STATUS.LATE) lat++;
-              else if (s.status === ATTENDANCE_STATUS.LEAVE) lev++;
-            });
-          }
-          return {
-            ...cls,
-            isMarked,
-            record,
-          };
-        })
-      );
+      const statuses = clsList.map((cls) => {
+        const record = historyMap[cls.id] || null;
+        const isMarked = !!record && Array.isArray(record.students) && record.students.length > 0;
+        if (isMarked) {
+          record.students.forEach((s) => {
+            tot++;
+            if (s.status === ATTENDANCE_STATUS.PRESENT) pres++;
+            else if (s.status === ATTENDANCE_STATUS.ABSENT) abs++;
+            else if (s.status === ATTENDANCE_STATUS.LATE) lat++;
+            else if (s.status === ATTENDANCE_STATUS.LEAVE) lev++;
+          });
+        }
+        return {
+          ...cls,
+          isMarked,
+          record,
+        };
+      });
 
       setClassAttendanceStatus(statuses);
       setBreakdown({
@@ -80,8 +84,6 @@ export const AdminDashboard = () => {
       });
     } catch (err) {
       console.error('[AdminDashboard] Error loading live data:', err);
-    } finally {
-      setLoading(false);
     }
   }, [todayDate]);
 

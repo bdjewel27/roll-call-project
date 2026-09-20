@@ -31,17 +31,27 @@ export const TeacherDashboard = () => {
     const teacherId = user?.id || 'tch-1';
     
     // Fetch classes directly from Supabase via dataService
-    const teacherClasses = await dataService.getClassesForTeacher(teacherId);
+    const [teacherClasses, todayLogs] = await Promise.all([
+      dataService.getClassesForTeacher(teacherId),
+      dataService.getAttendanceHistory(null, todayDate, todayDate),
+    ]);
+
+    const historyMap = {};
+    (todayLogs || []).forEach((log) => {
+      if (log.classId) {
+        historyMap[log.classId] = log;
+      }
+    });
 
     let totalStudents = 0;
     let markedCount = 0;
     let presentOrLateSum = 0;
     let totalAttendanceEntries = 0;
 
-    const statusPromises = teacherClasses.map(async (cls) => {
+    const classStatusList = teacherClasses.map((cls) => {
       totalStudents += cls.studentCount || 0;
-      const todayRecord = await dataService.getAttendanceRecord(cls.id, todayDate);
-      const isMarked = !!todayRecord;
+      const todayRecord = historyMap[cls.id] || null;
+      const isMarked = !!todayRecord && Array.isArray(todayRecord.students) && todayRecord.students.length > 0;
       if (isMarked) {
         markedCount++;
         todayRecord.students.forEach((s) => {
@@ -59,13 +69,12 @@ export const TeacherDashboard = () => {
       };
     });
 
-    const classStatusList = await Promise.all(statusPromises);
     setAssignedClassesStatus(classStatusList);
 
     const overallRate =
       totalAttendanceEntries > 0
         ? Math.round((presentOrLateSum / totalAttendanceEntries) * 100)
-        : 100;
+        : 0;
 
     setSummaryStats({
       totalClasses: teacherClasses.length,

@@ -23,30 +23,34 @@ export const MyClasses = () => {
   const [selectedClassForRoster, setSelectedClassForRoster] = useState(null);
   const [rosterStudents, setRosterStudents] = useState([]);
   const [rosterSearch, setRosterSearch] = useState('');
-  const [loading, setLoading] = useState(false);
   const todayDate = getTodayDateString();
 
   const loadClasses = useCallback(async () => {
-    setLoading(true);
     try {
       const teacherId = user?.id || null;
-      const list = await dataService.getClassesForTeacher(teacherId);
+      const [list, todayLogs] = await Promise.all([
+        dataService.getClassesForTeacher(teacherId),
+        dataService.getAttendanceHistory(null, todayDate, todayDate),
+      ]);
 
-      const enriched = await Promise.all(
-        list.map(async (cls) => {
-          const todayRecord = await dataService.getAttendanceRecord(cls.id, todayDate);
-          return {
-            ...cls,
-            isMarked: !!todayRecord && Array.isArray(todayRecord.students) && todayRecord.students.length > 0,
-          };
-        })
-      );
+      const historyMap = {};
+      (todayLogs || []).forEach((log) => {
+        if (log.classId) {
+          historyMap[log.classId] = log;
+        }
+      });
+
+      const enriched = list.map((cls) => {
+        const todayRecord = historyMap[cls.id] || null;
+        return {
+          ...cls,
+          isMarked: !!todayRecord && Array.isArray(todayRecord.students) && todayRecord.students.length > 0,
+        };
+      });
 
       setClasses(enriched);
     } catch (err) {
       console.error('[MyClasses] Error loading classes:', err);
-    } finally {
-      setLoading(false);
     }
   }, [user, todayDate]);
 
