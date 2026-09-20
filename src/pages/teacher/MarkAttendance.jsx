@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { Card } from '../../components/common/Card';
 import { ConfirmModal } from '../../components/common/ConfirmModal';
 import { EmptyState } from '../../components/common/EmptyState';
+import { StudentAvatar } from '../../components/common/StudentAvatar';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../context/ToastContext';
 import { dataService } from '../../services/dataService';
@@ -16,84 +17,6 @@ import {
   RotateCcw,
 } from 'lucide-react';
 
-// In-memory cache for avatar fetch statuses
-const loadedImageCache = new Set();
-const failedImageCache = new Set();
-
-const areAttendanceAvatarPropsEqual = (prevProps, nextProps) => {
-  const prevStudent = prevProps.student || {};
-  const nextStudent = nextProps.student || {};
-  const prevSrc = prevStudent.avatar_url || prevStudent.avatarUrl;
-  const nextSrc = nextStudent.avatar_url || nextStudent.avatarUrl;
-  return (
-    prevStudent.id === nextStudent.id &&
-    prevSrc === nextSrc &&
-    prevStudent.name === nextStudent.name
-  );
-};
-
-const AttendanceStudentAvatar = React.memo(({ student }) => {
-  const avatarSrc = (student.avatar_url || student.avatarUrl);
-  const [hasError, setHasError] = useState(() => failedImageCache.has(avatarSrc));
-
-  useEffect(() => {
-    setHasError(failedImageCache.has(avatarSrc));
-  }, [avatarSrc]);
-
-  return (
-    <div
-      style={{
-        width: '36px',
-        height: '36px',
-        minWidth: '36px',
-        minHeight: '36px',
-        borderRadius: '9999px',
-        overflow: 'hidden',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: 'var(--bg-subtle)',
-        border: '1px solid var(--border-color)',
-        flexShrink: 0,
-      }}
-    >
-      {avatarSrc && typeof avatarSrc === 'string' && avatarSrc.trim() !== '' && !hasError ? (
-        <img
-          src={avatarSrc}
-          alt={student.name || 'Student'}
-          width="36"
-          height="36"
-          loading="lazy"
-          decoding="async"
-          onLoad={() => loadedImageCache.add(avatarSrc)}
-          onError={() => {
-            failedImageCache.add(avatarSrc);
-            setHasError(true);
-          }}
-          style={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            borderRadius: '9999px',
-          }}
-        />
-      ) : (
-        <span
-          style={{
-            fontSize: '0.85rem',
-            fontWeight: 700,
-            color: 'var(--primary)',
-            lineHeight: 1,
-            textTransform: 'uppercase',
-          }}
-        >
-          {student.name ? student.name.charAt(0).toUpperCase() : 'S'}
-        </span>
-      )}
-    </div>
-  );
-}, areAttendanceAvatarPropsEqual);
-
 export const MarkAttendance = () => {
   const { user } = useAuth();
   const { showToast } = useToast();
@@ -101,7 +24,9 @@ export const MarkAttendance = () => {
 
   const [classes, setClasses] = useState([]);
   const [selectedClassId, setSelectedClassId] = useState('');
-  const [selectedDate, setSelectedDate] = useState(getTodayDateString());
+  const [selectedDate, setSelectedDate] = useState(
+    () => location.state?.preselectedDate || getTodayDateString()
+  );
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [rosterAttendance, setRosterAttendance] = useState([]);
@@ -126,6 +51,10 @@ export const MarkAttendance = () => {
         setSelectedClassId(preselected);
       } else if (availableClasses.length > 0) {
         setSelectedClassId(availableClasses[0].id);
+      }
+
+      if (location.state?.preselectedDate) {
+        setSelectedDate(location.state.preselectedDate);
       }
     };
     fetchClasses();
@@ -679,7 +608,7 @@ export const MarkAttendance = () => {
                       </td>
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                          <AttendanceStudentAvatar student={student} />
+                          <StudentAvatar student={student} shape="circle" />
                           <div>
                             <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
                               {student.name}

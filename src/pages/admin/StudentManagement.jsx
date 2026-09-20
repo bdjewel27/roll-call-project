@@ -3,6 +3,7 @@ import { Card } from '../../components/common/Card';
 import { Modal } from '../../components/common/Modal';
 import { ConfirmModal } from '../../components/common/ConfirmModal';
 import { EmptyState } from '../../components/common/EmptyState';
+import { StudentAvatar } from '../../components/common/StudentAvatar';
 import { useToast } from '../../context/ToastContext';
 import { dataService } from '../../services/dataService';
 import {
@@ -17,16 +18,12 @@ import {
   X,
 } from 'lucide-react';
 
-// In-memory cache for avatar fetch statuses
-const loadedImageCache = new Set();
-const failedImageCache = new Set();
-
 /**
  * Compresses an image File using HTML5 Canvas to max 150x150px and converts to JPEG (quality 0.7)
  * Guarantees avatar files are tiny (<30KB) before uploading to Supabase Storage.
  */
 const compressImage = (file, maxWidth = 150, maxHeight = 150, quality = 0.7) => {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const reader = new FileReader();
     reader.onload = (event) => {
       const img = new Image();
@@ -80,52 +77,6 @@ const compressImage = (file, maxWidth = 150, maxHeight = 150, quality = 0.7) => 
     reader.readAsDataURL(file);
   });
 };
-
-const areStudentAvatarPropsEqual = (prevProps, nextProps) => {
-  const prevStudent = prevProps.student || {};
-  const nextStudent = nextProps.student || {};
-  const prevSrc = prevStudent.avatar_url || prevStudent.avatarUrl;
-  const nextSrc = nextStudent.avatar_url || nextStudent.avatarUrl;
-  return (
-    prevStudent.id === nextStudent.id &&
-    prevSrc === nextSrc &&
-    prevStudent.name === nextStudent.name
-  );
-};
-
-const StudentAvatar = React.memo(({ student }) => {
-  const avatarSrc = (student.avatar_url || student.avatarUrl);
-  const [hasError, setHasError] = useState(() => failedImageCache.has(avatarSrc));
-
-  useEffect(() => {
-    setHasError(failedImageCache.has(avatarSrc));
-  }, [avatarSrc]);
-
-  if (avatarSrc && typeof avatarSrc === 'string' && avatarSrc.trim() !== '' && !hasError) {
-    return (
-      <img
-        src={avatarSrc}
-        alt={student.name || 'Student'}
-        width="36"
-        height="36"
-        loading="lazy"
-        decoding="async"
-        onLoad={() => loadedImageCache.add(avatarSrc)}
-        onError={() => {
-          failedImageCache.add(avatarSrc);
-          setHasError(true);
-        }}
-        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-      />
-    );
-  }
-
-  return (
-    <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--primary)' }}>
-      {student.name ? student.name.charAt(0).toUpperCase() : 'S'}
-    </span>
-  );
-}, areStudentAvatarPropsEqual);
 
 export const StudentManagement = () => {
   const { showToast } = useToast();
@@ -486,23 +437,7 @@ export const StudentManagement = () => {
                       </td>
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                          <div
-                            style={{
-                              width: '36px',
-                              height: '36px',
-                              aspectRatio: '1 / 1',
-                              borderRadius: '8px',
-                              backgroundColor: 'var(--bg-subtle)',
-                              border: '1px solid var(--border-color)',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              overflow: 'hidden',
-                              flexShrink: 0,
-                            }}
-                          >
-                            <StudentAvatar student={std} />
-                          </div>
+                          <StudentAvatar student={std} shape="rounded" />
                           <div>
                             <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{std.name}</div>
                             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>ID: {std.id}</div>
