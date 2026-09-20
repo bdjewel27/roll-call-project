@@ -11,7 +11,6 @@ export const TeacherManagement = () => {
   const { showToast } = useToast();
   const [teachers, setTeachers] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [loading, setLoading] = useState(false);
 
   // Modals
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -28,15 +27,12 @@ export const TeacherManagement = () => {
   });
 
   const loadData = useCallback(async () => {
-    setLoading(true);
     try {
       const list = await dataService.getTeachers();
       setTeachers(list);
     } catch (err) {
       console.error(err);
       showToast('Error loading teachers', 'error');
-    } finally {
-      setLoading(false);
     }
   }, [showToast]);
 
@@ -100,19 +96,6 @@ export const TeacherManagement = () => {
     } catch (err) {
       console.error(err);
       showToast(err.message || 'Error saving teacher', 'error');
-    }
-  };
-
-  const handleDeleteTeacher = async (id) => {
-    if (!id) return;
-    try {
-      await dataService.deleteTeacher(id);
-      setTeachers((prev) => prev.filter((t) => t.id !== id));
-      showToast('Teacher removed successfully', 'success');
-      loadData();
-    } catch (err) {
-      console.error(err);
-      showToast(err.message || 'Error removing teacher', 'error');
     }
   };
 
@@ -340,8 +323,18 @@ export const TeacherManagement = () => {
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               required
-              style={{ width: '100%' }}
+              disabled={!!editingTeacher}
+              style={{
+                width: '100%',
+                opacity: editingTeacher ? 0.7 : 1,
+                cursor: editingTeacher ? 'not-allowed' : 'text',
+              }}
             />
+            {editingTeacher && (
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem', display: 'block' }}>
+                Login email cannot be changed from this profile editor.
+              </span>
+            )}
           </div>
 
           {!editingTeacher && (

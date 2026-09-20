@@ -17,7 +17,7 @@ export const LoginPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  const from = location.state?.from?.pathname || (selectedRole === ROLES.ADMIN ? '/admin/dashboard' : '/teacher/dashboard');
+  const from = location.state?.from?.pathname;
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -30,8 +30,8 @@ export const LoginPage = () => {
     setSubmitting(true);
     try {
       const loggedUser = await login(selectedRole, email.trim(), password);
-      const targetPath = loggedUser.role === ROLES.ADMIN ? '/admin/dashboard' : '/teacher/dashboard';
-      navigate(targetPath, { replace: true });
+      const fallbackPath = loggedUser.role === ROLES.ADMIN ? '/admin/dashboard' : '/teacher/dashboard';
+      navigate(from || fallbackPath, { replace: true });
     } catch (err) {
       console.error(err);
       setErrorMsg(err.message || 'Invalid login credentials. Please check your email and password.');
