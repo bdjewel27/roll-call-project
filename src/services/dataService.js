@@ -445,7 +445,7 @@ export const dataService = {
       role: 'teacher',
     };
 
-    const { data: profileRow, error: profileError } = await supabase
+    let { data: profileRow, error: profileError } = await supabase
       .from('profiles')
       .upsert(profilePayload, { onConflict: 'id' })
       .select()
@@ -454,15 +454,29 @@ export const dataService = {
     if (profileError) {
       console.warn('[RollCall] Note on profiles upsert:', profileError.message);
       // Fallback direct insert if upsert is restricted
-      await supabase.from('profiles').insert([profilePayload]);
+      const { data: insertedRow, error: insertError } = await supabase
+        .from('profiles')
+        .insert([profilePayload])
+        .select()
+        .maybeSingle();
+
+      if (insertError) {
+        throw new Error(`Failed to create teacher profile: ${insertError.message || profileError.message}`);
+      }
+
+      profileRow = insertedRow;
+    }
+
+    if (!profileRow) {
+      throw new Error('Failed to create teacher profile: No profile record returned.');
     }
 
     return {
-      id: profileRow?.id || userId,
-      name: profileRow?.full_name || fullName,
-      email: profileRow?.email || email,
-      phone: profileRow?.phone || teacherData.phone || '',
-      subject: profileRow?.subject || teacherData.subject || '',
+      id: profileRow.id,
+      name: profileRow.full_name || fullName,
+      email: profileRow.email || email,
+      phone: profileRow.phone || teacherData.phone || '',
+      subject: profileRow.subject || teacherData.subject || '',
       assignedClassIds: [],
     };
   },
