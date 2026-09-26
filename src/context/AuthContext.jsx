@@ -93,7 +93,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   // Pure Supabase Auth sign-in with email & password
-  const login = async (_role = ROLES.ADMIN, email = '', password = '') => {
+  const login = async (email = '', password = '') => {
     if (!email || !password) {
       throw new Error('Email and password are required.');
     }
