@@ -5,6 +5,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../context/ToastContext';
 import { dataService } from '../../services/dataService';
 import { exportStudentMetricsCSV } from '../../utils/csvExport';
+import { getTodayDateString } from '../../utils/formatters';
 import {
   FileBarChart,
   Download,
@@ -57,7 +58,7 @@ export const TeacherReports = () => {
       return;
     }
 
-    const filename = `Attendance_Report_${selectedClassId}_${new Date().toISOString().split('T')[0]}.csv`;
+    const filename = `Attendance_Report_${selectedClassId}_${getTodayDateString()}.csv`;
     exportStudentMetricsCSV(filename, studentMetrics);
     showToast('Attendance report exported to CSV successfully!', 'success');
   };

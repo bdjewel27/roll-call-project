@@ -12,9 +12,29 @@ export const formatDate = (dateInput) => {
   });
 };
 
+export const BANGLADESH_TIMEZONE = 'Asia/Dhaka';
+
 export const getTodayDateString = () => {
-  const today = new Date();
-  return today.toISOString().split('T')[0];
+  try {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: BANGLADESH_TIMEZONE,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).formatToParts(new Date());
+
+    const map = {};
+    for (let i = 0; i < parts.length; i++) {
+      map[parts[i].type] = parts[i].value;
+    }
+    return `${map.year}-${map.month}-${map.day}`;
+  } catch {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
 };
 
 export const calculateAttendanceStats = (records = []) => {

@@ -6,7 +6,7 @@ import { EmptyState } from '../../components/common/EmptyState';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../context/ToastContext';
 import { dataService } from '../../services/dataService';
-import { formatDate } from '../../utils/formatters';
+import { formatDate, getTodayDateString } from '../../utils/formatters';
 import { exportAttendanceHistoryCSV } from '../../utils/csvExport';
 import { Link } from 'react-router-dom';
 import {
@@ -74,7 +74,7 @@ export const AttendanceHistory = () => {
       return;
     }
 
-    const filename = `Attendance_History_${selectedClassId !== 'ALL' ? selectedClassId : 'All'}_${new Date().toISOString().split('T')[0]}.csv`;
+    const filename = `Attendance_History_${selectedClassId !== 'ALL' ? selectedClassId : 'All'}_${getTodayDateString()}.csv`;
     exportAttendanceHistoryCSV(filename, historyLogs);
     showToast('Attendance history exported to CSV successfully!', 'success');
   };

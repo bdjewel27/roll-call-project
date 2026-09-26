@@ -3,7 +3,7 @@ import { Card } from '../../components/common/Card';
 import { EmptyState } from '../../components/common/EmptyState';
 import { useToast } from '../../context/ToastContext';
 import { dataService } from '../../services/dataService';
-import { formatDate } from '../../utils/formatters';
+import { formatDate, getTodayDateString } from '../../utils/formatters';
 import { exportAttendanceHistoryCSV } from '../../utils/csvExport';
 import {
   BarChart3,
@@ -93,7 +93,7 @@ export const ReportsPage = () => {
       return;
     }
 
-    const filename = `School_Attendance_Report_${new Date().toISOString().split('T')[0]}.csv`;
+    const filename = `School_Attendance_Report_${getTodayDateString()}.csv`;
     exportAttendanceHistoryCSV(filename, historyLogs);
     showToast('Institutional report exported to CSV successfully!', 'success');
   };
