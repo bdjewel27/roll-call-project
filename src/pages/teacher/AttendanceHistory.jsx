@@ -188,7 +188,7 @@ export const AttendanceHistory = () => {
       </Card>
 
       {/* History Table */}
-      <Card title="Past Roll Call Sessions" subtitle={loading ? 'Loading sessions...' : `Showing ${historyLogs.length} logged sessions`}>
+      <Card title="Past Roll Call Sessions" subtitle={loading ? 'Loading sessions...' : `Showing ${historyLogs.length} logged ${historyLogs.length === 1 ? 'session' : 'sessions'}`}>
         {historyLogs.length === 0 ? (
           <EmptyState
             icon={History}

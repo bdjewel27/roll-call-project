@@ -222,7 +222,7 @@ export const AdminDashboard = () => {
               </span>
             </div>
             <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--status-present-text)', marginTop: '0.4rem' }}>
-              {breakdown.present} <span style={{ fontSize: '0.85rem', fontWeight: 400 }}>students</span>
+              {breakdown.present} <span style={{ fontSize: '0.85rem', fontWeight: 400 }}>{breakdown.present === 1 ? 'student' : 'students'}</span>
             </div>
           </div>
 
@@ -234,7 +234,7 @@ export const AdminDashboard = () => {
               </span>
             </div>
             <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--status-absent-text)', marginTop: '0.4rem' }}>
-              {breakdown.absent} <span style={{ fontSize: '0.85rem', fontWeight: 400 }}>students</span>
+              {breakdown.absent} <span style={{ fontSize: '0.85rem', fontWeight: 400 }}>{breakdown.absent === 1 ? 'student' : 'students'}</span>
             </div>
           </div>
 
@@ -246,7 +246,7 @@ export const AdminDashboard = () => {
               </span>
             </div>
             <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--status-late-text)', marginTop: '0.4rem' }}>
-              {breakdown.late} <span style={{ fontSize: '0.85rem', fontWeight: 400 }}>students</span>
+              {breakdown.late} <span style={{ fontSize: '0.85rem', fontWeight: 400 }}>{breakdown.late === 1 ? 'student' : 'students'}</span>
             </div>
           </div>
 
@@ -258,7 +258,7 @@ export const AdminDashboard = () => {
               </span>
             </div>
             <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--status-leave-text)', marginTop: '0.4rem' }}>
-              {breakdown.leave} <span style={{ fontSize: '0.85rem', fontWeight: 400 }}>students</span>
+              {breakdown.leave} <span style={{ fontSize: '0.85rem', fontWeight: 400 }}>{breakdown.leave === 1 ? 'student' : 'students'}</span>
             </div>
           </div>
         </div>
@@ -292,7 +292,7 @@ export const AdminDashboard = () => {
                     <tr key={cls.id}>
                       <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{cls.name}</td>
                       <td>{cls.room || 'Classroom'}</td>
-                      <td>{cls.studentCount || 0} students</td>
+                      <td>{cls.studentCount || 0} {(cls.studentCount || 0) === 1 ? 'student' : 'students'}</td>
                       <td>
                         {assignedTeachersList.length > 0 ? (
                           <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>

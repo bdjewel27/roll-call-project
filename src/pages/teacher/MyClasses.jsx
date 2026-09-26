@@ -148,7 +148,7 @@ export const MyClasses = () => {
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       <Users size={14} color="var(--text-muted)" />
-                      <span>{cls.studentCount || 0} Enrolled Students</span>
+                      <span>{cls.studentCount || 0} {(cls.studentCount || 0) === 1 ? 'Enrolled Student' : 'Enrolled Students'}</span>
                     </div>
                   </div>
                 </div>

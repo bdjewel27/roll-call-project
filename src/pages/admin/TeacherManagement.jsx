@@ -157,7 +157,7 @@ export const TeacherManagement = () => {
       {/* Table Card */}
       <Card
         title="Faculty Directory"
-        subtitle={`Total ${teachers.length} teachers registered`}
+        subtitle={`Total ${teachers.length} ${teachers.length === 1 ? 'teacher' : 'teachers'} registered`}
         extra={
           <div style={{ position: 'relative', width: '260px' }}>
             <Search size={16} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />

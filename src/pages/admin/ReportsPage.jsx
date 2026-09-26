@@ -149,7 +149,7 @@ export const ReportsPage = () => {
           <div>
             <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Logged Sessions</div>
             <div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-              {metrics.totalSessions} <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>sessions</span>
+              {metrics.totalSessions} <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>{metrics.totalSessions === 1 ? 'session' : 'sessions'}</span>
             </div>
           </div>
         </Card>
@@ -195,7 +195,7 @@ export const ReportsPage = () => {
           <div>
             <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Total Absences</div>
             <div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-              {metrics.totalAbsent} <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>records</span>
+              {metrics.totalAbsent} <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>{metrics.totalAbsent === 1 ? 'record' : 'records'}</span>
             </div>
           </div>
         </Card>
@@ -218,7 +218,7 @@ export const ReportsPage = () => {
           <div>
             <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Total Late Arrivals</div>
             <div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-              {metrics.totalLate} <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>records</span>
+              {metrics.totalLate} <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>{metrics.totalLate === 1 ? 'record' : 'records'}</span>
             </div>
           </div>
         </Card>
@@ -295,7 +295,7 @@ export const ReportsPage = () => {
       </Card>
 
       {/* Breakdown Table */}
-      <Card title="Session Attendance Registry" subtitle={`Showing ${historyLogs.length} logged sessions`}>
+      <Card title="Session Attendance Registry" subtitle={`Showing ${historyLogs.length} logged ${historyLogs.length === 1 ? 'session' : 'sessions'}`}>
         {historyLogs.length === 0 ? (
           <EmptyState
             icon={BarChart3}

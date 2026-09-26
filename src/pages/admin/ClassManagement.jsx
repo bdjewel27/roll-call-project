@@ -142,7 +142,7 @@ export const ClassManagement = () => {
       {/* List / Table Card */}
       <Card
         title="Configured Classes"
-        subtitle={`Total ${classes.length} academic classes registered`}
+        subtitle={`Total ${classes.length} academic ${classes.length === 1 ? 'class' : 'classes'} registered`}
         extra={
           <div style={{ position: 'relative', width: '260px' }}>
             <Search size={16} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />

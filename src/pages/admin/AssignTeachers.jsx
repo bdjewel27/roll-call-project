@@ -90,7 +90,7 @@ export const AssignTeachers = () => {
       {/* Search and Overview */}
       <Card
         title="Class Assignment Matrix"
-        subtitle={`Managing ${classes.length} classes and ${teachers.length} faculty members`}
+        subtitle={`Managing ${classes.length} ${classes.length === 1 ? 'class' : 'classes'} and ${teachers.length} faculty members`}
         extra={
           <div style={{ position: 'relative', width: '260px' }}>
             <Search size={16} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
@@ -137,7 +137,7 @@ export const AssignTeachers = () => {
                         {cls.name}
                       </h4>
                       <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                        {cls.room || 'Classroom'} &bull; {cls.studentCount || 0} Students enrolled
+                        {cls.room || 'Classroom'} &bull; {cls.studentCount || 0} {(cls.studentCount || 0) === 1 ? 'Student' : 'Students'} enrolled
                       </span>
                     </div>
 

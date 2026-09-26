@@ -340,7 +340,7 @@ export const StudentManagement = () => {
       {/* Student List */}
       <Card
         title="Enrolled Students"
-        subtitle={loading ? 'Loading students...' : `Showing ${filteredStudents.length} students`}
+        subtitle={loading ? 'Loading students...' : `Showing ${filteredStudents.length} ${filteredStudents.length === 1 ? 'student' : 'students'}`}
       >
         {loading ? (
           <div className="table-responsive">

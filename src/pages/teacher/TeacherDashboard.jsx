@@ -143,7 +143,7 @@ export const TeacherDashboard = () => {
           <div>
             <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>My Assigned Classes</div>
             <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-              {summaryStats.totalClasses} <span style={{ fontSize: '0.85rem', fontWeight: 400 }}>classes</span>
+              {summaryStats.totalClasses} <span style={{ fontSize: '0.85rem', fontWeight: 400 }}>{summaryStats.totalClasses === 1 ? 'class' : 'classes'}</span>
             </div>
           </div>
         </Card>
@@ -166,7 +166,7 @@ export const TeacherDashboard = () => {
           <div>
             <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Total Students</div>
             <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-              {summaryStats.totalStudents} <span style={{ fontSize: '0.85rem', fontWeight: 400 }}>students</span>
+              {summaryStats.totalStudents} <span style={{ fontSize: '0.85rem', fontWeight: 400 }}>{summaryStats.totalStudents === 1 ? 'student' : 'students'}</span>
             </div>
           </div>
         </Card>
@@ -267,7 +267,7 @@ export const TeacherDashboard = () => {
                     {cls.name}
                   </div>
                   <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>
-                    {cls.room || 'Classroom'} &bull; {cls.studentCount || 0} Students enrolled
+                    {cls.room || 'Classroom'} &bull; {cls.studentCount || 0} {(cls.studentCount || 0) === 1 ? 'Student' : 'Students'} enrolled
                   </div>
                 </div>
 
