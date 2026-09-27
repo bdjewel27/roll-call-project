@@ -71,7 +71,10 @@ export const LoginPage = () => {
       {/* Top right theme toggle */}
       <div style={{ position: 'absolute', top: '1.25rem', right: '1.25rem' }}>
         <button
+          type="button"
           onClick={toggleTheme}
+          aria-label={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
           style={{
             background: 'var(--bg-card)',
             border: '1px solid var(--border-color)',

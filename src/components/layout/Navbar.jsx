@@ -75,7 +75,9 @@ export const Navbar = ({ onToggleMobileNav }) => {
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
         {/* Theme switcher */}
         <button
+          type="button"
           onClick={toggleTheme}
+          aria-label={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
           title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
           style={{
             background: 'var(--bg-subtle)',
