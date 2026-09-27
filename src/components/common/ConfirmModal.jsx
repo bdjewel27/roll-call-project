@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId, useRef } from 'react';
 import { Modal } from './Modal';
 import { AlertTriangle } from 'lucide-react';
 
@@ -12,8 +12,18 @@ export const ConfirmModal = ({
   cancelText = 'Cancel',
   isDanger = true,
 }) => {
+  const messageId = useId();
+  const cancelBtnRef = useRef(null);
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={title} maxWidth="440px">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={title}
+      maxWidth="440px"
+      ariaDescribedBy={messageId}
+      initialFocusRef={cancelBtnRef}
+    >
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
           <div
@@ -21,7 +31,7 @@ export const ConfirmModal = ({
               padding: '0.6rem',
               borderRadius: '10px',
               backgroundColor: isDanger ? 'var(--status-absent-bg)' : 'var(--status-late-bg)',
-              color: isDanger ? 'var(--status-absent)' : 'var(--status-late)',
+              color: isDanger ? 'var(--status-absent-text)' : 'var(--status-late-text)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -31,7 +41,10 @@ export const ConfirmModal = ({
             <AlertTriangle size={24} />
           </div>
           <div>
-            <p style={{ margin: 0, fontSize: '0.925rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+            <p
+              id={messageId}
+              style={{ margin: 0, fontSize: '0.925rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}
+            >
               {message}
             </p>
           </div>
@@ -39,6 +52,7 @@ export const ConfirmModal = ({
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
           <button
+            ref={cancelBtnRef}
             type="button"
             onClick={onClose}
             style={{
@@ -56,8 +70,9 @@ export const ConfirmModal = ({
               onClose();
             }}
             style={{
-              backgroundColor: isDanger ? 'var(--status-absent)' : 'var(--primary)',
-              color: '#ffffff',
+              backgroundColor: isDanger ? 'var(--status-absent-bg)' : 'var(--primary)',
+              color: isDanger ? 'var(--status-absent-text)' : '#ffffff',
+              border: isDanger ? '1px solid var(--status-absent-border)' : '1px solid transparent',
             }}
           >
             {confirmText}

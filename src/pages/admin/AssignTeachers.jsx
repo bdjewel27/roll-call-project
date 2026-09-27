@@ -160,11 +160,11 @@ export const AssignTeachers = () => {
 
                   {/* Assigned teachers pill list */}
                   <div>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '0.4rem' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '0.4rem' }}>
                       ASSIGNED FACULTY:
                     </span>
                     {assignedTeachers.length === 0 ? (
-                      <span style={{ fontSize: '0.825rem', color: 'var(--status-absent)', fontStyle: 'italic' }}>
+                      <span style={{ fontSize: '0.825rem', color: 'var(--status-absent-text)', fontStyle: 'italic' }}>
                         No teachers assigned yet. Roll call cannot be taken until a teacher is assigned.
                       </span>
                     ) : (
@@ -188,7 +188,7 @@ export const AssignTeachers = () => {
                           >
                             <Users size={14} color="var(--primary)" />
                             <span>{tch.name}</span>
-                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>({tch.subject || 'Faculty'})</span>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>({tch.subject || 'Faculty'})</span>
                             <button
                               type="button"
                               onClick={() =>
@@ -204,7 +204,7 @@ export const AssignTeachers = () => {
                                 background: 'none',
                                 border: 'none',
                                 padding: '2px',
-                                color: 'var(--status-absent)',
+                                color: 'var(--status-absent-text)',
                                 cursor: 'pointer',
                                 display: 'flex',
                                 marginLeft: '2px',

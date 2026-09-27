@@ -13,6 +13,8 @@ import {
   Plus,
   CheckCircle2,
   Clock,
+  AlertCircle,
+  RotateCcw,
 } from 'lucide-react';
 
 export const AdminDashboard = () => {
@@ -21,6 +23,8 @@ export const AdminDashboard = () => {
   const [students, setStudents] = useState([]);
   const [todayDate] = useState(getTodayDateString());
   const [classAttendanceStatus, setClassAttendanceStatus] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [breakdown, setBreakdown] = useState({
     present: 0,
     absent: 0,
@@ -30,6 +34,8 @@ export const AdminDashboard = () => {
   });
 
   const loadDashboardData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
     try {
       const [clsList, tchList, stdList, todayLogs] = await Promise.all([
         dataService.getClasses(),
@@ -84,6 +90,9 @@ export const AdminDashboard = () => {
       });
     } catch (err) {
       console.error('[AdminDashboard] Error loading live data:', err);
+      setError('Unable to load institutional dashboard data. Please check your connection and try again.');
+    } finally {
+      setLoading(false);
     }
   }, [todayDate]);
 
@@ -98,10 +107,10 @@ export const AdminDashboard = () => {
       : 0;
 
   const statsCards = [
-    { title: 'Total Classes', value: classes.length, icon: School, color: 'var(--primary)', bg: 'var(--primary-light)' },
-    { title: 'Registered Teachers', value: teachers.length, icon: Users, color: '#8b5cf6', bg: 'rgba(139, 92, 246, 0.12)' },
-    { title: 'Enrolled Students', value: students.length, icon: GraduationCap, color: 'var(--status-present)', bg: 'var(--status-present-bg)' },
-    { title: "Today's Attendance Rate", value: `${overallPct}%`, icon: CalendarCheck, color: 'var(--status-late)', bg: 'var(--status-late-bg)' },
+    { title: 'Total Classes', value: loading ? '—' : classes.length, icon: School, color: 'var(--primary)', bg: 'var(--primary-light)' },
+    { title: 'Registered Teachers', value: loading ? '—' : teachers.length, icon: Users, color: '#8b5cf6', bg: 'rgba(139, 92, 246, 0.12)' },
+    { title: 'Enrolled Students', value: loading ? '—' : students.length, icon: GraduationCap, color: 'var(--status-present-text)', bg: 'var(--status-present-bg)' },
+    { title: "Today's Attendance Rate", value: loading ? '—' : `${overallPct}%`, icon: CalendarCheck, color: 'var(--status-late-text)', bg: 'var(--status-late-bg)' },
   ];
 
   return (
@@ -177,100 +186,180 @@ export const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-        {statsCards.map((s, idx) => {
-          const Icon = s.icon;
-          return (
-            <Card key={idx} style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+      {error ? (
+        <Card style={{ textAlign: 'center', padding: '3rem 1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+          <div
+            style={{
+              width: '48px',
+              height: '48px',
+              borderRadius: '50%',
+              backgroundColor: 'var(--status-absent-bg)',
+              color: 'var(--status-absent-text)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <AlertCircle size={24} />
+          </div>
+          <div>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 600, margin: '0 0 0.5rem', color: 'var(--text-primary)' }}>
+              Unable to Load Dashboard Data
+            </h3>
+            <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-secondary)', maxWidth: '420px' }}>
+              {error}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => loadDashboardData()}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              backgroundColor: 'var(--primary)',
+              color: '#ffffff',
+              padding: '0.55rem 1.25rem',
+              borderRadius: '8px',
+              fontWeight: 600,
+              fontSize: '0.875rem',
+              cursor: 'pointer',
+              border: 'none',
+              boxShadow: 'var(--shadow-sm)',
+            }}
+          >
+            <RotateCcw size={15} />
+            <span>Retry</span>
+          </button>
+        </Card>
+      ) : (
+        <>
+          {/* KPI Cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+            {statsCards.map((s, idx) => {
+              const Icon = s.icon;
+              return (
+                <Card key={idx} style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <div
+                    style={{
+                      width: '48px',
+                      height: '48px',
+                      borderRadius: '12px',
+                      backgroundColor: s.bg,
+                      color: s.color,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Icon size={24} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{s.title}</div>
+                    <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)', marginTop: '0.2rem' }}>
+                      {s.value}
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+
+          {/* Today's Status Breakdown */}
+          <Card
+            title="Today's Institution Attendance"
+            subtitle={loading ? "Loading today's attendance..." : `Recorded across ${markedClassesCount} of ${classes.length} active classes`}
+          >
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginTop: '0.5rem' }}>
               <div
                 style={{
-                  width: '48px',
-                  height: '48px',
-                  borderRadius: '12px',
-                  backgroundColor: s.bg,
-                  color: s.color,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  border: `1px solid ${!loading && breakdown.present > 0 ? 'var(--status-present-border)' : 'var(--border-color)'}`,
+                  backgroundColor: !loading && breakdown.present > 0 ? 'var(--status-present-bg)' : 'var(--bg-card)',
+                  borderRadius: '10px',
+                  padding: '1rem',
                 }}
               >
-                <Icon size={24} />
-              </div>
-              <div>
-                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{s.title}</div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)', marginTop: '0.2rem' }}>
-                  {s.value}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <StatusBadge status="present" />
+                  <span style={{ fontSize: '0.85rem', fontWeight: 700, color: !loading && breakdown.present > 0 ? 'var(--status-present-text)' : 'var(--text-secondary)' }}>
+                    {loading ? '—' : `${breakdown.total > 0 ? Math.round((breakdown.present / breakdown.total) * 100) : 0}%`}
+                  </span>
+                </div>
+                <div style={{ fontSize: '1.6rem', fontWeight: 800, color: !loading && breakdown.present > 0 ? 'var(--status-present-text)' : 'var(--text-secondary)', marginTop: '0.4rem' }}>
+                  {loading ? '—' : breakdown.present} <span style={{ fontSize: '0.85rem', fontWeight: 400 }}>{breakdown.present === 1 ? 'student' : 'students'}</span>
                 </div>
               </div>
-            </Card>
-          );
-        })}
-      </div>
 
-      {/* Today's Status Breakdown */}
-      <Card
-        title="Today's Institution Attendance"
-        subtitle={`Recorded across ${markedClassesCount} of ${classes.length} active classes`}
-      >
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginTop: '0.5rem' }}>
-          <div style={{ border: '1px solid var(--status-present-border)', backgroundColor: 'var(--status-present-bg)', borderRadius: '10px', padding: '1rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <StatusBadge status="present" />
-              <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--status-present-text)' }}>
-                {breakdown.total > 0 ? Math.round((breakdown.present / breakdown.total) * 100) : 0}%
-              </span>
-            </div>
-            <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--status-present-text)', marginTop: '0.4rem' }}>
-              {breakdown.present} <span style={{ fontSize: '0.85rem', fontWeight: 400 }}>{breakdown.present === 1 ? 'student' : 'students'}</span>
-            </div>
-          </div>
+              <div
+                style={{
+                  border: `1px solid ${!loading && breakdown.absent > 0 ? 'var(--status-absent-border)' : 'var(--border-color)'}`,
+                  backgroundColor: !loading && breakdown.absent > 0 ? 'var(--status-absent-bg)' : 'var(--bg-card)',
+                  borderRadius: '10px',
+                  padding: '1rem',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <StatusBadge status="absent" />
+                  <span style={{ fontSize: '0.85rem', fontWeight: 700, color: !loading && breakdown.absent > 0 ? 'var(--status-absent-text)' : 'var(--text-secondary)' }}>
+                    {loading ? '—' : `${breakdown.total > 0 ? Math.round((breakdown.absent / breakdown.total) * 100) : 0}%`}
+                  </span>
+                </div>
+                <div style={{ fontSize: '1.6rem', fontWeight: 800, color: !loading && breakdown.absent > 0 ? 'var(--status-absent-text)' : 'var(--text-secondary)', marginTop: '0.4rem' }}>
+                  {loading ? '—' : breakdown.absent} <span style={{ fontSize: '0.85rem', fontWeight: 400 }}>{breakdown.absent === 1 ? 'student' : 'students'}</span>
+                </div>
+              </div>
 
-          <div style={{ border: '1px solid var(--status-absent-border)', backgroundColor: 'var(--status-absent-bg)', borderRadius: '10px', padding: '1rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <StatusBadge status="absent" />
-              <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--status-absent-text)' }}>
-                {breakdown.total > 0 ? Math.round((breakdown.absent / breakdown.total) * 100) : 0}%
-              </span>
-            </div>
-            <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--status-absent-text)', marginTop: '0.4rem' }}>
-              {breakdown.absent} <span style={{ fontSize: '0.85rem', fontWeight: 400 }}>{breakdown.absent === 1 ? 'student' : 'students'}</span>
-            </div>
-          </div>
+              <div
+                style={{
+                  border: `1px solid ${!loading && breakdown.late > 0 ? 'var(--status-late-border)' : 'var(--border-color)'}`,
+                  backgroundColor: !loading && breakdown.late > 0 ? 'var(--status-late-bg)' : 'var(--bg-card)',
+                  borderRadius: '10px',
+                  padding: '1rem',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <StatusBadge status="late" />
+                  <span style={{ fontSize: '0.85rem', fontWeight: 700, color: !loading && breakdown.late > 0 ? 'var(--status-late-text)' : 'var(--text-secondary)' }}>
+                    {loading ? '—' : `${breakdown.total > 0 ? Math.round((breakdown.late / breakdown.total) * 100) : 0}%`}
+                  </span>
+                </div>
+                <div style={{ fontSize: '1.6rem', fontWeight: 800, color: !loading && breakdown.late > 0 ? 'var(--status-late-text)' : 'var(--text-secondary)', marginTop: '0.4rem' }}>
+                  {loading ? '—' : breakdown.late} <span style={{ fontSize: '0.85rem', fontWeight: 400 }}>{breakdown.late === 1 ? 'student' : 'students'}</span>
+                </div>
+              </div>
 
-          <div style={{ border: '1px solid var(--status-late-border)', backgroundColor: 'var(--status-late-bg)', borderRadius: '10px', padding: '1rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <StatusBadge status="late" />
-              <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--status-late-text)' }}>
-                {breakdown.total > 0 ? Math.round((breakdown.late / breakdown.total) * 100) : 0}%
-              </span>
+              <div
+                style={{
+                  border: `1px solid ${!loading && breakdown.leave > 0 ? 'var(--status-leave-border)' : 'var(--border-color)'}`,
+                  backgroundColor: !loading && breakdown.leave > 0 ? 'var(--status-leave-bg)' : 'var(--bg-card)',
+                  borderRadius: '10px',
+                  padding: '1rem',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <StatusBadge status="leave" />
+                  <span style={{ fontSize: '0.85rem', fontWeight: 700, color: !loading && breakdown.leave > 0 ? 'var(--status-leave-text)' : 'var(--text-secondary)' }}>
+                    {loading ? '—' : `${breakdown.total > 0 ? Math.round((breakdown.leave / breakdown.total) * 100) : 0}%`}
+                  </span>
+                </div>
+                <div style={{ fontSize: '1.6rem', fontWeight: 800, color: !loading && breakdown.leave > 0 ? 'var(--status-leave-text)' : 'var(--text-secondary)', marginTop: '0.4rem' }}>
+                  {loading ? '—' : breakdown.leave} <span style={{ fontSize: '0.85rem', fontWeight: 400 }}>{breakdown.leave === 1 ? 'student' : 'students'}</span>
+                </div>
+              </div>
             </div>
-            <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--status-late-text)', marginTop: '0.4rem' }}>
-              {breakdown.late} <span style={{ fontSize: '0.85rem', fontWeight: 400 }}>{breakdown.late === 1 ? 'student' : 'students'}</span>
-            </div>
-          </div>
+          </Card>
 
-          <div style={{ border: '1px solid var(--status-leave-border)', backgroundColor: 'var(--status-leave-bg)', borderRadius: '10px', padding: '1rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <StatusBadge status="leave" />
-              <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--status-leave-text)' }}>
-                {breakdown.total > 0 ? Math.round((breakdown.leave / breakdown.total) * 100) : 0}%
-              </span>
-            </div>
-            <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--status-leave-text)', marginTop: '0.4rem' }}>
-              {breakdown.leave} <span style={{ fontSize: '0.85rem', fontWeight: 400 }}>{breakdown.leave === 1 ? 'student' : 'students'}</span>
-            </div>
-          </div>
-        </div>
-      </Card>
-
-      {/* Class Roll Call Status Table */}
-      <Card title="Today's Class Roll Call Progress" subtitle="Monitor whether teachers have submitted daily attendance">
-        {classAttendanceStatus.length === 0 ? (
-          <div style={{ padding: '2rem 1rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-            No classes created yet. Add classes to begin tracking attendance.
-          </div>
-        ) : (
+          {/* Class Roll Call Status Table */}
+          <Card title="Today's Class Roll Call Progress" subtitle={loading ? "Loading classes..." : "Monitor whether teachers have submitted daily attendance"}>
+            {loading ? (
+              <div style={{ padding: '2.5rem 1rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                Loading classes and roll call status...
+              </div>
+            ) : classAttendanceStatus.length === 0 ? (
+              <div style={{ padding: '2rem 1rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                No classes created yet. Add classes to begin tracking attendance.
+              </div>
+            ) : (
           <div className="table-responsive">
             <table>
               <thead>
@@ -313,7 +402,7 @@ export const AdminDashboard = () => {
                             ))}
                           </div>
                         ) : (
-                          <span style={{ fontSize: '0.8rem', color: 'var(--status-absent)' }}>
+                          <span style={{ fontSize: '0.8rem', color: 'var(--status-absent-text)' }}>
                             No Teacher Assigned
                           </span>
                         )}
@@ -345,6 +434,8 @@ export const AdminDashboard = () => {
           </div>
         )}
       </Card>
+        </>
+      )}
     </div>
   );
 };

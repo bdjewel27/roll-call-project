@@ -14,8 +14,8 @@
   --bg-hover: #f1f5f9;
 
   --text-primary: #0f172a;
-  --text-secondary: #64748b;
-  --text-muted: #94a3b8;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
 
   --border-color: #e2e8f0;
   --border-focus: #3b82f6;
@@ -68,8 +68,8 @@
   --bg-hover: #1e293b;
 
   --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
 
   --border-color: #1e293b;
   --border-focus: #60a5fa;
@@ -165,12 +165,38 @@ input:focus, select:focus, textarea:focus {
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
 }
 
+input::placeholder, select::placeholder, textarea::placeholder {
+  color: var(--text-secondary);
+  opacity: 1;
+}
+
 /* Responsive Table container */
 .table-responsive {
   width: 100%;
+  max-width: 100%;
   overflow-x: auto;
   border-radius: 8px;
   -webkit-overflow-scrolling: touch;
+}
+
+/* Flexbox width containment */
+.main-content {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.card,
+.app-card {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Mobile Card Padding */
+@media (max-width: 640px) {
+  .card,
+  .app-card {
+    padding: 1rem 0.75rem !important;
+  }
 }
 
 table {
@@ -185,7 +211,7 @@ th {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   border-bottom: 1px solid var(--border-color);
   background-color: var(--bg-subtle);
   white-space: nowrap;

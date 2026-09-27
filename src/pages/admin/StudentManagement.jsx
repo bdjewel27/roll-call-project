@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Card } from '../../components/common/Card';
 import { Modal } from '../../components/common/Modal';
 import { ConfirmModal } from '../../components/common/ConfirmModal';
@@ -104,6 +104,23 @@ export const StudentManagement = () => {
   const [avatarFile, setAvatarFile] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const activeBlobUrlRef = useRef(null);
+
+  const revokeActiveBlobUrl = () => {
+    if (activeBlobUrlRef.current) {
+      URL.revokeObjectURL(activeBlobUrlRef.current);
+      activeBlobUrlRef.current = null;
+    }
+  };
+
+  useEffect(() => {
+    if (!isModalOpen) {
+      revokeActiveBlobUrl();
+    }
+    return () => {
+      revokeActiveBlobUrl();
+    };
+  }, [isModalOpen]);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -127,6 +144,7 @@ export const StudentManagement = () => {
   }, [loadData]);
 
   const handleOpenCreate = () => {
+    revokeActiveBlobUrl();
     setEditingStudent(null);
     setFormData({
       rollNo: '',
@@ -143,6 +161,7 @@ export const StudentManagement = () => {
   };
 
   const handleOpenEdit = (std) => {
+    revokeActiveBlobUrl();
     setEditingStudent(std);
     const existingAvatar = std.avatar_url || std.avatarUrl || '';
     setFormData({
@@ -171,16 +190,23 @@ export const StudentManagement = () => {
     try {
       // Compress to max 150x150px JPEG (quality 0.7) before upload to guarantee tiny file size (<30KB)
       const compressed = await compressImage(file, 150, 150, 0.7);
+      revokeActiveBlobUrl();
+      const newUrl = URL.createObjectURL(compressed);
+      activeBlobUrlRef.current = newUrl;
       setAvatarFile(compressed);
-      setAvatarPreview(URL.createObjectURL(compressed));
+      setAvatarPreview(newUrl);
     } catch (err) {
       console.warn('[RollCall] Image compression notice:', err);
+      revokeActiveBlobUrl();
+      const newUrl = URL.createObjectURL(file);
+      activeBlobUrlRef.current = newUrl;
       setAvatarFile(file);
-      setAvatarPreview(URL.createObjectURL(file));
+      setAvatarPreview(newUrl);
     }
   };
 
   const handleRemoveAvatar = () => {
+    revokeActiveBlobUrl();
     setAvatarFile(null);
     setAvatarPreview(null);
     setFormData((prev) => ({ ...prev, avatarUrl: '' }));
@@ -200,6 +226,11 @@ export const StudentManagement = () => {
 
     if (formData.guardianPhone && formData.guardianPhone.trim().length !== 11) {
       showToast('Guardian emergency phone must be exactly 11 digits (e.g. 01XXXXXXXXX)', 'error');
+      return;
+    }
+
+    if (!formData.classId) {
+      showToast('Please create and select a class before enrolling students', 'error');
       return;
     }
 
@@ -440,7 +471,7 @@ export const StudentManagement = () => {
                           <StudentAvatar student={std} shape="rounded" />
                           <div>
                             <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{std.name}</div>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>ID: {std.id}</div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>ID: {std.id}</div>
                           </div>
                         </div>
                       </td>
@@ -462,7 +493,7 @@ export const StudentManagement = () => {
                       <td>
                         {std.guardianPhone ? (
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                            <Phone size={13} color="var(--text-muted)" />
+                            <Phone size={13} color="var(--text-secondary)" />
                             <span>{std.guardianPhone}</span>
                           </div>
                         ) : (
@@ -491,7 +522,7 @@ export const StudentManagement = () => {
                             style={{
                               padding: '0.35rem 0.6rem',
                               backgroundColor: 'var(--status-absent-bg)',
-                              color: 'var(--status-absent)',
+                              color: 'var(--status-absent-text)',
                               border: '1px solid var(--status-absent-border)',
                             }}
                           >
@@ -547,7 +578,7 @@ export const StudentManagement = () => {
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />
                 ) : (
-                  <div style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
+                  <div style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>
                     <User size={28} />
                     <div style={{ fontSize: '0.65rem', marginTop: '2px', fontWeight: 600 }}>1:1</div>
                   </div>
@@ -593,7 +624,7 @@ export const StudentManagement = () => {
                         padding: '0.4rem 0.65rem',
                         borderRadius: '6px',
                         backgroundColor: 'var(--status-absent-bg)',
-                        color: 'var(--status-absent)',
+                        color: 'var(--status-absent-text)',
                         border: '1px solid var(--status-absent-border)',
                         fontSize: '0.825rem',
                         fontWeight: 500,
@@ -604,7 +635,7 @@ export const StudentManagement = () => {
                     </button>
                   )}
                 </div>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                   Accepts JPG, PNG, WEBP (image/*). Square 1:1 preview.
                 </span>
               </div>

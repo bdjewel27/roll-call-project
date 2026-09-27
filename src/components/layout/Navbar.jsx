@@ -127,7 +127,7 @@ export const Navbar = ({ onToggleMobileNav }) => {
                 border: '1px solid var(--border-color)',
                 borderRadius: '8px',
                 backgroundColor: 'var(--bg-subtle)',
-                color: 'var(--status-absent)',
+                color: 'var(--status-absent-text)',
                 fontSize: '0.85rem',
                 fontWeight: 500,
               }}

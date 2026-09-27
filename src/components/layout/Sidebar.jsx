@@ -103,7 +103,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
             fontWeight: 700,
             textTransform: 'uppercase',
             letterSpacing: '0.06em',
-            color: 'var(--text-muted)',
+            color: 'var(--text-secondary)',
             padding: '0 0.75rem 0.75rem',
           }}
         >

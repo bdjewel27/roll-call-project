@@ -12,6 +12,8 @@ import {
   CheckCircle2,
   ArrowRight,
   TrendingUp,
+  AlertCircle,
+  RotateCcw,
 } from 'lucide-react';
 
 export const TeacherDashboard = () => {
@@ -19,6 +21,7 @@ export const TeacherDashboard = () => {
   const [todayDate] = useState(getTodayDateString());
   const [assignedClassesStatus, setAssignedClassesStatus] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [summaryStats, setSummaryStats] = useState({
     totalClasses: 0,
     totalStudents: 0,
@@ -28,61 +31,68 @@ export const TeacherDashboard = () => {
 
   const loadDashboardData = useCallback(async () => {
     setLoading(true);
-    const teacherId = user?.id || 'tch-1';
-    
-    // Fetch classes directly from Supabase via dataService
-    const [teacherClasses, todayLogs] = await Promise.all([
-      dataService.getClassesForTeacher(teacherId),
-      dataService.getAttendanceHistory(null, todayDate, todayDate),
-    ]);
+    setError(null);
+    try {
+      const teacherId = user?.id || 'tch-1';
 
-    const historyMap = {};
-    (todayLogs || []).forEach((log) => {
-      if (log.classId) {
-        historyMap[log.classId] = log;
-      }
-    });
+      // Fetch classes directly from Supabase via dataService
+      const [teacherClasses, todayLogs] = await Promise.all([
+        dataService.getClassesForTeacher(teacherId),
+        dataService.getAttendanceHistory(null, todayDate, todayDate),
+      ]);
 
-    let totalStudents = 0;
-    let markedCount = 0;
-    let presentOrLateSum = 0;
-    let totalAttendanceEntries = 0;
+      const historyMap = {};
+      (todayLogs || []).forEach((log) => {
+        if (log.classId) {
+          historyMap[log.classId] = log;
+        }
+      });
 
-    const classStatusList = teacherClasses.map((cls) => {
-      totalStudents += cls.studentCount || 0;
-      const todayRecord = historyMap[cls.id] || null;
-      const isMarked = !!todayRecord && Array.isArray(todayRecord.students) && todayRecord.students.length > 0;
-      if (isMarked) {
-        markedCount++;
-        todayRecord.students.forEach((s) => {
-          totalAttendanceEntries++;
-          if (s.status === ATTENDANCE_STATUS.PRESENT || s.status === ATTENDANCE_STATUS.LATE) {
-            presentOrLateSum++;
-          }
-        });
-      }
+      let totalStudents = 0;
+      let markedCount = 0;
+      let presentOrLateSum = 0;
+      let totalAttendanceEntries = 0;
 
-      return {
-        ...cls,
-        isMarked,
-        record: todayRecord,
-      };
-    });
+      const classStatusList = teacherClasses.map((cls) => {
+        totalStudents += cls.studentCount || 0;
+        const todayRecord = historyMap[cls.id] || null;
+        const isMarked = !!todayRecord && Array.isArray(todayRecord.students) && todayRecord.students.length > 0;
+        if (isMarked) {
+          markedCount++;
+          todayRecord.students.forEach((s) => {
+            totalAttendanceEntries++;
+            if (s.status === ATTENDANCE_STATUS.PRESENT || s.status === ATTENDANCE_STATUS.LATE) {
+              presentOrLateSum++;
+            }
+          });
+        }
 
-    setAssignedClassesStatus(classStatusList);
+        return {
+          ...cls,
+          isMarked,
+          record: todayRecord,
+        };
+      });
 
-    const overallRate =
-      totalAttendanceEntries > 0
-        ? Math.round((presentOrLateSum / totalAttendanceEntries) * 100)
-        : 0;
+      setAssignedClassesStatus(classStatusList);
 
-    setSummaryStats({
-      totalClasses: teacherClasses.length,
-      totalStudents,
-      markedClasses: markedCount,
-      overallRate,
-    });
-    setLoading(false);
+      const overallRate =
+        totalAttendanceEntries > 0
+          ? Math.round((presentOrLateSum / totalAttendanceEntries) * 100)
+          : 0;
+
+      setSummaryStats({
+        totalClasses: teacherClasses.length,
+        totalStudents,
+        markedClasses: markedCount,
+        overallRate,
+      });
+    } catch (err) {
+      console.error('[TeacherDashboard] Error loading dashboard data:', err);
+      setError('Unable to load your class and attendance data. Please check your connection and try again.');
+    } finally {
+      setLoading(false);
+    }
   }, [user, todayDate]);
 
   useEffect(() => {
@@ -123,107 +133,167 @@ export const TeacherDashboard = () => {
         </Link>
       </div>
 
-      {/* KPI Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-        <Card style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+      {error ? (
+        <Card style={{ textAlign: 'center', padding: '3rem 1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
           <div
             style={{
               width: '48px',
               height: '48px',
-              borderRadius: '12px',
-              backgroundColor: 'var(--primary-light)',
+              borderRadius: '50%',
+              backgroundColor: 'var(--status-absent-bg)',
+              color: 'var(--status-absent-text)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: 'var(--primary)',
             }}
           >
-            <School size={24} />
+            <AlertCircle size={24} />
           </div>
           <div>
-            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>My Assigned Classes</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-              {summaryStats.totalClasses} <span style={{ fontSize: '0.85rem', fontWeight: 400 }}>{summaryStats.totalClasses === 1 ? 'class' : 'classes'}</span>
-            </div>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 600, margin: '0 0 0.5rem', color: 'var(--text-primary)' }}>
+              Unable to Load Dashboard Data
+            </h3>
+            <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-secondary)', maxWidth: '420px' }}>
+              {error}
+            </p>
           </div>
+          <button
+            type="button"
+            onClick={() => loadDashboardData()}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              backgroundColor: 'var(--primary)',
+              color: '#ffffff',
+              padding: '0.55rem 1.25rem',
+              borderRadius: '8px',
+              fontWeight: 600,
+              fontSize: '0.875rem',
+              cursor: 'pointer',
+              border: 'none',
+              boxShadow: 'var(--shadow-sm)',
+            }}
+          >
+            <RotateCcw size={15} />
+            <span>Retry</span>
+          </button>
         </Card>
+      ) : (
+        <>
+          {/* KPI Cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+            <Card style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div
+                style={{
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '12px',
+                  backgroundColor: 'var(--primary-light)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--primary)',
+                }}
+              >
+                <School size={24} />
+              </div>
+              <div>
+                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>My Assigned Classes</div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                  {loading ? '—' : (
+                    <>
+                      {summaryStats.totalClasses} <span style={{ fontSize: '0.85rem', fontWeight: 400 }}>{summaryStats.totalClasses === 1 ? 'class' : 'classes'}</span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </Card>
 
-        <Card style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div
-            style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '12px',
-              backgroundColor: 'var(--status-present-bg)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'var(--status-present)',
-            }}
-          >
-            <Users size={24} />
-          </div>
-          <div>
-            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Total Students</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-              {summaryStats.totalStudents} <span style={{ fontSize: '0.85rem', fontWeight: 400 }}>{summaryStats.totalStudents === 1 ? 'student' : 'students'}</span>
-            </div>
-          </div>
-        </Card>
+            <Card style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div
+                style={{
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '12px',
+                  backgroundColor: 'var(--status-present-bg)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--status-present-text)',
+                }}
+              >
+                <Users size={24} />
+              </div>
+              <div>
+                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Total Students</div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                  {loading ? '—' : (
+                    <>
+                      {summaryStats.totalStudents} <span style={{ fontSize: '0.85rem', fontWeight: 400 }}>{summaryStats.totalStudents === 1 ? 'student' : 'students'}</span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </Card>
 
-        <Card style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div
-            style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '12px',
-              backgroundColor:
-                summaryStats.markedClasses === summaryStats.totalClasses && summaryStats.totalClasses > 0
-                  ? 'var(--status-present-bg)'
-                  : 'var(--status-late-bg)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color:
-                summaryStats.markedClasses === summaryStats.totalClasses && summaryStats.totalClasses > 0
-                  ? 'var(--status-present)'
-                  : 'var(--status-late)',
-            }}
-          >
-            <CheckCircle2 size={24} />
-          </div>
-          <div>
-            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Today's Roll Call</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-              {summaryStats.markedClasses} / {summaryStats.totalClasses}{' '}
-              <span style={{ fontSize: '0.85rem', fontWeight: 400 }}>completed</span>
-            </div>
-          </div>
-        </Card>
+            <Card style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div
+                style={{
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '12px',
+                  backgroundColor:
+                    !loading && summaryStats.markedClasses === summaryStats.totalClasses && summaryStats.totalClasses > 0
+                      ? 'var(--status-present-bg)'
+                      : 'var(--status-late-bg)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color:
+                    !loading && summaryStats.markedClasses === summaryStats.totalClasses && summaryStats.totalClasses > 0
+                      ? 'var(--status-present-text)'
+                      : 'var(--status-late-text)',
+                }}
+              >
+                <CheckCircle2 size={24} />
+              </div>
+              <div>
+                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Today's Roll Call</div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                  {loading ? '—' : (
+                    <>
+                      {summaryStats.markedClasses} / {summaryStats.totalClasses}{' '}
+                      <span style={{ fontSize: '0.85rem', fontWeight: 400 }}>completed</span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </Card>
 
-        <Card style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div
-            style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '12px',
-              backgroundColor: 'var(--primary-light)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'var(--primary)',
-            }}
-          >
-            <TrendingUp size={24} />
+            <Card style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div
+                style={{
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '12px',
+                  backgroundColor: 'var(--primary-light)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--primary)',
+                }}
+              >
+                <TrendingUp size={24} />
+              </div>
+              <div>
+                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Average Attendance</div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                  {loading ? '—' : `${summaryStats.overallRate}%`}
+                </div>
+              </div>
+            </Card>
           </div>
-          <div>
-            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Average Attendance</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-              {summaryStats.overallRate}%
-            </div>
-          </div>
-        </Card>
-      </div>
 
       {/* Today's Roll Call Tracker */}
       <Card
@@ -320,6 +390,8 @@ export const TeacherDashboard = () => {
           )}
         </div>
       </Card>
+        </>
+      )}
     </div>
   );
 };

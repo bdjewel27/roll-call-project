@@ -214,11 +214,11 @@ export const TeacherManagement = () => {
                     <tr key={tch.id}>
                       <td>
                         <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{tch.name}</div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>ID: {tch.id}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>ID: {tch.id}</div>
                       </td>
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-secondary)' }}>
-                          <Mail size={13} color="var(--text-muted)" />
+                          <Mail size={13} color="var(--text-secondary)" />
                           <span>{tch.email}</span>
                         </div>
                       </td>
@@ -272,7 +272,7 @@ export const TeacherManagement = () => {
                             style={{
                               padding: '0.35rem 0.6rem',
                               backgroundColor: 'var(--status-absent-bg)',
-                              color: 'var(--status-absent)',
+                              color: 'var(--status-absent-text)',
                               border: '1px solid var(--status-absent-border)',
                             }}
                           >
@@ -331,7 +331,7 @@ export const TeacherManagement = () => {
               }}
             />
             {editingTeacher && (
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem', display: 'block' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem', display: 'block' }}>
                 Login email cannot be changed from this profile editor.
               </span>
             )}
@@ -352,7 +352,7 @@ export const TeacherManagement = () => {
                 minLength={6}
                 style={{ width: '100%' }}
               />
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem', display: 'block' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem', display: 'block' }}>
                 The teacher will use this password along with their email to log in at /login.
               </span>
             </div>

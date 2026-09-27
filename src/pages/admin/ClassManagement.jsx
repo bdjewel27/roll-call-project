@@ -238,7 +238,7 @@ export const ClassManagement = () => {
                           style={{
                             padding: '0.35rem 0.6rem',
                             backgroundColor: 'var(--status-absent-bg)',
-                            color: 'var(--status-absent)',
+                            color: 'var(--status-absent-text)',
                             border: '1px solid var(--status-absent-border)',
                           }}
                         >

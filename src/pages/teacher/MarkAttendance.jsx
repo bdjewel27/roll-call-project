@@ -15,6 +15,7 @@ import {
   Search,
   CheckCheck,
   RotateCcw,
+  AlertCircle,
 } from 'lucide-react';
 
 export const MarkAttendance = () => {
@@ -35,6 +36,7 @@ export const MarkAttendance = () => {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [loadError, setLoadError] = useState(false);
 
   // Load teacher's classes on mount
   useEffect(() => {
@@ -70,6 +72,7 @@ export const MarkAttendance = () => {
   const loadRosterAndAttendance = useCallback(async () => {
     if (!selectedClassId) return;
     setLoading(true);
+    setLoadError(false);
     try {
       const [students, existingSession] = await Promise.all([
         dataService.getStudents(selectedClassId),
@@ -135,6 +138,8 @@ export const MarkAttendance = () => {
       }
     } catch (err) {
       console.error('Failed to load roster/attendance:', err);
+      setLoadError(true);
+      setRosterAttendance([]);
       showToast('Error loading attendance roster', 'error');
     } finally {
       setLoading(false);
@@ -245,6 +250,7 @@ export const MarkAttendance = () => {
       );
       if (!confirmLeave) return;
     }
+    setLoadError(false);
     setSelectedClassId(newClassId);
   };
 
@@ -257,6 +263,7 @@ export const MarkAttendance = () => {
       );
       if (!confirmLeave) return;
     }
+    setLoadError(false);
     setSelectedDate(newDate);
   };
 
@@ -314,6 +321,7 @@ export const MarkAttendance = () => {
 
   const handleSaveClick = (e) => {
     e.preventDefault();
+    if (loadError || rosterAttendance.length === 0) return;
     if (selectedDate !== getTodayDateString() && isExistingRecord) {
       setIsConfirmOpen(true);
     } else {
@@ -343,7 +351,7 @@ export const MarkAttendance = () => {
   const selectedClass = classes.find((c) => c.id === selectedClassId);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%', minWidth: 0 }}>
       {/* Page Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
@@ -355,7 +363,7 @@ export const MarkAttendance = () => {
           </p>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
           {isExistingRecord && (
             <span
               style={{
@@ -375,7 +383,7 @@ export const MarkAttendance = () => {
           <button
             type="button"
             onClick={handleSaveClick}
-            disabled={rosterAttendance.length === 0 || saving || loading}
+            disabled={rosterAttendance.length === 0 || saving || loading || loadError}
             style={{
               backgroundColor: 'var(--primary)',
               color: '#ffffff',
@@ -384,8 +392,8 @@ export const MarkAttendance = () => {
               fontWeight: 600,
               fontSize: '0.9rem',
               boxShadow: 'var(--shadow-sm)',
-              opacity: (rosterAttendance.length === 0 || saving || loading) ? 0.6 : 1,
-              cursor: (rosterAttendance.length === 0 || saving || loading) ? 'not-allowed' : 'pointer',
+              opacity: (rosterAttendance.length === 0 || saving || loading || loadError) ? 0.6 : 1,
+              cursor: (rosterAttendance.length === 0 || saving || loading || loadError) ? 'not-allowed' : 'pointer',
             }}
           >
             <Save size={18} />
@@ -436,12 +444,15 @@ export const MarkAttendance = () => {
               <button
                 type="button"
                 onClick={() => handleMarkAll(ATTENDANCE_STATUS.PRESENT)}
+                disabled={loading || loadError || rosterAttendance.length === 0}
                 style={{
                   backgroundColor: 'var(--status-present-bg)',
                   color: 'var(--status-present-text)',
                   border: '1px solid var(--status-present-border)',
                   fontSize: '0.8rem',
                   padding: '0.45rem 0.75rem',
+                  opacity: (loading || loadError || rosterAttendance.length === 0) ? 0.5 : 1,
+                  cursor: (loading || loadError || rosterAttendance.length === 0) ? 'not-allowed' : 'pointer',
                 }}
               >
                 <CheckCheck size={14} />
@@ -451,12 +462,15 @@ export const MarkAttendance = () => {
               <button
                 type="button"
                 onClick={() => handleMarkAll(ATTENDANCE_STATUS.ABSENT)}
+                disabled={loading || loadError || rosterAttendance.length === 0}
                 style={{
                   backgroundColor: 'var(--status-absent-bg)',
                   color: 'var(--status-absent-text)',
                   border: '1px solid var(--status-absent-border)',
                   fontSize: '0.8rem',
                   padding: '0.45rem 0.75rem',
+                  opacity: (loading || loadError || rosterAttendance.length === 0) ? 0.5 : 1,
+                  cursor: (loading || loadError || rosterAttendance.length === 0) ? 'not-allowed' : 'pointer',
                 }}
               >
                 <UserX size={14} />
@@ -466,6 +480,7 @@ export const MarkAttendance = () => {
               <button
                 type="button"
                 onClick={handleReset}
+                disabled={loading || loadError || rosterAttendance.length === 0}
                 title="Reset statuses"
                 style={{
                   backgroundColor: 'var(--bg-subtle)',
@@ -473,6 +488,8 @@ export const MarkAttendance = () => {
                   border: '1px solid var(--border-color)',
                   fontSize: '0.8rem',
                   padding: '0.45rem 0.75rem',
+                  opacity: (loading || loadError || rosterAttendance.length === 0) ? 0.5 : 1,
+                  cursor: (loading || loadError || rosterAttendance.length === 0) ? 'not-allowed' : 'pointer',
                 }}
               >
                 <RotateCcw size={14} />
@@ -489,24 +506,52 @@ export const MarkAttendance = () => {
           <div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-primary)' }}>{stats.total}</div>
         </div>
 
-        <div style={{ backgroundColor: 'var(--status-present-bg)', border: '1px solid var(--status-present-border)', padding: '0.85rem 1rem', borderRadius: '10px' }}>
-          <div style={{ fontSize: '0.75rem', color: 'var(--status-present-text)', fontWeight: 700 }}>PRESENT</div>
-          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--status-present-text)' }}>{stats.present}</div>
+        <div
+          style={{
+            backgroundColor: stats.present > 0 ? 'var(--status-present-bg)' : 'var(--bg-card)',
+            border: `1px solid ${stats.present > 0 ? 'var(--status-present-border)' : 'var(--border-color)'}`,
+            padding: '0.85rem 1rem',
+            borderRadius: '10px',
+          }}
+        >
+          <div style={{ fontSize: '0.75rem', color: stats.present > 0 ? 'var(--status-present-text)' : 'var(--text-secondary)', fontWeight: 700 }}>PRESENT</div>
+          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: stats.present > 0 ? 'var(--status-present-text)' : 'var(--text-primary)' }}>{stats.present}</div>
         </div>
 
-        <div style={{ backgroundColor: 'var(--status-absent-bg)', border: '1px solid var(--status-absent-border)', padding: '0.85rem 1rem', borderRadius: '10px' }}>
-          <div style={{ fontSize: '0.75rem', color: 'var(--status-absent-text)', fontWeight: 700 }}>ABSENT</div>
-          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--status-absent-text)' }}>{stats.absent}</div>
+        <div
+          style={{
+            backgroundColor: stats.absent > 0 ? 'var(--status-absent-bg)' : 'var(--bg-card)',
+            border: `1px solid ${stats.absent > 0 ? 'var(--status-absent-border)' : 'var(--border-color)'}`,
+            padding: '0.85rem 1rem',
+            borderRadius: '10px',
+          }}
+        >
+          <div style={{ fontSize: '0.75rem', color: stats.absent > 0 ? 'var(--status-absent-text)' : 'var(--text-secondary)', fontWeight: 700 }}>ABSENT</div>
+          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: stats.absent > 0 ? 'var(--status-absent-text)' : 'var(--text-primary)' }}>{stats.absent}</div>
         </div>
 
-        <div style={{ backgroundColor: 'var(--status-late-bg)', border: '1px solid var(--status-late-border)', padding: '0.85rem 1rem', borderRadius: '10px' }}>
-          <div style={{ fontSize: '0.75rem', color: 'var(--status-late-text)', fontWeight: 700 }}>LATE</div>
-          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--status-late-text)' }}>{stats.late}</div>
+        <div
+          style={{
+            backgroundColor: stats.late > 0 ? 'var(--status-late-bg)' : 'var(--bg-card)',
+            border: `1px solid ${stats.late > 0 ? 'var(--status-late-border)' : 'var(--border-color)'}`,
+            padding: '0.85rem 1rem',
+            borderRadius: '10px',
+          }}
+        >
+          <div style={{ fontSize: '0.75rem', color: stats.late > 0 ? 'var(--status-late-text)' : 'var(--text-secondary)', fontWeight: 700 }}>LATE</div>
+          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: stats.late > 0 ? 'var(--status-late-text)' : 'var(--text-primary)' }}>{stats.late}</div>
         </div>
 
-        <div style={{ backgroundColor: 'var(--status-leave-bg)', border: '1px solid var(--status-leave-border)', padding: '0.85rem 1rem', borderRadius: '10px' }}>
-          <div style={{ fontSize: '0.75rem', color: 'var(--status-leave-text)', fontWeight: 700 }}>LEAVE</div>
-          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--status-leave-text)' }}>{stats.leave}</div>
+        <div
+          style={{
+            backgroundColor: stats.leave > 0 ? 'var(--status-leave-bg)' : 'var(--bg-card)',
+            border: `1px solid ${stats.leave > 0 ? 'var(--status-leave-border)' : 'var(--border-color)'}`,
+            padding: '0.85rem 1rem',
+            borderRadius: '10px',
+          }}
+        >
+          <div style={{ fontSize: '0.75rem', color: stats.leave > 0 ? 'var(--status-leave-text)' : 'var(--text-secondary)', fontWeight: 700 }}>LEAVE</div>
+          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: stats.leave > 0 ? 'var(--status-leave-text)' : 'var(--text-primary)' }}>{stats.leave}</div>
         </div>
 
         <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', padding: '0.85rem 1rem', borderRadius: '10px' }}>
@@ -520,7 +565,7 @@ export const MarkAttendance = () => {
         title={`${selectedClass?.name || 'Class'} Roll Call`}
         subtitle={`Marking session for ${formatDate(selectedDate)}`}
         extra={
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', maxWidth: '100%' }}>
             {/* Search Input */}
             <div style={{ position: 'relative' }}>
               <Search size={15} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
@@ -541,6 +586,9 @@ export const MarkAttendance = () => {
                 borderRadius: '8px',
                 padding: '3px',
                 gap: '2px',
+                maxWidth: '100%',
+                overflowX: 'auto',
+                WebkitOverflowScrolling: 'touch',
               }}
             >
               {['ALL', 'PRESENT', 'ABSENT', 'LATE', 'LEAVE'].map((tab) => (
@@ -558,6 +606,7 @@ export const MarkAttendance = () => {
                     backgroundColor: statusFilter === tab ? 'var(--bg-card)' : 'transparent',
                     color: statusFilter === tab ? 'var(--text-primary)' : 'var(--text-secondary)',
                     boxShadow: statusFilter === tab ? 'var(--shadow-sm)' : 'none',
+                    flexShrink: 0,
                   }}
                 >
                   {tab}
@@ -608,6 +657,62 @@ export const MarkAttendance = () => {
               </tbody>
             </table>
           </div>
+        ) : loadError ? (
+          <div
+            style={{
+              padding: '3rem 1.5rem',
+              textAlign: 'center',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '1rem',
+            }}
+          >
+            <div
+              style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '50%',
+                backgroundColor: 'var(--status-absent-bg)',
+                color: 'var(--status-absent-text)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <AlertCircle size={24} />
+            </div>
+            <div>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 600, margin: '0 0 0.5rem', color: 'var(--text-primary)' }}>
+                Unable to Load Attendance Records
+              </h3>
+              <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-secondary)', maxWidth: '420px' }}>
+                A network or server error occurred while retrieving attendance for this session. Existing records have not been altered.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => loadRosterAndAttendance()}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                backgroundColor: 'var(--primary)',
+                color: '#ffffff',
+                padding: '0.55rem 1.25rem',
+                borderRadius: '8px',
+                fontWeight: 600,
+                fontSize: '0.875rem',
+                cursor: 'pointer',
+                border: 'none',
+                boxShadow: 'var(--shadow-sm)',
+              }}
+            >
+              <RotateCcw size={15} />
+              <span>Retry</span>
+            </button>
+          </div>
         ) : filteredStudents.length === 0 ? (
           <EmptyState
             title="No students match criteria"
@@ -638,7 +743,7 @@ export const MarkAttendance = () => {
                             <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
                               {student.name}
                             </div>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                               {student.gender || 'Student'}
                             </div>
                           </div>
@@ -659,15 +764,15 @@ export const MarkAttendance = () => {
                               fontWeight: student.status === ATTENDANCE_STATUS.PRESENT ? 700 : 500,
                               backgroundColor:
                                 student.status === ATTENDANCE_STATUS.PRESENT
-                                  ? 'var(--status-present)'
+                                  ? 'var(--status-present-bg)'
                                   : 'var(--bg-subtle)',
                               color:
                                 student.status === ATTENDANCE_STATUS.PRESENT
-                                  ? '#ffffff'
+                                  ? 'var(--status-present-text)'
                                   : 'var(--text-secondary)',
                               border: `1px solid ${
                                 student.status === ATTENDANCE_STATUS.PRESENT
-                                  ? 'var(--status-present)'
+                                  ? 'var(--status-present-border)'
                                   : 'var(--border-color)'
                               }`,
                             }}
@@ -687,15 +792,15 @@ export const MarkAttendance = () => {
                               fontWeight: student.status === ATTENDANCE_STATUS.ABSENT ? 700 : 500,
                               backgroundColor:
                                 student.status === ATTENDANCE_STATUS.ABSENT
-                                  ? 'var(--status-absent)'
+                                  ? 'var(--status-absent-bg)'
                                   : 'var(--bg-subtle)',
                               color:
                                 student.status === ATTENDANCE_STATUS.ABSENT
-                                  ? '#ffffff'
+                                  ? 'var(--status-absent-text)'
                                   : 'var(--text-secondary)',
                               border: `1px solid ${
                                 student.status === ATTENDANCE_STATUS.ABSENT
-                                  ? 'var(--status-absent)'
+                                  ? 'var(--status-absent-border)'
                                   : 'var(--border-color)'
                               }`,
                             }}
@@ -715,15 +820,15 @@ export const MarkAttendance = () => {
                               fontWeight: student.status === ATTENDANCE_STATUS.LATE ? 700 : 500,
                               backgroundColor:
                                 student.status === ATTENDANCE_STATUS.LATE
-                                  ? 'var(--status-late)'
+                                  ? 'var(--status-late-bg)'
                                   : 'var(--bg-subtle)',
                               color:
                                 student.status === ATTENDANCE_STATUS.LATE
-                                  ? '#ffffff'
+                                  ? 'var(--status-late-text)'
                                   : 'var(--text-secondary)',
                               border: `1px solid ${
                                 student.status === ATTENDANCE_STATUS.LATE
-                                  ? 'var(--status-late)'
+                                  ? 'var(--status-late-border)'
                                   : 'var(--border-color)'
                               }`,
                             }}
@@ -743,15 +848,15 @@ export const MarkAttendance = () => {
                               fontWeight: student.status === ATTENDANCE_STATUS.LEAVE ? 700 : 500,
                               backgroundColor:
                                 student.status === ATTENDANCE_STATUS.LEAVE
-                                  ? 'var(--status-leave)'
+                                  ? 'var(--status-leave-bg)'
                                   : 'var(--bg-subtle)',
                               color:
                                 student.status === ATTENDANCE_STATUS.LEAVE
-                                  ? '#ffffff'
+                                  ? 'var(--status-leave-text)'
                                   : 'var(--text-secondary)',
                               border: `1px solid ${
                                 student.status === ATTENDANCE_STATUS.LEAVE
-                                  ? 'var(--status-leave)'
+                                  ? 'var(--status-leave-border)'
                                   : 'var(--border-color)'
                               }`,
                             }}
