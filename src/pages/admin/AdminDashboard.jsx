@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card } from '../../components/common/Card';
 import { StatusBadge } from '../../components/common/StatusBadge';
+import { EmptyState } from '../../components/common/EmptyState';
 import { dataService } from '../../services/dataService';
 import { ATTENDANCE_STATUS } from '../../constants/attendanceStatus';
 import { getTodayDateString, formatDate } from '../../utils/formatters';
@@ -108,7 +109,7 @@ export const AdminDashboard = () => {
 
   const statsCards = [
     { title: 'Total Classes', value: loading ? '—' : classes.length, icon: School, color: 'var(--primary)', bg: 'var(--primary-light)' },
-    { title: 'Registered Teachers', value: loading ? '—' : teachers.length, icon: Users, color: '#8b5cf6', bg: 'rgba(139, 92, 246, 0.12)' },
+    { title: 'Registered Teachers', value: loading ? '—' : teachers.length, icon: Users, color: 'var(--status-leave-text)', bg: 'var(--status-leave-bg)' },
     { title: 'Enrolled Students', value: loading ? '—' : students.length, icon: GraduationCap, color: 'var(--status-present-text)', bg: 'var(--status-present-bg)' },
     { title: "Today's Attendance Rate", value: loading ? '—' : `${overallPct}%`, icon: CalendarCheck, color: 'var(--status-late-text)', bg: 'var(--status-late-bg)' },
   ];
@@ -356,9 +357,11 @@ export const AdminDashboard = () => {
                 Loading classes and roll call status...
               </div>
             ) : classAttendanceStatus.length === 0 ? (
-              <div style={{ padding: '2rem 1rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                No classes created yet. Add classes to begin tracking attendance.
-              </div>
+              <EmptyState
+                icon={School}
+                title="No classes created yet"
+                description="Add classes to begin tracking attendance."
+              />
             ) : (
           <div className="table-responsive">
             <table>

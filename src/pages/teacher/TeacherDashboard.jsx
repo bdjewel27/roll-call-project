@@ -10,6 +10,7 @@ import {
   School,
   Users,
   CheckCircle2,
+  Clock,
   ArrowRight,
   TrendingUp,
   AlertCircle,
@@ -344,7 +345,10 @@ export const TeacherDashboard = () => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
                   <span
                     style={{
-                      padding: '0.35rem 0.75rem',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      padding: '0.25rem 0.65rem',
                       borderRadius: '9999px',
                       fontSize: '0.75rem',
                       fontWeight: 600,
@@ -361,7 +365,8 @@ export const TeacherDashboard = () => {
                       }`,
                     }}
                   >
-                    {cls.isMarked ? '✓ Completed Today' : '● Roll Call Pending'}
+                    {cls.isMarked ? <CheckCircle2 size={13} /> : <Clock size={13} />}
+                    <span>{cls.isMarked ? 'Marked Today' : 'Pending Roll Call'}</span>
                   </span>
 
                   <Link
