@@ -39,16 +39,21 @@ export const ReportsPage = () => {
   useEffect(() => {
     let isMounted = true;
     const fetchClasses = async () => {
-      const cls = await dataService.getClasses();
-      if (isMounted) {
-        setClasses(cls);
+      try {
+        const cls = await dataService.getClasses();
+        if (isMounted) {
+          setClasses(cls);
+        }
+      } catch (err) {
+        console.error('[ReportsPage] Error loading classes:', err);
+        showToast('Error loading classes', 'error');
       }
     };
     fetchClasses();
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [showToast]);
 
   useEffect(() => {
     loadReports();

@@ -40,26 +40,31 @@ export const MarkAttendance = () => {
   useEffect(() => {
     let mounted = true;
     const fetchClasses = async () => {
-      const teacherId = user?.id || null;
-      const availableClasses = await dataService.getClassesForTeacher(teacherId);
-      if (!mounted) return;
-      setClasses(availableClasses);
+      try {
+        const teacherId = user?.id || null;
+        const availableClasses = await dataService.getClassesForTeacher(teacherId);
+        if (!mounted) return;
+        setClasses(availableClasses);
 
-      // If preselected from dashboard or my-classes
-      const preselected = location.state?.preselectedClassId;
-      if (preselected && availableClasses.some((c) => c.id === preselected)) {
-        setSelectedClassId(preselected);
-      } else if (availableClasses.length > 0) {
-        setSelectedClassId(availableClasses[0].id);
-      }
+        // If preselected from dashboard or my-classes
+        const preselected = location.state?.preselectedClassId;
+        if (preselected && availableClasses.some((c) => c.id === preselected)) {
+          setSelectedClassId(preselected);
+        } else if (availableClasses.length > 0) {
+          setSelectedClassId(availableClasses[0].id);
+        }
 
-      if (location.state?.preselectedDate) {
-        setSelectedDate(location.state.preselectedDate);
+        if (location.state?.preselectedDate) {
+          setSelectedDate(location.state.preselectedDate);
+        }
+      } catch (err) {
+        console.error('[MarkAttendance] Failed to load classes for teacher:', err);
+        showToast('Error loading assigned classes', 'error');
       }
     };
     fetchClasses();
     return () => { mounted = false; };
-  }, [user, location.state]);
+  }, [user, location.state, showToast]);
 
   // Load attendance or roster when class or date changes
   const loadRosterAndAttendance = useCallback(async () => {

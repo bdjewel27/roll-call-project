@@ -36,13 +36,18 @@ export const dataService = {
 
     if (error) {
       console.error('[RollCall] Error fetching classes:', error.message);
-      return [];
+      throw error;
     }
 
     // Fetch assignments from teacher_class_assignments
-    const { data: assignments } = await supabase
+    const { data: assignments, error: assignError } = await supabase
       .from('teacher_class_assignments')
       .select('class_id, teacher_id');
+
+    if (assignError) {
+      console.error('[RollCall] Error fetching class assignments:', assignError.message);
+      throw assignError;
+    }
 
     const assignmentMap = {};
     (assignments || []).forEach((a) => {
@@ -51,10 +56,15 @@ export const dataService = {
     });
 
     // Fetch active students in one query to avoid N+1 queries
-    const { data: activeStudents } = await supabase
+    const { data: activeStudents, error: studentsError } = await supabase
       .from('students')
       .select('class_id')
       .eq('is_active', true);
+
+    if (studentsError) {
+      console.error('[RollCall] Error fetching student counts for classes:', studentsError.message);
+      throw studentsError;
+    }
 
     const studentCountMap = {};
     (activeStudents || []).forEach((s) => {
@@ -243,7 +253,7 @@ export const dataService = {
 
     if (error) {
       console.error('[RollCall] Error fetching students:', error.message);
-      return [];
+      throw error;
     }
 
     const result = (data || []).map((s) => ({
@@ -385,7 +395,7 @@ export const dataService = {
 
     if (error) {
       console.error('[RollCall] Error fetching teachers:', error.message);
-      return [];
+      throw error;
     }
 
     return (data || []).map((t) => ({
@@ -557,7 +567,8 @@ export const dataService = {
       .eq('date', date)
       .maybeSingle();
 
-    if (sErr || !session) return null;
+    if (sErr) throw sErr;
+    if (!session) return null;
 
     const { data: records, error: rErr } = await supabase
       .from('attendance_records')
@@ -566,7 +577,7 @@ export const dataService = {
 
     if (rErr) {
       console.error('[RollCall] Error fetching attendance records:', rErr.message);
-      return null;
+      throw rErr;
     }
 
     return {
@@ -691,7 +702,7 @@ export const dataService = {
 
     if (error) {
       console.error('[RollCall] Error fetching attendance history:', error.message);
-      return [];
+      throw error;
     }
 
     return (sessions || []).map((session) => {

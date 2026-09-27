@@ -35,17 +35,22 @@ export const TeacherReports = () => {
   useEffect(() => {
     let isMounted = true;
     const fetchClasses = async () => {
-      const teacherId = user?.id || null;
-      let teacherClasses = await dataService.getClassesForTeacher(teacherId);
-      if (isMounted) {
-        setClasses(teacherClasses);
+      try {
+        const teacherId = user?.id || null;
+        let teacherClasses = await dataService.getClassesForTeacher(teacherId);
+        if (isMounted) {
+          setClasses(teacherClasses);
+        }
+      } catch (err) {
+        console.error('[TeacherReports] Error loading classes:', err);
+        showToast('Error loading assigned classes', 'error');
       }
     };
     fetchClasses();
     return () => {
       isMounted = false;
     };
-  }, [user]);
+  }, [user, showToast]);
 
   useEffect(() => {
     loadMetrics();

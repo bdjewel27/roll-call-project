@@ -47,17 +47,22 @@ export const AttendanceHistory = () => {
   useEffect(() => {
     let isMounted = true;
     const loadInitData = async () => {
-      const teacherId = user?.id || null;
-      let teacherClasses = await dataService.getClassesForTeacher(teacherId);
-      if (isMounted) {
-        setClasses(teacherClasses);
+      try {
+        const teacherId = user?.id || null;
+        let teacherClasses = await dataService.getClassesForTeacher(teacherId);
+        if (isMounted) {
+          setClasses(teacherClasses);
+        }
+      } catch (err) {
+        console.error('[AttendanceHistory] Error loading classes:', err);
+        showToast('Error loading assigned classes', 'error');
       }
     };
     loadInitData();
     return () => {
       isMounted = false;
     };
-  }, [user]);
+  }, [user, showToast]);
 
   useEffect(() => {
     loadHistory();

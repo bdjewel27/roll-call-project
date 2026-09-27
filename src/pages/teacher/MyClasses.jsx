@@ -3,6 +3,7 @@ import { Card } from '../../components/common/Card';
 import { Modal } from '../../components/common/Modal';
 import { EmptyState } from '../../components/common/EmptyState';
 import { useAuth } from '../../hooks/useAuth';
+import { useToast } from '../../context/ToastContext';
 import { dataService } from '../../services/dataService';
 import { getTodayDateString } from '../../utils/formatters';
 import { Link } from 'react-router-dom';
@@ -19,6 +20,7 @@ import {
 
 export const MyClasses = () => {
   const { user } = useAuth();
+  const { showToast } = useToast();
   const [classes, setClasses] = useState([]);
   const [selectedClassForRoster, setSelectedClassForRoster] = useState(null);
   const [rosterStudents, setRosterStudents] = useState([]);
@@ -51,8 +53,9 @@ export const MyClasses = () => {
       setClasses(enriched);
     } catch (err) {
       console.error('[MyClasses] Error loading classes:', err);
+      showToast('Failed to load assigned classes', 'error');
     }
-  }, [user, todayDate]);
+  }, [user, todayDate, showToast]);
 
   useEffect(() => {
     loadClasses();
@@ -60,8 +63,14 @@ export const MyClasses = () => {
 
   const handleOpenRoster = async (cls) => {
     setSelectedClassForRoster(cls);
-    const students = await dataService.getStudents(cls.id);
-    setRosterStudents(students);
+    try {
+      const students = await dataService.getStudents(cls.id);
+      setRosterStudents(students);
+    } catch (err) {
+      console.error('[MyClasses] Error loading roster:', err);
+      setRosterStudents([]);
+      showToast('Failed to load class roster', 'error');
+    }
     setRosterSearch('');
   };
 
