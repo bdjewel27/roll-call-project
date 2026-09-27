@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { ROLES } from '../constants/roles';
+import { invalidateCache } from '../services/dataService';
 
 const AuthContext = createContext(null);
 
@@ -81,6 +82,7 @@ export const AuthProvider = ({ children }) => {
         const fullUser = await fetchProfile(session.user);
         if (mounted) setUser(fullUser);
       } else {
+        invalidateCache();
         if (mounted) setUser(null);
       }
       if (mounted) setLoading(false);
@@ -98,6 +100,7 @@ export const AuthProvider = ({ children }) => {
       throw new Error('Email and password are required.');
     }
 
+    invalidateCache();
     isLoggingInRef.current = true;
     setLoading(true);
     try {
@@ -124,8 +127,10 @@ export const AuthProvider = ({ children }) => {
       await supabase.auth.signOut();
     } catch (e) {
       console.warn('Sign out warning:', e);
+    } finally {
+      invalidateCache();
+      setUser(null);
     }
-    setUser(null);
   };
 
   const value = {
