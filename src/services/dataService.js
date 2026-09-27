@@ -408,13 +408,17 @@ export const dataService = {
     }));
   },
 
-  async createTeacher(teacherData) {
-    if (!teacherData.password || teacherData.password.length < 6) {
+  async createTeacher(teacherData = {}) {
+    if (!teacherData?.password || teacherData.password.length < 6) {
       throw new Error('Temporary password must be at least 6 characters.');
     }
 
-    const email = teacherData.email.trim();
-    const fullName = teacherData.name.trim();
+    const email = (teacherData?.email || '').trim();
+    const fullName = (teacherData?.name || '').trim();
+
+    if (!email || !fullName) {
+      throw new Error('Teacher name and email are required.');
+    }
 
     // 1. Create teacher account in Supabase Auth using isolated client so admin session is not replaced
     const authClient = createAuthClient();

@@ -116,11 +116,12 @@ export const TeacherManagement = () => {
     }
   };
 
+  const query = (searchQuery || '').toLowerCase();
   const filteredTeachers = teachers.filter(
     (t) =>
-      t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (t.subject && t.subject.toLowerCase().includes(searchQuery.toLowerCase()))
+      (t.name || '').toLowerCase().includes(query) ||
+      (t.email || '').toLowerCase().includes(query) ||
+      Boolean(t.subject && String(t.subject).toLowerCase().includes(query))
   );
 
   return (

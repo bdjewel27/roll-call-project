@@ -101,11 +101,12 @@ export const ClassManagement = () => {
     }
   };
 
+  const query = (searchQuery || '').toLowerCase();
   const filteredClasses = classes.filter(
     (c) =>
-      c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (c.section && c.section.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (c.room && c.room.toLowerCase().includes(searchQuery.toLowerCase()))
+      (c.name || '').toLowerCase().includes(query) ||
+      Boolean(c.section && String(c.section).toLowerCase().includes(query)) ||
+      Boolean(c.room && String(c.room).toLowerCase().includes(query))
   );
 
   return (

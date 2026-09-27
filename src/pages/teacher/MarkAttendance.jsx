@@ -336,13 +336,14 @@ export const MarkAttendance = () => {
 
   // Search and status tab filtering
   const filteredStudents = useMemo(() => {
+    const query = (searchQuery || '').toLowerCase();
     return rosterAttendance.filter((student) => {
       const matchesSearch =
-        student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        student.rollNo.toLowerCase().includes(searchQuery.toLowerCase());
+        (student.name || '').toLowerCase().includes(query) ||
+        String(student.rollNo ?? '').toLowerCase().includes(query);
 
       const matchesStatus =
-        statusFilter === 'ALL' || student.status.toUpperCase() === statusFilter;
+        statusFilter === 'ALL' || (student.status || '').toUpperCase() === statusFilter;
 
       return matchesSearch && matchesStatus;
     });

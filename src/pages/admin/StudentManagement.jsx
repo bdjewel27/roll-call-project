@@ -289,11 +289,12 @@ export const StudentManagement = () => {
     }
   };
 
+  const query = (searchQuery || '').toLowerCase();
   const filteredStudents = students.filter(
     (s) =>
-      s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.rollNo.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (s.guardianName && s.guardianName.toLowerCase().includes(searchQuery.toLowerCase()))
+      (s.name || '').toLowerCase().includes(query) ||
+      String(s.rollNo ?? '').toLowerCase().includes(query) ||
+      Boolean(s.guardianName && String(s.guardianName).toLowerCase().includes(query))
   );
 
   return (

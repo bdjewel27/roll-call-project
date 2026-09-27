@@ -74,10 +74,11 @@ export const MyClasses = () => {
     setRosterSearch('');
   };
 
+  const query = (rosterSearch || '').toLowerCase();
   const filteredRoster = rosterStudents.filter(
     (s) =>
-      s.name.toLowerCase().includes(rosterSearch.toLowerCase()) ||
-      s.rollNo.toLowerCase().includes(rosterSearch.toLowerCase())
+      (s.name || '').toLowerCase().includes(query) ||
+      String(s.rollNo ?? '').toLowerCase().includes(query)
   );
 
   return (
