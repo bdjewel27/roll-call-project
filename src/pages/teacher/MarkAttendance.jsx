@@ -91,7 +91,33 @@ export const MarkAttendance = () => {
             remark: recorded?.remark || '',
           };
         });
-        setRosterAttendance(mapped);
+
+        const activeStudentIds = new Set(students.map((s) => s.id));
+        const historicalOnly = existingSession.students
+          .filter((rec) => !activeStudentIds.has(rec.studentId))
+          .map((rec) => {
+            const stdInfo = rec.student || {};
+            return {
+              id: rec.studentId,
+              rollNo: stdInfo.rollNo || '-',
+              name: stdInfo.name || 'Unknown Student',
+              gender: stdInfo.gender || 'Other',
+              avatarUrl: stdInfo.avatarUrl || null,
+              avatar_url: stdInfo.avatarUrl || null,
+              status: rec.status || ATTENDANCE_STATUS.PRESENT,
+              remark: rec.remark || '',
+              isInactive: true,
+            };
+          });
+
+        const combined = [...mapped, ...historicalOnly].sort((a, b) => {
+          const rollA = parseInt(a.rollNo, 10);
+          const rollB = parseInt(b.rollNo, 10);
+          if (!isNaN(rollA) && !isNaN(rollB)) return rollA - rollB;
+          return String(a.rollNo).localeCompare(String(b.rollNo));
+        });
+
+        setRosterAttendance(combined);
       } else {
         setIsExistingRecord(false);
         // Default new roll call: everyone is set to Present by default for speed

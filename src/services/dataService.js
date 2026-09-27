@@ -572,7 +572,7 @@ export const dataService = {
 
     const { data: records, error: rErr } = await supabase
       .from('attendance_records')
-      .select('*')
+      .select('*, students(id, roll_no, full_name, gender, avatar_url, is_active)')
       .eq('session_id', session.id);
 
     if (rErr) {
@@ -589,6 +589,17 @@ export const dataService = {
         studentId: r.student_id,
         status: r.status,
         remark: r.remark || '',
+        student: r.students
+          ? {
+              id: r.students.id,
+              rollNo: r.students.roll_no,
+              name: r.students.full_name,
+              gender: r.students.gender,
+              avatarUrl: r.students.avatar_url || null,
+              avatar_url: r.students.avatar_url || null,
+              isActive: r.students.is_active,
+            }
+          : null,
       })),
     };
   },
@@ -738,10 +749,21 @@ export const dataService = {
     const history = await this.getAttendanceHistory(classId && classId !== 'ALL' ? classId : null);
 
     const metricsMap = new Map();
+    const studentMetaMap = new Map();
 
     history.forEach((session) => {
       (session.students || []).forEach((studentLog) => {
         if (!studentLog?.studentId) return;
+
+        if (!studentMetaMap.has(studentLog.studentId)) {
+          studentMetaMap.set(studentLog.studentId, {
+            id: studentLog.studentId,
+            rollNo: studentLog.rollNo || '-',
+            name: studentLog.studentName || 'Unknown Student',
+            classId: session.classId || (classId && classId !== 'ALL' ? classId : ''),
+            isActive: false,
+          });
+        }
 
         let entry = metricsMap.get(studentLog.studentId);
         if (!entry) {
@@ -757,7 +779,8 @@ export const dataService = {
       });
     });
 
-    return students.map((std) => {
+    const activeStudentIds = new Set(students.map((s) => s.id));
+    const activeMetrics = students.map((std) => {
       const entry = metricsMap.get(std.id) || {
         total: 0,
         present: 0,
@@ -779,6 +802,39 @@ export const dataService = {
         rate,
         isAtRisk: rate < 75 && total > 0,
       };
+    });
+
+    const historicalMetrics = [];
+    metricsMap.forEach((entry, studentId) => {
+      if (!activeStudentIds.has(studentId)) {
+        const std = studentMetaMap.get(studentId) || {
+          id: studentId,
+          rollNo: '-',
+          name: 'Unknown Student',
+          classId: classId && classId !== 'ALL' ? classId : '',
+          isActive: false,
+        };
+        const { total, present, absent, late, leave } = entry;
+        const rate = total > 0 ? Math.round(((present + late) / total) * 100) : 100;
+
+        historicalMetrics.push({
+          student: std,
+          totalSessions: total,
+          present,
+          absent,
+          late,
+          leave,
+          rate,
+          isAtRisk: rate < 75 && total > 0,
+        });
+      }
+    });
+
+    return [...activeMetrics, ...historicalMetrics].sort((a, b) => {
+      const rollA = parseInt(a.student.rollNo, 10);
+      const rollB = parseInt(b.student.rollNo, 10);
+      if (!isNaN(rollA) && !isNaN(rollB)) return rollA - rollB;
+      return String(a.student.rollNo).localeCompare(String(b.student.rollNo));
     });
   },
 };
