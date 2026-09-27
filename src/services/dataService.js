@@ -617,7 +617,7 @@ export const dataService = {
       remark: r.remark || null,
     }));
 
-    const { data, error } = await supabase.rpc('save_attendance_atomic', {
+    const { error } = await supabase.rpc('save_attendance_atomic', {
       p_class_id: classId,
       p_date: date,
       p_records: recordsPayload,
