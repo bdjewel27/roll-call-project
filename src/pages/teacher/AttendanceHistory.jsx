@@ -8,6 +8,7 @@ import { useToast } from '../../context/ToastContext';
 import { dataService } from '../../services/dataService';
 import { formatDate, getTodayDateString } from '../../utils/formatters';
 import { exportAttendanceHistoryCSV } from '../../utils/csvExport';
+import { ATTENDANCE_BENCHMARK } from '../../constants/attendanceStatus';
 import { Link } from 'react-router-dom';
 import {
   History,
@@ -227,22 +228,22 @@ export const AttendanceHistory = () => {
                     </td>
                     <td>{log.stats.total}</td>
                     <td>
-                      <span style={{ color: 'var(--status-present)', fontWeight: 700 }}>
+                      <span style={{ color: 'var(--status-present-text)', fontWeight: 700 }}>
                         {log.stats.present}
                       </span>
                     </td>
                     <td>
-                      <span style={{ color: 'var(--status-absent)', fontWeight: 700 }}>
+                      <span style={{ color: 'var(--status-absent-text)', fontWeight: 700 }}>
                         {log.stats.absent}
                       </span>
                     </td>
                     <td>
-                      <span style={{ color: 'var(--status-late)', fontWeight: 700 }}>
+                      <span style={{ color: 'var(--status-late-text)', fontWeight: 700 }}>
                         {log.stats.late}
                       </span>
                     </td>
                     <td>
-                      <span style={{ color: 'var(--status-leave)', fontWeight: 700 }}>
+                      <span style={{ color: 'var(--status-leave-text)', fontWeight: 700 }}>
                         {log.stats.leave}
                       </span>
                     </td>
@@ -250,7 +251,7 @@ export const AttendanceHistory = () => {
                       <span
                         style={{
                           fontWeight: 700,
-                          color: log.stats.rate >= 80 ? 'var(--status-present)' : 'var(--status-absent)',
+                          color: log.stats.rate >= ATTENDANCE_BENCHMARK.AT_RISK_THRESHOLD ? 'var(--status-present-text)' : 'var(--status-absent-text)',
                         }}
                       >
                         {log.stats.rate}%

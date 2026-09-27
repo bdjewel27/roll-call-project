@@ -5,6 +5,7 @@ import { useToast } from '../../context/ToastContext';
 import { dataService } from '../../services/dataService';
 import { formatDate, getTodayDateString } from '../../utils/formatters';
 import { exportAttendanceHistoryCSV } from '../../utils/csvExport';
+import { ATTENDANCE_BENCHMARK } from '../../constants/attendanceStatus';
 import {
   BarChart3,
   Download,
@@ -165,8 +166,8 @@ export const ReportsPage = () => {
               width: '44px',
               height: '44px',
               borderRadius: '10px',
-              backgroundColor: 'var(--status-present-bg)',
-              color: 'var(--status-present)',
+              backgroundColor: metrics.overallRate > 0 ? 'var(--status-present-bg)' : 'var(--bg-subtle)',
+              color: metrics.overallRate > 0 ? 'var(--status-present-text)' : 'var(--text-secondary)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -188,8 +189,8 @@ export const ReportsPage = () => {
               width: '44px',
               height: '44px',
               borderRadius: '10px',
-              backgroundColor: 'var(--status-absent-bg)',
-              color: 'var(--status-absent)',
+              backgroundColor: metrics.totalAbsent > 0 ? 'var(--status-absent-bg)' : 'var(--bg-subtle)',
+              color: metrics.totalAbsent > 0 ? 'var(--status-absent-text)' : 'var(--text-secondary)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -211,8 +212,8 @@ export const ReportsPage = () => {
               width: '44px',
               height: '44px',
               borderRadius: '10px',
-              backgroundColor: 'var(--status-late-bg)',
-              color: 'var(--status-late)',
+              backgroundColor: metrics.totalLate > 0 ? 'var(--status-late-bg)' : 'var(--bg-subtle)',
+              color: metrics.totalLate > 0 ? 'var(--status-late-text)' : 'var(--text-secondary)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -333,22 +334,22 @@ export const ReportsPage = () => {
                     </td>
                     <td>{log.stats.total}</td>
                     <td>
-                      <span style={{ color: 'var(--status-present)', fontWeight: 700 }}>
+                      <span style={{ color: 'var(--status-present-text)', fontWeight: 700 }}>
                         {log.stats.present}
                       </span>
                     </td>
                     <td>
-                      <span style={{ color: 'var(--status-absent)', fontWeight: 700 }}>
+                      <span style={{ color: 'var(--status-absent-text)', fontWeight: 700 }}>
                         {log.stats.absent}
                       </span>
                     </td>
                     <td>
-                      <span style={{ color: 'var(--status-late)', fontWeight: 700 }}>
+                      <span style={{ color: 'var(--status-late-text)', fontWeight: 700 }}>
                         {log.stats.late}
                       </span>
                     </td>
                     <td>
-                      <span style={{ color: 'var(--status-leave)', fontWeight: 700 }}>
+                      <span style={{ color: 'var(--status-leave-text)', fontWeight: 700 }}>
                         {log.stats.leave}
                       </span>
                     </td>
@@ -356,7 +357,7 @@ export const ReportsPage = () => {
                       <span
                         style={{
                           fontWeight: 700,
-                          color: log.stats.rate >= 80 ? 'var(--status-present)' : 'var(--status-absent)',
+                          color: log.stats.rate >= ATTENDANCE_BENCHMARK.AT_RISK_THRESHOLD ? 'var(--status-present-text)' : 'var(--status-absent-text)',
                         }}
                       >
                         {log.stats.rate}%

@@ -8,6 +8,10 @@ export const ATTENDANCE_STATUS = {
   LEAVE: 'leave',
 };
 
+export const ATTENDANCE_BENCHMARK = {
+  AT_RISK_THRESHOLD: 75,
+};
+
 export const ATTENDANCE_CONFIG = {
   [ATTENDANCE_STATUS.PRESENT]: {
     label: 'Present',

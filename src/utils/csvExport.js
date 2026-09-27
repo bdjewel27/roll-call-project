@@ -2,6 +2,7 @@
  * CSV Export utility functions
  * Uses Blob and URL.createObjectURL for reliable file downloads.
  */
+import { ATTENDANCE_BENCHMARK } from '../constants/attendanceStatus';
 
 /**
  * Sanitizes and escapes a single CSV cell value according to RFC 4180 and
@@ -162,7 +163,7 @@ export const formatStudentMetricsRows = (studentMetrics) => {
     typeof m.late === 'number' ? m.late : 0,
     typeof m.leave === 'number' ? m.leave : 0,
     `${m.rate ?? 0}%`,
-    m.isAtRisk ? 'At Risk (< 75%)' : 'Good Standing',
+    m.isAtRisk ? `At Risk (< ${ATTENDANCE_BENCHMARK.AT_RISK_THRESHOLD}%)` : 'Good Standing',
   ]);
 };
 

@@ -6,6 +6,7 @@ import { useToast } from '../../context/ToastContext';
 import { dataService } from '../../services/dataService';
 import { exportStudentMetricsCSV } from '../../utils/csvExport';
 import { getTodayDateString } from '../../utils/formatters';
+import { ATTENDANCE_BENCHMARK } from '../../constants/attendanceStatus';
 import {
   FileBarChart,
   Download,
@@ -138,8 +139,8 @@ export const TeacherReports = () => {
               width: '44px',
               height: '44px',
               borderRadius: '10px',
-              backgroundColor: atRiskCount > 0 ? 'var(--status-absent-bg)' : 'var(--status-present-bg)',
-              color: atRiskCount > 0 ? 'var(--status-absent)' : 'var(--status-present)',
+              backgroundColor: atRiskCount > 0 ? 'var(--status-absent-bg)' : 'var(--bg-subtle)',
+              color: atRiskCount > 0 ? 'var(--status-absent-text)' : 'var(--text-secondary)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -150,7 +151,7 @@ export const TeacherReports = () => {
           <div>
             <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>At-Risk Students</div>
             <div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-              {atRiskCount} <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>(rate &lt; 75%)</span>
+              {atRiskCount} <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>(rate &lt; {ATTENDANCE_BENCHMARK.AT_RISK_THRESHOLD}%)</span>
             </div>
           </div>
         </Card>
@@ -215,16 +216,16 @@ export const TeacherReports = () => {
                     </td>
                     <td>{m.totalSessions}</td>
                     <td>
-                      <span style={{ color: 'var(--status-present)', fontWeight: 600 }}>{m.present}</span>
+                      <span style={{ color: 'var(--status-present-text)', fontWeight: 600 }}>{m.present}</span>
                     </td>
                     <td>
-                      <span style={{ color: 'var(--status-absent)', fontWeight: 600 }}>{m.absent}</span>
+                      <span style={{ color: 'var(--status-absent-text)', fontWeight: 600 }}>{m.absent}</span>
                     </td>
                     <td>
-                      <span style={{ color: 'var(--status-late)', fontWeight: 600 }}>{m.late}</span>
+                      <span style={{ color: 'var(--status-late-text)', fontWeight: 600 }}>{m.late}</span>
                     </td>
                     <td>
-                      <span style={{ color: 'var(--status-leave)', fontWeight: 600 }}>{m.leave}</span>
+                      <span style={{ color: 'var(--status-leave-text)', fontWeight: 600 }}>{m.leave}</span>
                     </td>
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -242,7 +243,7 @@ export const TeacherReports = () => {
                             style={{
                               width: `${m.rate}%`,
                               height: '100%',
-                              backgroundColor: m.rate < 75 ? 'var(--status-absent)' : 'var(--status-present)',
+                              backgroundColor: m.rate < ATTENDANCE_BENCHMARK.AT_RISK_THRESHOLD ? 'var(--status-absent)' : 'var(--status-present)',
                               borderRadius: '9999px',
                             }}
                           />

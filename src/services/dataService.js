@@ -1,5 +1,5 @@
 import { supabase, createAuthClient } from './supabaseClient';
-import { ATTENDANCE_STATUS } from '../constants/attendanceStatus';
+import { ATTENDANCE_STATUS, ATTENDANCE_BENCHMARK } from '../constants/attendanceStatus';
 import { calculateAttendanceStats } from '../utils/formatters';
 
 // --- 60-SECOND IN-MEMORY CACHE ---
@@ -605,54 +605,29 @@ export const dataService = {
   },
 
   async saveAttendance(classId, date, studentRecords, teacherId = null) {
-    let { data: session, error: sErr } = await supabase
-      .from('attendance_sessions')
-      .select('id')
-      .eq('class_id', classId)
-      .eq('date', date)
-      .maybeSingle();
-
-    if (sErr && sErr.code !== 'PGRST116') {
-      throw sErr;
-    }
-
     const isValidUuid = (str) =>
       typeof str === 'string' &&
       /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(str);
 
     const validTeacherId = isValidUuid(teacherId) ? teacherId : null;
 
-    if (!session) {
-      const { data: newSession, error: createErr } = await supabase
-        .from('attendance_sessions')
-        .insert([{ class_id: classId, date: date, marked_by: validTeacherId }])
-        .select('id')
-        .single();
-
-      if (createErr) throw createErr;
-      session = newSession;
-    }
-
-    const { error: delErr } = await supabase
-      .from('attendance_records')
-      .delete()
-      .eq('session_id', session.id);
-
-    if (delErr) throw delErr;
-
-    const recordsToInsert = studentRecords.map((r) => ({
-      session_id: session.id,
-      student_id: r.studentId,
-      class_id: classId,
+    const recordsPayload = (studentRecords || []).map((r) => ({
+      student_id: r.studentId || r.student_id,
       status: r.status,
       remark: r.remark || null,
     }));
 
-    const { error: insErr } = await supabase
-      .from('attendance_records')
-      .insert(recordsToInsert);
+    const { data, error } = await supabase.rpc('save_attendance_atomic', {
+      p_class_id: classId,
+      p_date: date,
+      p_records: recordsPayload,
+      p_teacher_id: validTeacherId,
+    });
 
-    if (insErr) throw insErr;
+    if (error) {
+      console.error('[RollCall] Error in save_attendance_atomic RPC:', error.message);
+      throw error;
+    }
 
     return { classId, date, students: studentRecords };
   },
@@ -707,6 +682,14 @@ export const dataService = {
     }
     if (eDate) {
       query = query.lte('date', eDate);
+    }
+    if (!sDate && !eDate) {
+      const defaultPastDate = new Date();
+      defaultPastDate.setDate(defaultPastDate.getDate() - 90);
+      const y = defaultPastDate.getFullYear();
+      const m = String(defaultPastDate.getMonth() + 1).padStart(2, '0');
+      const d = String(defaultPastDate.getDate()).padStart(2, '0');
+      query = query.gte('date', `${y}-${m}-${d}`);
     }
 
     const { data: sessions, error } = await query;
@@ -800,7 +783,7 @@ export const dataService = {
         late,
         leave,
         rate,
-        isAtRisk: rate < 75 && total > 0,
+        isAtRisk: rate < ATTENDANCE_BENCHMARK.AT_RISK_THRESHOLD && total > 0,
       };
     });
 
@@ -825,7 +808,7 @@ export const dataService = {
           late,
           leave,
           rate,
-          isAtRisk: rate < 75 && total > 0,
+          isAtRisk: rate < ATTENDANCE_BENCHMARK.AT_RISK_THRESHOLD && total > 0,
         });
       }
     });
