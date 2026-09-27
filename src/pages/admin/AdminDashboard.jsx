@@ -215,19 +215,10 @@ export const AdminDashboard = () => {
           <button
             type="button"
             onClick={() => loadDashboardData()}
+            className="btn-primary"
             style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              backgroundColor: 'var(--primary)',
-              color: '#ffffff',
               padding: '0.55rem 1.25rem',
-              borderRadius: '8px',
               fontWeight: 600,
-              fontSize: '0.875rem',
-              cursor: 'pointer',
-              border: 'none',
-              boxShadow: 'var(--shadow-sm)',
             }}
           >
             <RotateCcw size={15} />

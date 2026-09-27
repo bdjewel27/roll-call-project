@@ -94,14 +94,11 @@ export const TeacherReports = () => {
         <button
           type="button"
           onClick={handleExportCSV}
+          className="btn-primary"
           style={{
-            backgroundColor: 'var(--primary)',
-            color: '#ffffff',
             padding: '0.65rem 1.15rem',
-            borderRadius: '8px',
             fontWeight: 600,
             fontSize: '0.9rem',
-            boxShadow: 'var(--shadow-sm)',
           }}
         >
           <Download size={16} />
