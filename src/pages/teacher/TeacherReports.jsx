@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card } from '../../components/common/Card';
+import { StatCard } from '../../components/common/StatCard';
 import { EmptyState } from '../../components/common/EmptyState';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../context/ToastContext';
@@ -110,51 +111,24 @@ export const TeacherReports = () => {
 
       {/* Summary KPI Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-        <Card style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div
-            style={{
-              width: '44px',
-              height: '44px',
-              borderRadius: '10px',
-              backgroundColor: 'var(--primary-light)',
-              color: 'var(--primary)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <TrendingUp size={22} />
-          </div>
-          <div>
-            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Overall Attendance</div>
-            <div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-              {avgRate}%
-            </div>
-          </div>
-        </Card>
+        <StatCard
+          size="compact"
+          icon={TrendingUp}
+          title="Overall Attendance"
+          value={`${avgRate}%`}
+          iconColor="var(--primary)"
+          iconBg="var(--primary-light)"
+        />
 
-        <Card style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div
-            style={{
-              width: '44px',
-              height: '44px',
-              borderRadius: '10px',
-              backgroundColor: atRiskCount > 0 ? 'var(--status-absent-bg)' : 'var(--bg-subtle)',
-              color: atRiskCount > 0 ? 'var(--status-absent-text)' : 'var(--text-secondary)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <AlertTriangle size={22} />
-          </div>
-          <div>
-            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>At-Risk Students</div>
-            <div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-              {atRiskCount} <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>(rate &lt; {ATTENDANCE_BENCHMARK.AT_RISK_THRESHOLD}%)</span>
-            </div>
-          </div>
-        </Card>
+        <StatCard
+          size="compact"
+          icon={AlertTriangle}
+          title="At-Risk Students"
+          value={atRiskCount}
+          unit={`(rate < ${ATTENDANCE_BENCHMARK.AT_RISK_THRESHOLD}%)`}
+          iconColor={atRiskCount > 0 ? 'var(--status-absent-text)' : 'var(--text-secondary)'}
+          iconBg={atRiskCount > 0 ? 'var(--status-absent-bg)' : 'var(--bg-subtle)'}
+        />
       </div>
 
       {/* Filter */}

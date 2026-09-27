@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Card } from '../../components/common/Card';
+import { StatCard } from '../../components/common/StatCard';
 import { EmptyState } from '../../components/common/EmptyState';
 import { useToast } from '../../context/ToastContext';
 import { dataService } from '../../services/dataService';
@@ -137,97 +138,44 @@ export const ReportsPage = () => {
 
       {/* Aggregate KPI Summary Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-        <Card style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div
-            style={{
-              width: '44px',
-              height: '44px',
-              borderRadius: '10px',
-              backgroundColor: 'var(--primary-light)',
-              color: 'var(--primary)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <FileSpreadsheet size={22} />
-          </div>
-          <div>
-            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Logged Sessions</div>
-            <div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-              {metrics.totalSessions} <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>{metrics.totalSessions === 1 ? 'session' : 'sessions'}</span>
-            </div>
-          </div>
-        </Card>
+        <StatCard
+          size="compact"
+          icon={FileSpreadsheet}
+          title="Logged Sessions"
+          value={metrics.totalSessions}
+          unit={metrics.totalSessions === 1 ? 'session' : 'sessions'}
+          iconColor="var(--primary)"
+          iconBg="var(--primary-light)"
+        />
 
-        <Card style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div
-            style={{
-              width: '44px',
-              height: '44px',
-              borderRadius: '10px',
-              backgroundColor: metrics.overallRate > 0 ? 'var(--status-present-bg)' : 'var(--bg-subtle)',
-              color: metrics.overallRate > 0 ? 'var(--status-present-text)' : 'var(--text-secondary)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <TrendingUp size={22} />
-          </div>
-          <div>
-            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Average Attendance</div>
-            <div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-              {metrics.overallRate}%
-            </div>
-          </div>
-        </Card>
+        <StatCard
+          size="compact"
+          icon={TrendingUp}
+          title="Average Attendance"
+          value={`${metrics.overallRate}%`}
+          iconColor={metrics.overallRate > 0 ? 'var(--status-present-text)' : 'var(--text-secondary)'}
+          iconBg={metrics.overallRate > 0 ? 'var(--status-present-bg)' : 'var(--bg-subtle)'}
+        />
 
-        <Card style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div
-            style={{
-              width: '44px',
-              height: '44px',
-              borderRadius: '10px',
-              backgroundColor: metrics.totalAbsent > 0 ? 'var(--status-absent-bg)' : 'var(--bg-subtle)',
-              color: metrics.totalAbsent > 0 ? 'var(--status-absent-text)' : 'var(--text-secondary)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <UserX size={22} />
-          </div>
-          <div>
-            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Total Absences</div>
-            <div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-              {metrics.totalAbsent} <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>{metrics.totalAbsent === 1 ? 'record' : 'records'}</span>
-            </div>
-          </div>
-        </Card>
+        <StatCard
+          size="compact"
+          icon={UserX}
+          title="Total Absences"
+          value={metrics.totalAbsent}
+          unit={metrics.totalAbsent === 1 ? 'record' : 'records'}
+          iconColor={metrics.totalAbsent > 0 ? 'var(--status-absent-text)' : 'var(--text-secondary)'}
+          iconBg={metrics.totalAbsent > 0 ? 'var(--status-absent-bg)' : 'var(--bg-subtle)'}
+        />
 
-        <Card style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div
-            style={{
-              width: '44px',
-              height: '44px',
-              borderRadius: '10px',
-              backgroundColor: metrics.totalLate > 0 ? 'var(--status-late-bg)' : 'var(--bg-subtle)',
-              color: metrics.totalLate > 0 ? 'var(--status-late-text)' : 'var(--text-secondary)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Clock size={22} />
-          </div>
-          <div>
-            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Total Late Arrivals</div>
-            <div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-              {metrics.totalLate} <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>{metrics.totalLate === 1 ? 'record' : 'records'}</span>
-            </div>
-          </div>
-        </Card>
+        <StatCard
+          size="compact"
+          icon={Clock}
+          title="Total Late Arrivals"
+          value={metrics.totalLate}
+          unit={metrics.totalLate === 1 ? 'record' : 'records'}
+          iconColor={metrics.totalLate > 0 ? 'var(--status-late-text)' : 'var(--text-secondary)'}
+          iconBg={metrics.totalLate > 0 ? 'var(--status-late-bg)' : 'var(--bg-subtle)'}
+        />
       </div>
 
       {/* Filter Toolbar */}

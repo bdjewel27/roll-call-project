@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card } from '../../components/common/Card';
+import { StatCard } from '../../components/common/StatCard';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { EmptyState } from '../../components/common/EmptyState';
 import { dataService } from '../../services/dataService';
@@ -237,33 +238,16 @@ export const AdminDashboard = () => {
         <>
           {/* KPI Cards */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-            {statsCards.map((s, idx) => {
-              const Icon = s.icon;
-              return (
-                <Card key={idx} style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                  <div
-                    style={{
-                      width: '48px',
-                      height: '48px',
-                      borderRadius: '12px',
-                      backgroundColor: s.bg,
-                      color: s.color,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <Icon size={24} />
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{s.title}</div>
-                    <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)', marginTop: '0.2rem' }}>
-                      {s.value}
-                    </div>
-                  </div>
-                </Card>
-              );
-            })}
+            {statsCards.map((s, idx) => (
+              <StatCard
+                key={idx}
+                icon={s.icon}
+                title={s.title}
+                value={s.value}
+                iconColor={s.color}
+                iconBg={s.bg}
+              />
+            ))}
           </div>
 
           {/* Today's Status Breakdown */}

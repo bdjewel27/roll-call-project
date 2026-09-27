@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card } from '../../components/common/Card';
+import { StatCard } from '../../components/common/StatCard';
 import { EmptyState } from '../../components/common/EmptyState';
 import { useAuth } from '../../hooks/useAuth';
 import { dataService } from '../../services/dataService';
@@ -184,116 +185,48 @@ export const TeacherDashboard = () => {
         <>
           {/* KPI Cards */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-            <Card style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div
-                style={{
-                  width: '48px',
-                  height: '48px',
-                  borderRadius: '12px',
-                  backgroundColor: 'var(--primary-light)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'var(--primary)',
-                }}
-              >
-                <School size={24} />
-              </div>
-              <div>
-                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>My Assigned Classes</div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                  {loading ? '—' : (
-                    <>
-                      {summaryStats.totalClasses} <span style={{ fontSize: '0.85rem', fontWeight: 400 }}>{summaryStats.totalClasses === 1 ? 'class' : 'classes'}</span>
-                    </>
-                  )}
-                </div>
-              </div>
-            </Card>
+            <StatCard
+              icon={School}
+              title="My Assigned Classes"
+              value={loading ? '—' : summaryStats.totalClasses}
+              unit={!loading ? (summaryStats.totalClasses === 1 ? 'class' : 'classes') : undefined}
+              iconColor="var(--primary)"
+              iconBg="var(--primary-light)"
+            />
 
-            <Card style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div
-                style={{
-                  width: '48px',
-                  height: '48px',
-                  borderRadius: '12px',
-                  backgroundColor: 'var(--status-present-bg)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'var(--status-present-text)',
-                }}
-              >
-                <Users size={24} />
-              </div>
-              <div>
-                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Total Students</div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                  {loading ? '—' : (
-                    <>
-                      {summaryStats.totalStudents} <span style={{ fontSize: '0.85rem', fontWeight: 400 }}>{summaryStats.totalStudents === 1 ? 'student' : 'students'}</span>
-                    </>
-                  )}
-                </div>
-              </div>
-            </Card>
+            <StatCard
+              icon={Users}
+              title="Total Students"
+              value={loading ? '—' : summaryStats.totalStudents}
+              unit={!loading ? (summaryStats.totalStudents === 1 ? 'student' : 'students') : undefined}
+              iconColor="var(--status-present-text)"
+              iconBg="var(--status-present-bg)"
+            />
 
-            <Card style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div
-                style={{
-                  width: '48px',
-                  height: '48px',
-                  borderRadius: '12px',
-                  backgroundColor:
-                    !loading && summaryStats.markedClasses === summaryStats.totalClasses && summaryStats.totalClasses > 0
-                      ? 'var(--status-present-bg)'
-                      : 'var(--status-late-bg)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color:
-                    !loading && summaryStats.markedClasses === summaryStats.totalClasses && summaryStats.totalClasses > 0
-                      ? 'var(--status-present-text)'
-                      : 'var(--status-late-text)',
-                }}
-              >
-                <CheckCircle2 size={24} />
-              </div>
-              <div>
-                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Today's Roll Call</div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                  {loading ? '—' : (
-                    <>
-                      {summaryStats.markedClasses} / {summaryStats.totalClasses}{' '}
-                      <span style={{ fontSize: '0.85rem', fontWeight: 400 }}>completed</span>
-                    </>
-                  )}
-                </div>
-              </div>
-            </Card>
+            <StatCard
+              icon={CheckCircle2}
+              title="Today's Roll Call"
+              value={loading ? '—' : `${summaryStats.markedClasses} / ${summaryStats.totalClasses}`}
+              unit={!loading ? 'completed' : undefined}
+              iconColor={
+                !loading && summaryStats.markedClasses === summaryStats.totalClasses && summaryStats.totalClasses > 0
+                  ? 'var(--status-present-text)'
+                  : 'var(--status-late-text)'
+              }
+              iconBg={
+                !loading && summaryStats.markedClasses === summaryStats.totalClasses && summaryStats.totalClasses > 0
+                  ? 'var(--status-present-bg)'
+                  : 'var(--status-late-bg)'
+              }
+            />
 
-            <Card style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div
-                style={{
-                  width: '48px',
-                  height: '48px',
-                  borderRadius: '12px',
-                  backgroundColor: 'var(--primary-light)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'var(--primary)',
-                }}
-              >
-                <TrendingUp size={24} />
-              </div>
-              <div>
-                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Average Attendance</div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                  {loading ? '—' : `${summaryStats.overallRate}%`}
-                </div>
-              </div>
-            </Card>
+            <StatCard
+              icon={TrendingUp}
+              title="Average Attendance"
+              value={loading ? '—' : `${summaryStats.overallRate}%`}
+              iconColor="var(--primary)"
+              iconBg="var(--primary-light)"
+            />
           </div>
 
       {/* Today's Roll Call Tracker */}
