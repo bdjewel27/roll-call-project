@@ -16,6 +16,8 @@ import {
   Upload,
   User,
   X,
+  AlertCircle,
+  RotateCcw,
 } from 'lucide-react';
 
 /**
@@ -84,7 +86,8 @@ export const StudentManagement = () => {
   const [students, setStudents] = useState([]);
   const [selectedClassFilter, setSelectedClassFilter] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // Modals
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -124,6 +127,7 @@ export const StudentManagement = () => {
 
   const loadData = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const [clsList, stdList] = await Promise.all([
         dataService.getClasses(),
@@ -133,6 +137,7 @@ export const StudentManagement = () => {
       setStudents(stdList);
     } catch (err) {
       console.error(err);
+      setError('Unable to load student records. Please check your network connection and try again.');
       showToast('Error loading student records', 'error');
     } finally {
       setLoading(false);
@@ -372,7 +377,7 @@ export const StudentManagement = () => {
       {/* Student List */}
       <Card
         title="Enrolled Students"
-        subtitle={loading ? 'Loading students...' : `Showing ${filteredStudents.length} ${filteredStudents.length === 1 ? 'student' : 'students'}`}
+        subtitle={error ? 'Failed to retrieve students' : loading ? 'Loading students...' : `Showing ${filteredStudents.length} ${filteredStudents.length === 1 ? 'student' : 'students'}`}
       >
         {loading ? (
           <div className="table-responsive">
@@ -422,6 +427,62 @@ export const StudentManagement = () => {
                 ))}
               </tbody>
             </table>
+          </div>
+        ) : error ? (
+          <div
+            style={{
+              padding: '3rem 1.5rem',
+              textAlign: 'center',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '1rem',
+            }}
+          >
+            <div
+              style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '50%',
+                backgroundColor: 'var(--status-absent-bg)',
+                color: 'var(--status-absent-text)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <AlertCircle size={24} />
+            </div>
+            <div>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 600, margin: '0 0 0.5rem', color: 'var(--text-primary)' }}>
+                Unable to Load Students
+              </h3>
+              <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-secondary)', maxWidth: '420px' }}>
+                {error}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => loadData()}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                backgroundColor: 'var(--primary)',
+                color: '#ffffff',
+                padding: '0.55rem 1.25rem',
+                borderRadius: '8px',
+                fontWeight: 600,
+                fontSize: '0.875rem',
+                cursor: 'pointer',
+                border: 'none',
+                boxShadow: 'var(--shadow-sm)',
+              }}
+            >
+              <RotateCcw size={15} />
+              <span>Retry</span>
+            </button>
           </div>
         ) : filteredStudents.length === 0 ? (
           <EmptyState

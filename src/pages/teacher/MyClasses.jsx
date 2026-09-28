@@ -16,18 +16,24 @@ import {
   School,
   MapPin,
   Calendar,
+  AlertCircle,
+  RotateCcw,
 } from 'lucide-react';
 
 export const MyClasses = () => {
   const { user } = useAuth();
   const { showToast } = useToast();
   const [classes, setClasses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [selectedClassForRoster, setSelectedClassForRoster] = useState(null);
   const [rosterStudents, setRosterStudents] = useState([]);
   const [rosterSearch, setRosterSearch] = useState('');
   const todayDate = getTodayDateString();
 
   const loadClasses = useCallback(async () => {
+    setLoading(true);
+    setError(null);
     try {
       const teacherId = user?.id || null;
       const [list, todayLogs] = await Promise.all([
@@ -53,7 +59,10 @@ export const MyClasses = () => {
       setClasses(enriched);
     } catch (err) {
       console.error('[MyClasses] Error loading classes:', err);
+      setError('Unable to load your assigned classes. Please check your network connection and try again.');
       showToast('Failed to load assigned classes', 'error');
+    } finally {
+      setLoading(false);
     }
   }, [user, todayDate, showToast]);
 
@@ -93,7 +102,68 @@ export const MyClasses = () => {
         </p>
       </div>
 
-      {classes.length === 0 ? (
+      {loading ? (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.25rem' }}>
+          {[1, 2, 3].map((idx) => (
+            <Card key={idx} className="animate-pulse" style={{ height: '200px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ width: '60%', height: '20px', borderRadius: '4px', backgroundColor: 'var(--border-color)', marginBottom: '10px' }} />
+                <div style={{ width: '40%', height: '14px', borderRadius: '4px', backgroundColor: 'var(--border-color)' }} />
+              </div>
+              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.5rem' }}>
+                <div style={{ flex: 1, height: '36px', borderRadius: '8px', backgroundColor: 'var(--border-color)' }} />
+                <div style={{ flex: 1, height: '36px', borderRadius: '8px', backgroundColor: 'var(--border-color)' }} />
+              </div>
+            </Card>
+          ))}
+        </div>
+      ) : error ? (
+        <Card style={{ textAlign: 'center', padding: '3rem 1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+          <div
+            style={{
+              width: '48px',
+              height: '48px',
+              borderRadius: '50%',
+              backgroundColor: 'var(--status-absent-bg)',
+              color: 'var(--status-absent-text)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <AlertCircle size={24} />
+          </div>
+          <div>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 600, margin: '0 0 0.5rem', color: 'var(--text-primary)' }}>
+              Unable to Load Classes
+            </h3>
+            <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-secondary)', maxWidth: '420px' }}>
+              {error}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => loadClasses()}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              backgroundColor: 'var(--primary)',
+              color: '#ffffff',
+              padding: '0.55rem 1.25rem',
+              borderRadius: '8px',
+              fontWeight: 600,
+              fontSize: '0.875rem',
+              cursor: 'pointer',
+              border: 'none',
+              boxShadow: 'var(--shadow-sm)',
+            }}
+          >
+            <RotateCcw size={15} />
+            <span>Retry</span>
+          </button>
+        </Card>
+      ) : classes.length === 0 ? (
         <Card>
           <EmptyState
             icon={BookOpen}

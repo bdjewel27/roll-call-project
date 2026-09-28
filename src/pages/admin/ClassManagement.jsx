@@ -5,11 +5,13 @@ import { ConfirmModal } from '../../components/common/ConfirmModal';
 import { EmptyState } from '../../components/common/EmptyState';
 import { useToast } from '../../context/ToastContext';
 import { dataService } from '../../services/dataService';
-import { School, Plus, Search, Edit2, Trash2 } from 'lucide-react';
+import { School, Plus, Search, Edit2, Trash2, AlertCircle, RotateCcw } from 'lucide-react';
 
 export const ClassManagement = () => {
   const { showToast } = useToast();
   const [classes, setClasses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
 
   // Modal states
@@ -27,12 +29,17 @@ export const ClassManagement = () => {
   });
 
   const loadClasses = useCallback(async () => {
+    setLoading(true);
+    setError(null);
     try {
       const list = await dataService.getClasses();
       setClasses(list);
     } catch (err) {
       console.error(err);
+      setError('Unable to load classes. Please check your network connection and try again.');
       showToast('Failed to load classes', 'error');
+    } finally {
+      setLoading(false);
     }
   }, [showToast]);
 
@@ -143,7 +150,7 @@ export const ClassManagement = () => {
       {/* List / Table Card */}
       <Card
         title="Configured Classes"
-        subtitle={`Total ${classes.length} academic ${classes.length === 1 ? 'class' : 'classes'} registered`}
+        subtitle={error ? 'Failed to retrieve classes' : loading ? 'Loading classes...' : `Total ${classes.length} academic ${classes.length === 1 ? 'class' : 'classes'} registered`}
         extra={
           <div style={{ position: 'relative', width: '260px' }}>
             <Search size={16} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
@@ -158,7 +165,109 @@ export const ClassManagement = () => {
           </div>
         }
       >
-        {filteredClasses.length === 0 ? (
+        {loading ? (
+          <div className="table-responsive">
+            <table style={{ width: '100%' }}>
+              <thead>
+                <tr>
+                  <th>Class Name</th>
+                  <th>Grade</th>
+                  <th>Section</th>
+                  <th>Room</th>
+                  <th>Academic Year</th>
+                  <th>Students</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[1, 2, 3, 4, 5].map((idx) => (
+                  <tr key={idx} className="animate-pulse">
+                    <td>
+                      <div style={{ width: '120px', height: '16px', borderRadius: '4px', backgroundColor: 'var(--border-color)' }} />
+                    </td>
+                    <td>
+                      <div style={{ width: '60px', height: '16px', borderRadius: '4px', backgroundColor: 'var(--border-color)' }} />
+                    </td>
+                    <td>
+                      <div style={{ width: '40px', height: '16px', borderRadius: '4px', backgroundColor: 'var(--border-color)' }} />
+                    </td>
+                    <td>
+                      <div style={{ width: '50px', height: '16px', borderRadius: '4px', backgroundColor: 'var(--border-color)' }} />
+                    </td>
+                    <td>
+                      <div style={{ width: '80px', height: '16px', borderRadius: '4px', backgroundColor: 'var(--border-color)' }} />
+                    </td>
+                    <td>
+                      <div style={{ width: '70px', height: '16px', borderRadius: '4px', backgroundColor: 'var(--border-color)' }} />
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      <div style={{ display: 'inline-flex', gap: '0.35rem', justifyContent: 'flex-end' }}>
+                        <div style={{ width: '28px', height: '28px', borderRadius: '4px', backgroundColor: 'var(--border-color)' }} />
+                        <div style={{ width: '28px', height: '28px', borderRadius: '4px', backgroundColor: 'var(--border-color)' }} />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : error ? (
+          <div
+            style={{
+              padding: '3rem 1.5rem',
+              textAlign: 'center',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '1rem',
+            }}
+          >
+            <div
+              style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '50%',
+                backgroundColor: 'var(--status-absent-bg)',
+                color: 'var(--status-absent-text)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <AlertCircle size={24} />
+            </div>
+            <div>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 600, margin: '0 0 0.5rem', color: 'var(--text-primary)' }}>
+                Unable to Load Classes
+              </h3>
+              <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-secondary)', maxWidth: '420px' }}>
+                {error}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => loadClasses()}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                backgroundColor: 'var(--primary)',
+                color: '#ffffff',
+                padding: '0.55rem 1.25rem',
+                borderRadius: '8px',
+                fontWeight: 600,
+                fontSize: '0.875rem',
+                cursor: 'pointer',
+                border: 'none',
+                boxShadow: 'var(--shadow-sm)',
+              }}
+            >
+              <RotateCcw size={15} />
+              <span>Retry</span>
+            </button>
+          </div>
+        ) : filteredClasses.length === 0 ? (
           <EmptyState
             icon={School}
             title="No classes found"
