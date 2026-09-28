@@ -27,6 +27,8 @@ export const ToastProvider = ({ children }) => {
     <ToastContext.Provider value={{ showToast }}>
       {children}
       <div
+        role="region"
+        aria-label="Notifications"
         style={{
           position: 'fixed',
           bottom: '24px',
@@ -57,9 +59,14 @@ export const ToastProvider = ({ children }) => {
             iconColor = 'var(--status-absent)';
           }
 
+          const isAlert = toast.type === 'error';
+
           return (
             <div
               key={toast.id}
+              role={isAlert ? 'alert' : 'status'}
+              aria-live={isAlert ? 'assertive' : 'polite'}
+              aria-atomic="true"
               className="animate-fade-in"
               style={{
                 pointerEvents: 'auto',
@@ -81,6 +88,8 @@ export const ToastProvider = ({ children }) => {
                 <span>{toast.message}</span>
               </div>
               <button
+                type="button"
+                aria-label="Dismiss notification"
                 onClick={() => removeToast(toast.id)}
                 style={{
                   background: 'none',

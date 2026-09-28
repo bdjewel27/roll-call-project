@@ -106,14 +106,14 @@ export const ReportsPage = () => {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+    <div className="page-container">
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+      <div className="page-header">
         <div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 700, margin: '0 0 0.25rem', color: 'var(--text-primary)' }}>
+          <h1 className="page-title">
             Institutional Reports & Analytics
           </h1>
-          <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.925rem' }}>
+          <p className="page-subtitle">
             Multi-class historical attendance tracking, audit logs, and institutional CSV export
           </p>
         </div>
@@ -121,14 +121,10 @@ export const ReportsPage = () => {
         <button
           type="button"
           onClick={handleExportCSV}
+          className="btn-primary"
           style={{
-            backgroundColor: 'var(--primary)',
-            color: '#ffffff',
             padding: '0.65rem 1.15rem',
-            borderRadius: '8px',
-            fontWeight: 600,
             fontSize: '0.9rem',
-            boxShadow: 'var(--shadow-sm)',
           }}
         >
           <Download size={16} />
@@ -234,13 +230,8 @@ export const ReportsPage = () => {
                 setStartDate('');
                 setEndDate('');
               }}
-              style={{
-                width: '100%',
-                backgroundColor: 'var(--bg-subtle)',
-                color: 'var(--text-secondary)',
-                border: '1px solid var(--border-color)',
-                padding: '0.6rem',
-              }}
+              className="btn-secondary"
+              style={{ width: '100%', padding: '0.6rem' }}
             >
               Reset Filters
             </button>

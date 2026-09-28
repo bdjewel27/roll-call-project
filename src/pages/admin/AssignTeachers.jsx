@@ -77,13 +77,13 @@ export const AssignTeachers = () => {
   );
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+    <div className="page-container">
       {/* Header */}
       <div>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 700, margin: '0 0 0.25rem', color: 'var(--text-primary)' }}>
+        <h1 className="page-title">
           Assign Teachers to Classes
         </h1>
-        <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.925rem' }}>
+        <p className="page-subtitle">
           Grant teachers roll call permissions by linking them to designated classes
         </p>
       </div>
@@ -145,12 +145,12 @@ export const AssignTeachers = () => {
                     <button
                       type="button"
                       onClick={() => setSelectedClassForAssign(cls)}
+                      className="btn-action"
                       style={{
                         backgroundColor: 'var(--primary-light)',
                         color: 'var(--primary-text)',
-                        border: '1px solid var(--border-color)',
+                        borderColor: 'var(--border-color)',
                         padding: '0.4rem 0.8rem',
-                        fontSize: '0.8rem',
                         fontWeight: 600,
                       }}
                     >
@@ -304,11 +304,7 @@ export const AssignTeachers = () => {
               <button
                 type="button"
                 onClick={() => setSelectedClassForAssign(null)}
-                style={{
-                  backgroundColor: 'var(--bg-subtle)',
-                  color: 'var(--text-primary)',
-                  border: '1px solid var(--border-color)',
-                }}
+                className="btn-secondary"
               >
                 Close
               </button>

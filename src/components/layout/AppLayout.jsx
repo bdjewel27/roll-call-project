@@ -16,17 +16,19 @@ export const AppLayout = () => {
       }}
     >
       <Navbar onToggleMobileNav={() => setMobileNavOpen((prev) => !prev)} />
-      <div style={{ display: 'flex', flex: 1, position: 'relative' }}>
+      <div style={{ display: 'flex', flex: 1, position: 'relative', minWidth: 0 }}>
         <Sidebar isOpen={mobileNavOpen} onClose={() => setMobileNavOpen(false)} />
         <main
+          className="main-content"
           style={{
             flex: 1,
             padding: '1.75rem',
             overflowY: 'auto',
             maxWidth: '100%',
+            minWidth: 0,
           }}
         >
-          <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
+          <div style={{ maxWidth: '1280px', margin: '0 auto', width: '100%', minWidth: 0 }}>
             <Outlet />
           </div>
         </main>

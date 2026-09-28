@@ -91,13 +91,13 @@ export const MyClasses = () => {
   );
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+    <div className="page-container">
       {/* Header */}
       <div>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 700, margin: '0 0 0.25rem', color: 'var(--text-primary)' }}>
+        <h1 className="page-title">
           My Classes
         </h1>
-        <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.925rem' }}>
+        <p className="page-subtitle">
           Overview of your assigned academic classes and enrolled student rosters
         </p>
       </div>
@@ -118,50 +118,28 @@ export const MyClasses = () => {
           ))}
         </div>
       ) : error ? (
-        <Card style={{ textAlign: 'center', padding: '3rem 1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
-          <div
-            style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '50%',
-              backgroundColor: 'var(--status-absent-bg)',
-              color: 'var(--status-absent-text)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <AlertCircle size={24} />
+        <Card>
+          <div className="error-state-card">
+            <div className="error-state-icon">
+              <AlertCircle size={24} />
+            </div>
+            <div>
+              <h3 className="error-state-title">
+                Unable to Load Classes
+              </h3>
+              <p className="error-state-desc">
+                {error}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => loadClasses()}
+              className="btn-primary"
+            >
+              <RotateCcw size={15} />
+              <span>Retry</span>
+            </button>
           </div>
-          <div>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 600, margin: '0 0 0.5rem', color: 'var(--text-primary)' }}>
-              Unable to Load Classes
-            </h3>
-            <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-secondary)', maxWidth: '420px' }}>
-              {error}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => loadClasses()}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              backgroundColor: 'var(--primary)',
-              color: '#ffffff',
-              padding: '0.55rem 1.25rem',
-              borderRadius: '8px',
-              fontWeight: 600,
-              fontSize: '0.875rem',
-              cursor: 'pointer',
-              border: 'none',
-              boxShadow: 'var(--shadow-sm)',
-            }}
-          >
-            <RotateCcw size={15} />
-            <span>Retry</span>
-          </button>
         </Card>
       ) : classes.length === 0 ? (
         <Card>
@@ -188,27 +166,10 @@ export const MyClasses = () => {
               >
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
-                    <div
-                      style={{
-                        padding: '0.6rem',
-                        borderRadius: '10px',
-                        backgroundColor: 'var(--primary-light)',
-                        color: 'var(--primary)',
-                      }}
-                    >
+                    <div className="icon-box-primary">
                       <School size={22} />
                     </div>
-                    <span
-                      style={{
-                        padding: '0.25rem 0.65rem',
-                        borderRadius: '9999px',
-                        fontSize: '0.725rem',
-                        fontWeight: 600,
-                        backgroundColor: isMarked ? 'var(--status-present-bg)' : 'var(--status-late-bg)',
-                        color: isMarked ? 'var(--status-present-text)' : 'var(--status-late-text)',
-                        border: `1px solid ${isMarked ? 'var(--status-present-border)' : 'var(--status-late-border)'}`,
-                      }}
-                    >
+                    <span className={`status-pill ${isMarked ? 'status-pill-marked' : 'status-pill-pending'}`}>
                       {isMarked ? 'Marked Today' : 'Pending Today'}
                     </span>
                   </div>
@@ -233,22 +194,13 @@ export const MyClasses = () => {
                   </div>
                 </div>
 
-                <div
-                  style={{
-                    display: 'flex',
-                    gap: '0.5rem',
-                    paddingTop: '0.85rem',
-                    borderTop: '1px solid var(--border-color)',
-                  }}
-                >
+                <div className="card-footer-actions">
                   <button
                     type="button"
                     onClick={() => handleOpenRoster(cls)}
+                    className="btn-secondary"
                     style={{
                       flex: 1,
-                      backgroundColor: 'var(--bg-subtle)',
-                      color: 'var(--text-primary)',
-                      border: '1px solid var(--border-color)',
                       fontSize: '0.85rem',
                     }}
                   >
@@ -259,18 +211,10 @@ export const MyClasses = () => {
                   <Link
                     to="/teacher/attendance"
                     state={{ preselectedClassId: cls.id }}
+                    className="btn-primary"
                     style={{
                       flex: 1,
-                      backgroundColor: 'var(--primary)',
-                      color: '#ffffff',
-                      borderRadius: '8px',
-                      padding: '0.55rem 0.75rem',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.4rem',
                       fontSize: '0.85rem',
-                      fontWeight: 600,
                     }}
                   >
                     <ClipboardCheck size={15} />

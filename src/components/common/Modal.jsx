@@ -1,16 +1,121 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useId } from 'react';
 import { X } from 'lucide-react';
 
-export const Modal = ({ isOpen, onClose, title, children, maxWidth = '540px' }) => {
+const FOCUSABLE_SELECTOR =
+  'button:not([disabled]), [href], input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+export const Modal = ({
+  isOpen,
+  onClose,
+  title,
+  children,
+  maxWidth = '540px',
+  ariaDescribedBy,
+  initialFocusRef,
+}) => {
+  const titleId = useId();
+  const modalRef = useRef(null);
+  const previousActiveElementRef = useRef(null);
+
   useEffect(() => {
+    if (!isOpen) return;
+
+    // Capture the trigger element before opening
+    previousActiveElementRef.current = document.activeElement;
+
+    // Lock background scrolling
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    // Move initial focus
+    const focusTimeout = setTimeout(() => {
+      if (initialFocusRef?.current) {
+        initialFocusRef.current.focus();
+      } else if (modalRef.current) {
+        // Query focusables inside content first (excluding header close button)
+        const contentContainer = modalRef.current.querySelector('.modal-content-area');
+        const contentFocusables = contentContainer
+          ? Array.from(contentContainer.querySelectorAll(FOCUSABLE_SELECTOR)).filter(
+              (el) => el.offsetParent !== null
+            )
+          : [];
+
+        if (contentFocusables.length > 0) {
+          contentFocusables[0].focus();
+        } else {
+          // Fall back to all focusables (e.g. close button) or modal container
+          const allFocusables = Array.from(
+            modalRef.current.querySelectorAll(FOCUSABLE_SELECTOR)
+          ).filter((el) => el.offsetParent !== null);
+
+          if (allFocusables.length > 0) {
+            allFocusables[0].focus();
+          } else {
+            modalRef.current.focus();
+          }
+        }
+      }
+    }, 0);
+
+    // Keyboard handlers: Escape and Tab focus trap
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && isOpen) {
+      if (e.key === 'Escape') {
+        e.preventDefault();
         onClose();
+        return;
+      }
+
+      if (e.key === 'Tab' && modalRef.current) {
+        const focusables = Array.from(
+          modalRef.current.querySelectorAll(FOCUSABLE_SELECTOR)
+        ).filter((el) => el.offsetParent !== null || el === document.activeElement);
+
+        if (focusables.length === 0) {
+          e.preventDefault();
+          modalRef.current.focus();
+          return;
+        }
+
+        const firstElement = focusables[0];
+        const lastElement = focusables[focusables.length - 1];
+
+        if (e.shiftKey) {
+          if (
+            document.activeElement === firstElement ||
+            !modalRef.current.contains(document.activeElement)
+          ) {
+            e.preventDefault();
+            lastElement.focus();
+          }
+        } else {
+          if (
+            document.activeElement === lastElement ||
+            !modalRef.current.contains(document.activeElement)
+          ) {
+            e.preventDefault();
+            firstElement.focus();
+          }
+        }
       }
     };
+
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+
+    return () => {
+      clearTimeout(focusTimeout);
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = originalOverflow;
+
+      // Restore focus to opener element
+      if (
+        previousActiveElementRef.current &&
+        typeof previousActiveElementRef.current.focus === 'function' &&
+        document.contains(previousActiveElementRef.current)
+      ) {
+        previousActiveElementRef.current.focus();
+      }
+    };
+  }, [isOpen, onClose, initialFocusRef]);
 
   if (!isOpen) return null;
 
@@ -30,6 +135,13 @@ export const Modal = ({ isOpen, onClose, title, children, maxWidth = '540px' }) 
       onClick={onClose}
     >
       <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={title ? titleId : undefined}
+        aria-label={!title ? 'Dialog' : undefined}
+        aria-describedby={ariaDescribedBy}
+        tabIndex={-1}
         className="animate-fade-in"
         style={{
           width: '100%',
@@ -42,6 +154,7 @@ export const Modal = ({ isOpen, onClose, title, children, maxWidth = '540px' }) 
           display: 'flex',
           flexDirection: 'column',
           maxHeight: '90vh',
+          outline: 'none',
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -55,11 +168,16 @@ export const Modal = ({ isOpen, onClose, title, children, maxWidth = '540px' }) 
             borderBottom: '1px solid var(--border-color)',
           }}
         >
-          <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+          <h3
+            id={titleId}
+            style={{ margin: 0, fontSize: '1.15rem', fontWeight: 600, color: 'var(--text-primary)' }}
+          >
             {title}
           </h3>
           <button
+            type="button"
             onClick={onClose}
+            aria-label="Close dialog"
             style={{
               background: 'none',
               border: 'none',
@@ -75,7 +193,7 @@ export const Modal = ({ isOpen, onClose, title, children, maxWidth = '540px' }) 
         </div>
 
         {/* Content */}
-        <div style={{ padding: '1.5rem', overflowY: 'auto' }}>
+        <div className="modal-content-area" style={{ padding: '1.5rem', overflowY: 'auto' }}>
           {children}
         </div>
       </div>

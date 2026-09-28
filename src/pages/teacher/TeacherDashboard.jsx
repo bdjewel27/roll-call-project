@@ -102,32 +102,24 @@ export const TeacherDashboard = () => {
   }, [loadDashboardData]);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+    <div className="page-container">
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+      <div className="page-header">
         <div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 700, margin: '0 0 0.25rem', color: 'var(--text-primary)' }}>
+          <h1 className="page-title">
             Welcome back, {user?.fullName || 'Teacher'}
           </h1>
-          <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.925rem' }}>
+          <p className="page-subtitle">
             Faculty Workspace &middot; Today is {formatDate(todayDate)}
           </p>
         </div>
 
         <Link
           to="/teacher/attendance"
+          className="btn-primary"
           style={{
-            backgroundColor: 'var(--primary)',
-            color: '#ffffff',
             padding: '0.65rem 1.15rem',
-            borderRadius: '8px',
-            fontWeight: 600,
             fontSize: '0.9rem',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            boxShadow: 'var(--shadow-sm)',
-            textDecoration: 'none',
           }}
         >
           <span>Take Attendance</span>
@@ -136,41 +128,28 @@ export const TeacherDashboard = () => {
       </div>
 
       {error ? (
-        <Card style={{ textAlign: 'center', padding: '3rem 1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
-          <div
-            style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '50%',
-              backgroundColor: 'var(--status-absent-bg)',
-              color: 'var(--status-absent-text)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <AlertCircle size={24} />
+        <Card>
+          <div className="error-state-card">
+            <div className="error-state-icon">
+              <AlertCircle size={24} />
+            </div>
+            <div>
+              <h3 className="error-state-title">
+                Unable to Load Dashboard Data
+              </h3>
+              <p className="error-state-desc">
+                {error}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => loadDashboardData()}
+              className="btn-primary"
+            >
+              <RotateCcw size={15} />
+              <span>Retry</span>
+            </button>
           </div>
-          <div>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 600, margin: '0 0 0.5rem', color: 'var(--text-primary)' }}>
-              Unable to Load Dashboard Data
-            </h3>
-            <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-secondary)', maxWidth: '420px' }}>
-              {error}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => loadDashboardData()}
-            className="btn-primary"
-            style={{
-              padding: '0.55rem 1.25rem',
-              fontWeight: 600,
-            }}
-          >
-            <RotateCcw size={15} />
-            <span>Retry</span>
-          </button>
         </Card>
       ) : (
         <>
@@ -267,28 +246,7 @@ export const TeacherDashboard = () => {
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                  <span
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.35rem',
-                      padding: '0.25rem 0.65rem',
-                      borderRadius: '9999px',
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      backgroundColor: cls.isMarked
-                        ? 'var(--status-present-bg)'
-                        : 'var(--status-late-bg)',
-                      color: cls.isMarked
-                        ? 'var(--status-present-text)'
-                        : 'var(--status-late-text)',
-                      border: `1px solid ${
-                        cls.isMarked
-                          ? 'var(--status-present-border)'
-                          : 'var(--status-late-border)'
-                      }`,
-                    }}
-                  >
+                  <span className={`status-pill ${cls.isMarked ? 'status-pill-marked' : 'status-pill-pending'}`}>
                     {cls.isMarked ? <CheckCircle2 size={13} /> : <Clock size={13} />}
                     <span>{cls.isMarked ? 'Marked Today' : 'Pending Roll Call'}</span>
                   </span>
@@ -296,18 +254,10 @@ export const TeacherDashboard = () => {
                   <Link
                     to="/teacher/attendance"
                     state={{ preselectedClassId: cls.id }}
+                    className={cls.isMarked ? 'btn-secondary' : 'btn-primary'}
                     style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.35rem',
-                      backgroundColor: cls.isMarked ? 'var(--bg-card)' : 'var(--primary)',
-                      color: cls.isMarked ? 'var(--text-primary)' : '#ffffff',
-                      border: cls.isMarked ? '1px solid var(--border-color)' : 'none',
                       padding: '0.5rem 0.95rem',
-                      borderRadius: '8px',
-                      textDecoration: 'none',
                       fontSize: '0.85rem',
-                      fontWeight: 500,
                     }}
                   >
                     <span>{cls.isMarked ? 'Review / Edit' : 'Take Attendance'}</span>

@@ -33,25 +33,21 @@ export const AuthProvider = ({ children }) => {
         console.warn('[RollCall Auth] Error fetching profile:', error.message);
       }
 
-      const role =
-        normalizeRole(profile?.role) ||
-        normalizeRole(authUser.user_metadata?.role) ||
-        null;
+      const role = normalizeRole(profile?.role);
 
       return {
         id: authUser.id,
         email: authUser.email,
         role,
-        fullName: profile?.full_name || authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
+        fullName: profile?.full_name || authUser.email?.split('@')[0] || 'User',
       };
     } catch (err) {
       console.warn('[RollCall Auth] Profile lookup exception:', err);
-      const role = normalizeRole(authUser.user_metadata?.role) || null;
       return {
         id: authUser.id,
         email: authUser.email,
-        role,
-        fullName: authUser.user_metadata?.full_name || 'User',
+        role: null,
+        fullName: authUser.email?.split('@')[0] || 'User',
       };
     }
   };

@@ -156,9 +156,26 @@ a:focus-visible,
 }
 
 /* Button utility classes */
+.btn-primary,
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.55rem 0.9rem;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.15s ease-in-out;
+}
+
 .btn-primary {
   background-color: var(--primary);
   color: #ffffff;
+  border: 1px solid transparent;
   box-shadow: var(--shadow-sm);
 }
 
@@ -287,4 +304,389 @@ tr:hover td {
 ::-webkit-scrollbar-thumb {
   background: var(--text-muted);
   border-radius: 4px;
+}
+
+/* Page Layout Utilities */
+.page-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.page-header-centered {
+  align-items: center;
+}
+
+.page-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 0 0 0.25rem;
+  color: var(--text-primary);
+}
+
+.page-subtitle {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.925rem;
+}
+
+.page-header-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* Action Icon Buttons for Tables */
+.btn-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s ease-in-out;
+}
+
+.btn-action-edit {
+  background-color: var(--bg-subtle);
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+
+.btn-action-edit:hover:not(:disabled) {
+  background-color: var(--bg-hover);
+  border-color: var(--border-focus);
+}
+
+.btn-action-delete {
+  background-color: var(--status-absent-bg);
+  color: var(--status-absent-text);
+  border-color: var(--status-absent-border);
+}
+
+.btn-action-delete:hover:not(:disabled) {
+  opacity: 0.9;
+  filter: brightness(0.95);
+}
+
+/* Attendance Status Toggle Buttons */
+.status-toggle-btn {
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  background-color: var(--bg-subtle);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+}
+
+.status-toggle-btn:hover:not(:disabled) {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.status-toggle-btn.status-present-active {
+  font-weight: 700;
+  background-color: var(--status-present-bg);
+  color: var(--status-present-text);
+  border-color: var(--status-present-border);
+}
+
+.status-toggle-btn.status-absent-active {
+  font-weight: 700;
+  background-color: var(--status-absent-bg);
+  color: var(--status-absent-text);
+  border-color: var(--status-absent-border);
+}
+
+.status-toggle-btn.status-late-active {
+  font-weight: 700;
+  background-color: var(--status-late-bg);
+  color: var(--status-late-text);
+  border-color: var(--status-late-border);
+}
+
+.status-toggle-btn.status-leave-active {
+  font-weight: 700;
+  background-color: var(--status-leave-bg);
+  color: var(--status-leave-text);
+  border-color: var(--status-leave-border);
+}
+
+/* Stat Tiles (Admin Breakdown) */
+.stat-tile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.stat-tile {
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-card);
+  border-radius: 10px;
+  padding: 1rem;
+  transition: all 0.15s ease-in-out;
+}
+
+.stat-tile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.stat-tile-pct {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.stat-tile-count {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--text-secondary);
+  margin-top: 0.4rem;
+}
+
+.stat-tile-unit {
+  font-size: 0.85rem;
+  font-weight: 400;
+}
+
+.stat-tile.active-present {
+  border-color: var(--status-present-border);
+  background-color: var(--status-present-bg);
+}
+.stat-tile.active-present .stat-tile-pct,
+.stat-tile.active-present .stat-tile-count {
+  color: var(--status-present-text);
+}
+
+.stat-tile.active-absent {
+  border-color: var(--status-absent-border);
+  background-color: var(--status-absent-bg);
+}
+.stat-tile.active-absent .stat-tile-pct,
+.stat-tile.active-absent .stat-tile-count {
+  color: var(--status-absent-text);
+}
+
+.stat-tile.active-late {
+  border-color: var(--status-late-border);
+  background-color: var(--status-late-bg);
+}
+.stat-tile.active-late .stat-tile-pct,
+.stat-tile.active-late .stat-tile-count {
+  color: var(--status-late-text);
+}
+
+.stat-tile.active-leave {
+  border-color: var(--status-leave-border);
+  background-color: var(--status-leave-bg);
+}
+.stat-tile.active-leave .stat-tile-pct,
+.stat-tile.active-leave .stat-tile-count {
+  color: var(--status-leave-text);
+}
+
+/* Stat Ribbon (Attendance marking summary) */
+.stat-ribbon {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
+}
+
+.stat-ribbon-tile {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  transition: all 0.15s ease-in-out;
+}
+
+.stat-ribbon-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.stat-ribbon-val {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.stat-ribbon-tile.status-present-active {
+  background-color: var(--status-present-bg);
+  border-color: var(--status-present-border);
+}
+.stat-ribbon-tile.status-present-active .stat-ribbon-label,
+.stat-ribbon-tile.status-present-active .stat-ribbon-val {
+  color: var(--status-present-text);
+  font-weight: 800;
+}
+
+.stat-ribbon-tile.status-absent-active {
+  background-color: var(--status-absent-bg);
+  border-color: var(--status-absent-border);
+}
+.stat-ribbon-tile.status-absent-active .stat-ribbon-label,
+.stat-ribbon-tile.status-absent-active .stat-ribbon-val {
+  color: var(--status-absent-text);
+  font-weight: 800;
+}
+
+.stat-ribbon-tile.status-late-active {
+  background-color: var(--status-late-bg);
+  border-color: var(--status-late-border);
+}
+.stat-ribbon-tile.status-late-active .stat-ribbon-label,
+.stat-ribbon-tile.status-late-active .stat-ribbon-val {
+  color: var(--status-late-text);
+  font-weight: 800;
+}
+
+.stat-ribbon-tile.status-leave-active {
+  background-color: var(--status-leave-bg);
+  border-color: var(--status-leave-border);
+}
+.stat-ribbon-tile.status-leave-active .stat-ribbon-label,
+.stat-ribbon-tile.status-leave-active .stat-ribbon-val {
+  color: var(--status-leave-text);
+  font-weight: 800;
+}
+
+/* Filter Tabs */
+.filter-tabs-wrapper {
+  display: inline-flex;
+  background-color: var(--bg-subtle);
+  border-radius: 8px;
+  padding: 3px;
+  gap: 2px;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.filter-tab {
+  padding: 0.35rem 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 6px;
+  border: none;
+  background-color: transparent;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.filter-tab:hover:not(.active) {
+  color: var(--text-primary);
+}
+
+.filter-tab.active {
+  font-weight: 700;
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Status Pills (Marked vs Pending) */
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 9999px;
+  font-size: 0.725rem;
+  font-weight: 600;
+}
+
+.status-pill-marked {
+  background-color: var(--status-present-bg);
+  color: var(--status-present-text);
+  border: 1px solid var(--status-present-border);
+}
+
+.status-pill-pending {
+  background-color: var(--status-late-bg);
+  color: var(--status-late-text);
+  border: 1px solid var(--status-late-border);
+}
+
+/* Shared Error State Card */
+.error-state-card {
+  padding: 3rem 1.5rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.error-state-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: var(--status-absent-bg);
+  color: var(--status-absent-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.error-state-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+  color: var(--text-primary);
+}
+
+.error-state-desc {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  max-width: 420px;
+}
+
+/* Shared Icon Box & Card Footer */
+.icon-box-primary {
+  padding: 0.6rem;
+  border-radius: 10px;
+  background-color: var(--primary-light);
+  color: var(--primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-footer-actions {
+  display: flex;
+  gap: 0.5rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--border-color);
 }

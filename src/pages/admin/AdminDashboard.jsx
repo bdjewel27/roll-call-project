@@ -116,72 +116,30 @@ export const AdminDashboard = () => {
   ];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+    <div className="page-container">
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+      <div className="page-header">
         <div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 700, margin: '0 0 0.25rem', color: 'var(--text-primary)' }}>
+          <h1 className="page-title">
             Institutional Administration
           </h1>
-          <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.925rem' }}>
+          <p className="page-subtitle">
             System overview and attendance tracking &middot; {formatDate(todayDate)}
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-          <Link
-            to="/admin/classes"
-            style={{
-              backgroundColor: 'var(--bg-subtle)',
-              color: 'var(--text-primary)',
-              border: '1px solid var(--border-color)',
-              padding: '0.55rem 0.9rem',
-              borderRadius: '8px',
-              fontWeight: 600,
-              fontSize: '0.85rem',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-            }}
-          >
+        <div className="page-header-actions">
+          <Link to="/admin/classes" className="btn-secondary">
             <Plus size={15} />
             <span>Add Class</span>
           </Link>
 
-          <Link
-            to="/admin/teachers"
-            style={{
-              backgroundColor: 'var(--bg-subtle)',
-              color: 'var(--text-primary)',
-              border: '1px solid var(--border-color)',
-              padding: '0.55rem 0.9rem',
-              borderRadius: '8px',
-              fontWeight: 600,
-              fontSize: '0.85rem',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-            }}
-          >
+          <Link to="/admin/teachers" className="btn-secondary">
             <Plus size={15} />
             <span>Add Teacher</span>
           </Link>
 
-          <Link
-            to="/admin/students"
-            style={{
-              backgroundColor: 'var(--primary)',
-              color: '#ffffff',
-              padding: '0.55rem 0.9rem',
-              borderRadius: '8px',
-              fontWeight: 600,
-              fontSize: '0.85rem',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              boxShadow: 'var(--shadow-sm)',
-            }}
-          >
+          <Link to="/admin/students" className="btn-primary">
             <Plus size={15} />
             <span>Enroll Student</span>
           </Link>
@@ -189,41 +147,28 @@ export const AdminDashboard = () => {
       </div>
 
       {error ? (
-        <Card style={{ textAlign: 'center', padding: '3rem 1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
-          <div
-            style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '50%',
-              backgroundColor: 'var(--status-absent-bg)',
-              color: 'var(--status-absent-text)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <AlertCircle size={24} />
+        <Card>
+          <div className="error-state-card">
+            <div className="error-state-icon">
+              <AlertCircle size={24} />
+            </div>
+            <div>
+              <h3 className="error-state-title">
+                Unable to Load Dashboard Data
+              </h3>
+              <p className="error-state-desc">
+                {error}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => loadDashboardData()}
+              className="btn-primary"
+            >
+              <RotateCcw size={15} />
+              <span>Retry</span>
+            </button>
           </div>
-          <div>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 600, margin: '0 0 0.5rem', color: 'var(--text-primary)' }}>
-              Unable to Load Dashboard Data
-            </h3>
-            <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-secondary)', maxWidth: '420px' }}>
-              {error}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => loadDashboardData()}
-            className="btn-primary"
-            style={{
-              padding: '0.55rem 1.25rem',
-              fontWeight: 600,
-            }}
-          >
-            <RotateCcw size={15} />
-            <span>Retry</span>
-          </button>
         </Card>
       ) : (
         <>
@@ -246,80 +191,52 @@ export const AdminDashboard = () => {
             title="Today's Institution Attendance"
             subtitle={loading ? "Loading today's attendance..." : `Recorded across ${markedClassesCount} of ${classes.length} active classes`}
           >
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginTop: '0.5rem' }}>
-              <div
-                style={{
-                  border: `1px solid ${!loading && breakdown.present > 0 ? 'var(--status-present-border)' : 'var(--border-color)'}`,
-                  backgroundColor: !loading && breakdown.present > 0 ? 'var(--status-present-bg)' : 'var(--bg-card)',
-                  borderRadius: '10px',
-                  padding: '1rem',
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="stat-tile-grid">
+              <div className={`stat-tile stat-tile-present ${!loading && breakdown.present > 0 ? 'active-present' : ''}`}>
+                <div className="stat-tile-header">
                   <StatusBadge status="present" />
-                  <span style={{ fontSize: '0.85rem', fontWeight: 700, color: !loading && breakdown.present > 0 ? 'var(--status-present-text)' : 'var(--text-secondary)' }}>
+                  <span className="stat-tile-pct">
                     {loading ? '—' : `${breakdown.total > 0 ? Math.round((breakdown.present / breakdown.total) * 100) : 0}%`}
                   </span>
                 </div>
-                <div style={{ fontSize: '1.6rem', fontWeight: 800, color: !loading && breakdown.present > 0 ? 'var(--status-present-text)' : 'var(--text-secondary)', marginTop: '0.4rem' }}>
-                  {loading ? '—' : breakdown.present} <span style={{ fontSize: '0.85rem', fontWeight: 400 }}>{breakdown.present === 1 ? 'student' : 'students'}</span>
+                <div className="stat-tile-count">
+                  {loading ? '—' : breakdown.present} <span className="stat-tile-unit">{breakdown.present === 1 ? 'student' : 'students'}</span>
                 </div>
               </div>
 
-              <div
-                style={{
-                  border: `1px solid ${!loading && breakdown.absent > 0 ? 'var(--status-absent-border)' : 'var(--border-color)'}`,
-                  backgroundColor: !loading && breakdown.absent > 0 ? 'var(--status-absent-bg)' : 'var(--bg-card)',
-                  borderRadius: '10px',
-                  padding: '1rem',
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div className={`stat-tile stat-tile-absent ${!loading && breakdown.absent > 0 ? 'active-absent' : ''}`}>
+                <div className="stat-tile-header">
                   <StatusBadge status="absent" />
-                  <span style={{ fontSize: '0.85rem', fontWeight: 700, color: !loading && breakdown.absent > 0 ? 'var(--status-absent-text)' : 'var(--text-secondary)' }}>
+                  <span className="stat-tile-pct">
                     {loading ? '—' : `${breakdown.total > 0 ? Math.round((breakdown.absent / breakdown.total) * 100) : 0}%`}
                   </span>
                 </div>
-                <div style={{ fontSize: '1.6rem', fontWeight: 800, color: !loading && breakdown.absent > 0 ? 'var(--status-absent-text)' : 'var(--text-secondary)', marginTop: '0.4rem' }}>
-                  {loading ? '—' : breakdown.absent} <span style={{ fontSize: '0.85rem', fontWeight: 400 }}>{breakdown.absent === 1 ? 'student' : 'students'}</span>
+                <div className="stat-tile-count">
+                  {loading ? '—' : breakdown.absent} <span className="stat-tile-unit">{breakdown.absent === 1 ? 'student' : 'students'}</span>
                 </div>
               </div>
 
-              <div
-                style={{
-                  border: `1px solid ${!loading && breakdown.late > 0 ? 'var(--status-late-border)' : 'var(--border-color)'}`,
-                  backgroundColor: !loading && breakdown.late > 0 ? 'var(--status-late-bg)' : 'var(--bg-card)',
-                  borderRadius: '10px',
-                  padding: '1rem',
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div className={`stat-tile stat-tile-late ${!loading && breakdown.late > 0 ? 'active-late' : ''}`}>
+                <div className="stat-tile-header">
                   <StatusBadge status="late" />
-                  <span style={{ fontSize: '0.85rem', fontWeight: 700, color: !loading && breakdown.late > 0 ? 'var(--status-late-text)' : 'var(--text-secondary)' }}>
+                  <span className="stat-tile-pct">
                     {loading ? '—' : `${breakdown.total > 0 ? Math.round((breakdown.late / breakdown.total) * 100) : 0}%`}
                   </span>
                 </div>
-                <div style={{ fontSize: '1.6rem', fontWeight: 800, color: !loading && breakdown.late > 0 ? 'var(--status-late-text)' : 'var(--text-secondary)', marginTop: '0.4rem' }}>
-                  {loading ? '—' : breakdown.late} <span style={{ fontSize: '0.85rem', fontWeight: 400 }}>{breakdown.late === 1 ? 'student' : 'students'}</span>
+                <div className="stat-tile-count">
+                  {loading ? '—' : breakdown.late} <span className="stat-tile-unit">{breakdown.late === 1 ? 'student' : 'students'}</span>
                 </div>
               </div>
 
-              <div
-                style={{
-                  border: `1px solid ${!loading && breakdown.leave > 0 ? 'var(--status-leave-border)' : 'var(--border-color)'}`,
-                  backgroundColor: !loading && breakdown.leave > 0 ? 'var(--status-leave-bg)' : 'var(--bg-card)',
-                  borderRadius: '10px',
-                  padding: '1rem',
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div className={`stat-tile stat-tile-leave ${!loading && breakdown.leave > 0 ? 'active-leave' : ''}`}>
+                <div className="stat-tile-header">
                   <StatusBadge status="leave" />
-                  <span style={{ fontSize: '0.85rem', fontWeight: 700, color: !loading && breakdown.leave > 0 ? 'var(--status-leave-text)' : 'var(--text-secondary)' }}>
+                  <span className="stat-tile-pct">
                     {loading ? '—' : `${breakdown.total > 0 ? Math.round((breakdown.leave / breakdown.total) * 100) : 0}%`}
                   </span>
                 </div>
-                <div style={{ fontSize: '1.6rem', fontWeight: 800, color: !loading && breakdown.leave > 0 ? 'var(--status-leave-text)' : 'var(--text-secondary)', marginTop: '0.4rem' }}>
-                  {loading ? '—' : breakdown.leave} <span style={{ fontSize: '0.85rem', fontWeight: 400 }}>{breakdown.leave === 1 ? 'student' : 'students'}</span>
+                <div className="stat-tile-count">
+                  {loading ? '—' : breakdown.leave} <span className="stat-tile-unit">{breakdown.leave === 1 ? 'student' : 'students'}</span>
                 </div>
               </div>
             </div>
@@ -386,20 +303,7 @@ export const AdminDashboard = () => {
                         )}
                       </td>
                       <td>
-                        <span
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.35rem',
-                            padding: '0.25rem 0.65rem',
-                            borderRadius: '9999px',
-                            fontSize: '0.75rem',
-                            fontWeight: 600,
-                            backgroundColor: cls.isMarked ? 'var(--status-present-bg)' : 'var(--status-late-bg)',
-                            color: cls.isMarked ? 'var(--status-present-text)' : 'var(--status-late-text)',
-                            border: `1px solid ${cls.isMarked ? 'var(--status-present-border)' : 'var(--status-late-border)'}`,
-                          }}
-                        >
+                        <span className={`status-pill ${cls.isMarked ? 'status-pill-marked' : 'status-pill-pending'}`}>
                           {cls.isMarked ? <CheckCircle2 size={13} /> : <Clock size={13} />}
                           <span>{cls.isMarked ? 'Marked Today' : 'Pending Roll Call'}</span>
                         </span>

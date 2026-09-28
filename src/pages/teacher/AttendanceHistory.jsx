@@ -86,14 +86,14 @@ export const AttendanceHistory = () => {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+    <div className="page-container">
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+      <div className="page-header">
         <div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 700, margin: '0 0 0.25rem', color: 'var(--text-primary)' }}>
+          <h1 className="page-title">
             Attendance History
           </h1>
-          <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.925rem' }}>
+          <p className="page-subtitle">
             Historical roll call sessions, student attendance registries, and records
           </p>
         </div>
@@ -102,20 +102,10 @@ export const AttendanceHistory = () => {
           type="button"
           onClick={handleExportCSV}
           disabled={historyLogs.length === 0}
+          className="btn-primary"
           style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            backgroundColor: 'var(--primary)',
-            color: '#ffffff',
             padding: '0.65rem 1.15rem',
-            borderRadius: '8px',
-            fontWeight: 600,
             fontSize: '0.9rem',
-            border: 'none',
-            cursor: historyLogs.length === 0 ? 'not-allowed' : 'pointer',
-            opacity: historyLogs.length === 0 ? 0.6 : 1,
-            boxShadow: 'var(--shadow-sm)',
           }}
         >
           <Download size={16} />
@@ -179,13 +169,8 @@ export const AttendanceHistory = () => {
                 setStartDate('');
                 setEndDate('');
               }}
-              style={{
-                width: '100%',
-                backgroundColor: 'var(--bg-subtle)',
-                color: 'var(--text-secondary)',
-                border: '1px solid var(--border-color)',
-                padding: '0.6rem',
-              }}
+              className="btn-secondary"
+              style={{ width: '100%', padding: '0.6rem' }}
             >
               Reset Filters
             </button>
@@ -263,13 +248,7 @@ export const AttendanceHistory = () => {
                           type="button"
                           onClick={() => handleOpenDetail(log)}
                           title="View Roll Call Roster"
-                          style={{
-                            padding: '0.35rem 0.65rem',
-                            backgroundColor: 'var(--bg-subtle)',
-                            color: 'var(--text-primary)',
-                            border: '1px solid var(--border-color)',
-                            fontSize: '0.8rem',
-                          }}
+                          className="btn-action btn-action-edit"
                         >
                           <Eye size={14} />
                           <span>Roster</span>
@@ -279,16 +258,11 @@ export const AttendanceHistory = () => {
                           to="/teacher/attendance"
                           state={{ preselectedClassId: log.classId, preselectedDate: log.date }}
                           title="Edit Session in Take Attendance"
+                          className="btn-action"
                           style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.35rem',
-                            padding: '0.35rem 0.65rem',
-                            borderRadius: '8px',
                             backgroundColor: 'var(--primary-light)',
                             color: 'var(--primary-text)',
-                            border: '1px solid var(--border-color)',
-                            fontSize: '0.8rem',
+                            borderColor: 'var(--border-color)',
                             fontWeight: 500,
                           }}
                         >

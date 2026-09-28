@@ -125,14 +125,14 @@ export const TeacherManagement = () => {
   );
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+    <div className="page-container">
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+      <div className="page-header page-header-centered">
         <div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 700, margin: '0 0 0.25rem', color: 'var(--text-primary)' }}>
+          <h1 className="page-title">
             Teacher Management
           </h1>
-          <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.925rem' }}>
+          <p className="page-subtitle">
             Register, manage, and oversee faculty members and class permissions
           </p>
         </div>
@@ -140,14 +140,10 @@ export const TeacherManagement = () => {
         <button
           type="button"
           onClick={handleOpenCreate}
+          className="btn-primary"
           style={{
-            backgroundColor: 'var(--primary)',
-            color: '#ffffff',
             padding: '0.65rem 1.15rem',
-            borderRadius: '8px',
-            fontWeight: 600,
             fontSize: '0.9rem',
-            boxShadow: 'var(--shadow-sm)',
           }}
         >
           <UserPlus size={18} />
@@ -257,12 +253,7 @@ export const TeacherManagement = () => {
                             type="button"
                             onClick={() => handleOpenEdit(tch)}
                             title="Edit Teacher"
-                            style={{
-                              padding: '0.35rem 0.6rem',
-                              backgroundColor: 'var(--bg-subtle)',
-                              color: 'var(--text-primary)',
-                              border: '1px solid var(--border-color)',
-                            }}
+                            className="btn-action btn-action-edit"
                           >
                             <Edit2 size={14} />
                           </button>
@@ -270,12 +261,7 @@ export const TeacherManagement = () => {
                             type="button"
                             onClick={() => setDeleteTargetTeacher(tch)}
                             title="Delete Teacher"
-                            style={{
-                              padding: '0.35rem 0.6rem',
-                              backgroundColor: 'var(--status-absent-bg)',
-                              color: 'var(--status-absent-text)',
-                              border: '1px solid var(--status-absent-border)',
-                            }}
+                            className="btn-action btn-action-delete"
                           >
                             <Trash2 size={14} />
                           </button>
@@ -397,20 +383,13 @@ export const TeacherManagement = () => {
             <button
               type="button"
               onClick={() => setIsModalOpen(false)}
-              style={{
-                backgroundColor: 'var(--bg-subtle)',
-                color: 'var(--text-primary)',
-                border: '1px solid var(--border-color)',
-              }}
+              className="btn-secondary"
             >
               Cancel
             </button>
             <button
               type="submit"
-              style={{
-                backgroundColor: 'var(--primary)',
-                color: '#ffffff',
-              }}
+              className="btn-primary"
             >
               {editingTeacher ? 'Update Teacher' : 'Register Teacher'}
             </button>

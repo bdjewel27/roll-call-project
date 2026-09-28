@@ -219,6 +219,9 @@ export const LoginPage = () => {
 
           {errorMsg && (
             <div
+              role="alert"
+              aria-live="assertive"
+              aria-atomic="true"
               style={{
                 backgroundColor: 'var(--status-absent-bg, #fee2e2)',
                 color: 'var(--status-absent-text, #b91c1c)',

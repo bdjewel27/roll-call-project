@@ -352,31 +352,21 @@ export const MarkAttendance = () => {
   const selectedClass = classes.find((c) => c.id === selectedClassId);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%', minWidth: 0 }}>
+    <div className="page-container" style={{ width: '100%', minWidth: 0 }}>
       {/* Page Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+      <div className="page-header">
         <div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 700, margin: '0 0 0.25rem', color: 'var(--text-primary)' }}>
+          <h1 className="page-title">
             Take Attendance
           </h1>
-          <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.925rem' }}>
+          <p className="page-subtitle">
             Roll call registry for <strong>Present, Absent, Late,</strong> and <strong>Leave</strong>
           </p>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+        <div className="page-header-actions">
           {isExistingRecord && (
-            <span
-              style={{
-                fontSize: '0.75rem',
-                fontWeight: 600,
-                padding: '0.35rem 0.75rem',
-                borderRadius: '9999px',
-                backgroundColor: 'var(--status-present-bg)',
-                color: 'var(--status-present-text)',
-                border: '1px solid var(--status-present-border)',
-              }}
-            >
+            <span className="status-pill status-pill-marked">
               ✓ Existing Record Loaded
             </span>
           )}
@@ -385,16 +375,10 @@ export const MarkAttendance = () => {
             type="button"
             onClick={handleSaveClick}
             disabled={rosterAttendance.length === 0 || saving || loading || loadError}
+            className="btn-primary"
             style={{
-              backgroundColor: 'var(--primary)',
-              color: '#ffffff',
               padding: '0.65rem 1.25rem',
-              borderRadius: '8px',
-              fontWeight: 600,
               fontSize: '0.9rem',
-              boxShadow: 'var(--shadow-sm)',
-              opacity: (rosterAttendance.length === 0 || saving || loading || loadError) ? 0.6 : 1,
-              cursor: (rosterAttendance.length === 0 || saving || loading || loadError) ? 'not-allowed' : 'pointer',
             }}
           >
             <Save size={18} />
@@ -446,15 +430,8 @@ export const MarkAttendance = () => {
                 type="button"
                 onClick={() => handleMarkAll(ATTENDANCE_STATUS.PRESENT)}
                 disabled={loading || loadError || rosterAttendance.length === 0}
-                style={{
-                  backgroundColor: 'var(--status-present-bg)',
-                  color: 'var(--status-present-text)',
-                  border: '1px solid var(--status-present-border)',
-                  fontSize: '0.8rem',
-                  padding: '0.45rem 0.75rem',
-                  opacity: (loading || loadError || rosterAttendance.length === 0) ? 0.5 : 1,
-                  cursor: (loading || loadError || rosterAttendance.length === 0) ? 'not-allowed' : 'pointer',
-                }}
+                className="status-toggle-btn status-present-active"
+                style={{ padding: '0.45rem 0.75rem' }}
               >
                 <CheckCheck size={14} />
                 <span>Mark All Present</span>
@@ -464,15 +441,8 @@ export const MarkAttendance = () => {
                 type="button"
                 onClick={() => handleMarkAll(ATTENDANCE_STATUS.ABSENT)}
                 disabled={loading || loadError || rosterAttendance.length === 0}
-                style={{
-                  backgroundColor: 'var(--status-absent-bg)',
-                  color: 'var(--status-absent-text)',
-                  border: '1px solid var(--status-absent-border)',
-                  fontSize: '0.8rem',
-                  padding: '0.45rem 0.75rem',
-                  opacity: (loading || loadError || rosterAttendance.length === 0) ? 0.5 : 1,
-                  cursor: (loading || loadError || rosterAttendance.length === 0) ? 'not-allowed' : 'pointer',
-                }}
+                className="status-toggle-btn status-absent-active"
+                style={{ padding: '0.45rem 0.75rem' }}
               >
                 <UserX size={14} />
                 <span>Mark All Absent</span>
@@ -483,15 +453,8 @@ export const MarkAttendance = () => {
                 onClick={handleReset}
                 disabled={loading || loadError || rosterAttendance.length === 0}
                 title="Reset statuses"
-                style={{
-                  backgroundColor: 'var(--bg-subtle)',
-                  color: 'var(--text-secondary)',
-                  border: '1px solid var(--border-color)',
-                  fontSize: '0.8rem',
-                  padding: '0.45rem 0.75rem',
-                  opacity: (loading || loadError || rosterAttendance.length === 0) ? 0.5 : 1,
-                  cursor: (loading || loadError || rosterAttendance.length === 0) ? 'not-allowed' : 'pointer',
-                }}
+                className="btn-action btn-action-edit"
+                style={{ padding: '0.45rem 0.75rem' }}
               >
                 <RotateCcw size={14} />
               </button>
@@ -501,63 +464,35 @@ export const MarkAttendance = () => {
       </Card>
 
       {/* Real-time Summary Ribbon */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.75rem' }}>
-        <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', padding: '0.85rem 1rem', borderRadius: '10px' }}>
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600 }}>TOTAL STUDENTS</div>
-          <div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-primary)' }}>{stats.total}</div>
+      <div className="stat-ribbon">
+        <div className="stat-ribbon-tile">
+          <div className="stat-ribbon-label">TOTAL STUDENTS</div>
+          <div className="stat-ribbon-val">{stats.total}</div>
         </div>
 
-        <div
-          style={{
-            backgroundColor: stats.present > 0 ? 'var(--status-present-bg)' : 'var(--bg-card)',
-            border: `1px solid ${stats.present > 0 ? 'var(--status-present-border)' : 'var(--border-color)'}`,
-            padding: '0.85rem 1rem',
-            borderRadius: '10px',
-          }}
-        >
-          <div style={{ fontSize: '0.75rem', color: stats.present > 0 ? 'var(--status-present-text)' : 'var(--text-secondary)', fontWeight: 700 }}>PRESENT</div>
-          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: stats.present > 0 ? 'var(--status-present-text)' : 'var(--text-primary)' }}>{stats.present}</div>
+        <div className={`stat-ribbon-tile ${stats.present > 0 ? 'status-present-active' : ''}`}>
+          <div className="stat-ribbon-label">PRESENT</div>
+          <div className="stat-ribbon-val">{stats.present}</div>
         </div>
 
-        <div
-          style={{
-            backgroundColor: stats.absent > 0 ? 'var(--status-absent-bg)' : 'var(--bg-card)',
-            border: `1px solid ${stats.absent > 0 ? 'var(--status-absent-border)' : 'var(--border-color)'}`,
-            padding: '0.85rem 1rem',
-            borderRadius: '10px',
-          }}
-        >
-          <div style={{ fontSize: '0.75rem', color: stats.absent > 0 ? 'var(--status-absent-text)' : 'var(--text-secondary)', fontWeight: 700 }}>ABSENT</div>
-          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: stats.absent > 0 ? 'var(--status-absent-text)' : 'var(--text-primary)' }}>{stats.absent}</div>
+        <div className={`stat-ribbon-tile ${stats.absent > 0 ? 'status-absent-active' : ''}`}>
+          <div className="stat-ribbon-label">ABSENT</div>
+          <div className="stat-ribbon-val">{stats.absent}</div>
         </div>
 
-        <div
-          style={{
-            backgroundColor: stats.late > 0 ? 'var(--status-late-bg)' : 'var(--bg-card)',
-            border: `1px solid ${stats.late > 0 ? 'var(--status-late-border)' : 'var(--border-color)'}`,
-            padding: '0.85rem 1rem',
-            borderRadius: '10px',
-          }}
-        >
-          <div style={{ fontSize: '0.75rem', color: stats.late > 0 ? 'var(--status-late-text)' : 'var(--text-secondary)', fontWeight: 700 }}>LATE</div>
-          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: stats.late > 0 ? 'var(--status-late-text)' : 'var(--text-primary)' }}>{stats.late}</div>
+        <div className={`stat-ribbon-tile ${stats.late > 0 ? 'status-late-active' : ''}`}>
+          <div className="stat-ribbon-label">LATE</div>
+          <div className="stat-ribbon-val">{stats.late}</div>
         </div>
 
-        <div
-          style={{
-            backgroundColor: stats.leave > 0 ? 'var(--status-leave-bg)' : 'var(--bg-card)',
-            border: `1px solid ${stats.leave > 0 ? 'var(--status-leave-border)' : 'var(--border-color)'}`,
-            padding: '0.85rem 1rem',
-            borderRadius: '10px',
-          }}
-        >
-          <div style={{ fontSize: '0.75rem', color: stats.leave > 0 ? 'var(--status-leave-text)' : 'var(--text-secondary)', fontWeight: 700 }}>LEAVE</div>
-          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: stats.leave > 0 ? 'var(--status-leave-text)' : 'var(--text-primary)' }}>{stats.leave}</div>
+        <div className={`stat-ribbon-tile ${stats.leave > 0 ? 'status-leave-active' : ''}`}>
+          <div className="stat-ribbon-label">LEAVE</div>
+          <div className="stat-ribbon-val">{stats.leave}</div>
         </div>
 
-        <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', padding: '0.85rem 1rem', borderRadius: '10px' }}>
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600 }}>ATTENDANCE RATE</div>
-          <div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--primary)' }}>{stats.percentage}%</div>
+        <div className="stat-ribbon-tile">
+          <div className="stat-ribbon-label">ATTENDANCE RATE</div>
+          <div className="stat-ribbon-val" style={{ color: 'var(--primary)' }}>{stats.percentage}%</div>
         </div>
       </div>
 
@@ -580,35 +515,14 @@ export const MarkAttendance = () => {
             </div>
 
             {/* Status Tabs */}
-            <div
-              style={{
-                display: 'inline-flex',
-                backgroundColor: 'var(--bg-subtle)',
-                borderRadius: '8px',
-                padding: '3px',
-                gap: '2px',
-                maxWidth: '100%',
-                overflowX: 'auto',
-                WebkitOverflowScrolling: 'touch',
-              }}
-            >
+            <div className="filter-tabs-wrapper">
               {['ALL', 'PRESENT', 'ABSENT', 'LATE', 'LEAVE'].map((tab) => (
                 <button
                   key={tab}
                   type="button"
                   aria-pressed={statusFilter === tab}
                   onClick={() => setStatusFilter(tab)}
-                  style={{
-                    padding: '0.35rem 0.65rem',
-                    fontSize: '0.75rem',
-                    fontWeight: statusFilter === tab ? 700 : 500,
-                    borderRadius: '6px',
-                    border: 'none',
-                    backgroundColor: statusFilter === tab ? 'var(--bg-card)' : 'transparent',
-                    color: statusFilter === tab ? 'var(--text-primary)' : 'var(--text-secondary)',
-                    boxShadow: statusFilter === tab ? 'var(--shadow-sm)' : 'none',
-                    flexShrink: 0,
-                  }}
+                  className={`filter-tab ${statusFilter === tab ? 'active' : ''}`}
                 >
                   {tab}
                 </button>
@@ -659,56 +573,22 @@ export const MarkAttendance = () => {
             </table>
           </div>
         ) : loadError ? (
-          <div
-            style={{
-              padding: '3rem 1.5rem',
-              textAlign: 'center',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '1rem',
-            }}
-          >
-            <div
-              style={{
-                width: '48px',
-                height: '48px',
-                borderRadius: '50%',
-                backgroundColor: 'var(--status-absent-bg)',
-                color: 'var(--status-absent-text)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
+          <div className="error-state-card">
+            <div className="error-state-icon">
               <AlertCircle size={24} />
             </div>
             <div>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 600, margin: '0 0 0.5rem', color: 'var(--text-primary)' }}>
+              <h3 className="error-state-title">
                 Unable to Load Attendance Records
               </h3>
-              <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-secondary)', maxWidth: '420px' }}>
+              <p className="error-state-desc">
                 A network or server error occurred while retrieving attendance for this session. Existing records have not been altered.
               </p>
             </div>
             <button
               type="button"
               onClick={() => loadRosterAndAttendance()}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                backgroundColor: 'var(--primary)',
-                color: '#ffffff',
-                padding: '0.55rem 1.25rem',
-                borderRadius: '8px',
-                fontWeight: 600,
-                fontSize: '0.875rem',
-                cursor: 'pointer',
-                border: 'none',
-                boxShadow: 'var(--shadow-sm)',
-              }}
+              className="btn-primary"
             >
               <RotateCcw size={15} />
               <span>Retry</span>
@@ -758,25 +638,7 @@ export const MarkAttendance = () => {
                             type="button"
                             aria-pressed={student.status === ATTENDANCE_STATUS.PRESENT}
                             onClick={() => handleStatusChange(student.id, ATTENDANCE_STATUS.PRESENT)}
-                            style={{
-                              padding: '0.35rem 0.75rem',
-                              borderRadius: '6px',
-                              fontSize: '0.8rem',
-                              fontWeight: student.status === ATTENDANCE_STATUS.PRESENT ? 700 : 500,
-                              backgroundColor:
-                                student.status === ATTENDANCE_STATUS.PRESENT
-                                  ? 'var(--status-present-bg)'
-                                  : 'var(--bg-subtle)',
-                              color:
-                                student.status === ATTENDANCE_STATUS.PRESENT
-                                  ? 'var(--status-present-text)'
-                                  : 'var(--text-secondary)',
-                              border: `1px solid ${
-                                student.status === ATTENDANCE_STATUS.PRESENT
-                                  ? 'var(--status-present-border)'
-                                  : 'var(--border-color)'
-                              }`,
-                            }}
+                            className={`status-toggle-btn ${student.status === ATTENDANCE_STATUS.PRESENT ? 'status-present-active' : ''}`}
                           >
                             Present
                           </button>
@@ -786,25 +648,7 @@ export const MarkAttendance = () => {
                             type="button"
                             aria-pressed={student.status === ATTENDANCE_STATUS.ABSENT}
                             onClick={() => handleStatusChange(student.id, ATTENDANCE_STATUS.ABSENT)}
-                            style={{
-                              padding: '0.35rem 0.75rem',
-                              borderRadius: '6px',
-                              fontSize: '0.8rem',
-                              fontWeight: student.status === ATTENDANCE_STATUS.ABSENT ? 700 : 500,
-                              backgroundColor:
-                                student.status === ATTENDANCE_STATUS.ABSENT
-                                  ? 'var(--status-absent-bg)'
-                                  : 'var(--bg-subtle)',
-                              color:
-                                student.status === ATTENDANCE_STATUS.ABSENT
-                                  ? 'var(--status-absent-text)'
-                                  : 'var(--text-secondary)',
-                              border: `1px solid ${
-                                student.status === ATTENDANCE_STATUS.ABSENT
-                                  ? 'var(--status-absent-border)'
-                                  : 'var(--border-color)'
-                              }`,
-                            }}
+                            className={`status-toggle-btn ${student.status === ATTENDANCE_STATUS.ABSENT ? 'status-absent-active' : ''}`}
                           >
                             Absent
                           </button>
@@ -814,25 +658,7 @@ export const MarkAttendance = () => {
                             type="button"
                             aria-pressed={student.status === ATTENDANCE_STATUS.LATE}
                             onClick={() => handleStatusChange(student.id, ATTENDANCE_STATUS.LATE)}
-                            style={{
-                              padding: '0.35rem 0.75rem',
-                              borderRadius: '6px',
-                              fontSize: '0.8rem',
-                              fontWeight: student.status === ATTENDANCE_STATUS.LATE ? 700 : 500,
-                              backgroundColor:
-                                student.status === ATTENDANCE_STATUS.LATE
-                                  ? 'var(--status-late-bg)'
-                                  : 'var(--bg-subtle)',
-                              color:
-                                student.status === ATTENDANCE_STATUS.LATE
-                                  ? 'var(--status-late-text)'
-                                  : 'var(--text-secondary)',
-                              border: `1px solid ${
-                                student.status === ATTENDANCE_STATUS.LATE
-                                  ? 'var(--status-late-border)'
-                                  : 'var(--border-color)'
-                              }`,
-                            }}
+                            className={`status-toggle-btn ${student.status === ATTENDANCE_STATUS.LATE ? 'status-late-active' : ''}`}
                           >
                             Late
                           </button>
@@ -842,25 +668,7 @@ export const MarkAttendance = () => {
                             type="button"
                             aria-pressed={student.status === ATTENDANCE_STATUS.LEAVE}
                             onClick={() => handleStatusChange(student.id, ATTENDANCE_STATUS.LEAVE)}
-                            style={{
-                              padding: '0.35rem 0.75rem',
-                              borderRadius: '6px',
-                              fontSize: '0.8rem',
-                              fontWeight: student.status === ATTENDANCE_STATUS.LEAVE ? 700 : 500,
-                              backgroundColor:
-                                student.status === ATTENDANCE_STATUS.LEAVE
-                                  ? 'var(--status-leave-bg)'
-                                  : 'var(--bg-subtle)',
-                              color:
-                                student.status === ATTENDANCE_STATUS.LEAVE
-                                  ? 'var(--status-leave-text)'
-                                  : 'var(--text-secondary)',
-                              border: `1px solid ${
-                                student.status === ATTENDANCE_STATUS.LEAVE
-                                  ? 'var(--status-leave-border)'
-                                  : 'var(--border-color)'
-                              }`,
-                            }}
+                            className={`status-toggle-btn ${student.status === ATTENDANCE_STATUS.LEAVE ? 'status-leave-active' : ''}`}
                           >
                             Leave
                           </button>

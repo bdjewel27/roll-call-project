@@ -79,14 +79,14 @@ export const TeacherReports = () => {
       : 0;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+    <div className="page-container">
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+      <div className="page-header">
         <div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 700, margin: '0 0 0.25rem', color: 'var(--text-primary)' }}>
+          <h1 className="page-title">
             My Attendance Reports
           </h1>
-          <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.925rem' }}>
+          <p className="page-subtitle">
             Class-level performance statistics, student attendance rates, and data export
           </p>
         </div>
@@ -97,7 +97,6 @@ export const TeacherReports = () => {
           className="btn-primary"
           style={{
             padding: '0.65rem 1.15rem',
-            fontWeight: 600,
             fontSize: '0.9rem',
           }}
         >

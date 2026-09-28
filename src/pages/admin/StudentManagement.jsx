@@ -303,14 +303,14 @@ export const StudentManagement = () => {
   );
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+    <div className="page-container">
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+      <div className="page-header page-header-centered">
         <div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 700, margin: '0 0 0.25rem', color: 'var(--text-primary)' }}>
+          <h1 className="page-title">
             Student Management
           </h1>
-          <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.925rem' }}>
+          <p className="page-subtitle">
             Enroll students, assign roll numbers, and organize class rosters
           </p>
         </div>
@@ -318,14 +318,10 @@ export const StudentManagement = () => {
         <button
           type="button"
           onClick={handleOpenCreate}
+          className="btn-primary"
           style={{
-            backgroundColor: 'var(--primary)',
-            color: '#ffffff',
             padding: '0.65rem 1.15rem',
-            borderRadius: '8px',
-            fontWeight: 600,
             fontSize: '0.9rem',
-            boxShadow: 'var(--shadow-sm)',
           }}
         >
           <UserPlus size={18} />
@@ -429,56 +425,22 @@ export const StudentManagement = () => {
             </table>
           </div>
         ) : error ? (
-          <div
-            style={{
-              padding: '3rem 1.5rem',
-              textAlign: 'center',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '1rem',
-            }}
-          >
-            <div
-              style={{
-                width: '48px',
-                height: '48px',
-                borderRadius: '50%',
-                backgroundColor: 'var(--status-absent-bg)',
-                color: 'var(--status-absent-text)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
+          <div className="error-state-card">
+            <div className="error-state-icon">
               <AlertCircle size={24} />
             </div>
             <div>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 600, margin: '0 0 0.5rem', color: 'var(--text-primary)' }}>
+              <h3 className="error-state-title">
                 Unable to Load Students
               </h3>
-              <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-secondary)', maxWidth: '420px' }}>
+              <p className="error-state-desc">
                 {error}
               </p>
             </div>
             <button
               type="button"
               onClick={() => loadData()}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                backgroundColor: 'var(--primary)',
-                color: '#ffffff',
-                padding: '0.55rem 1.25rem',
-                borderRadius: '8px',
-                fontWeight: 600,
-                fontSize: '0.875rem',
-                cursor: 'pointer',
-                border: 'none',
-                boxShadow: 'var(--shadow-sm)',
-              }}
+              className="btn-primary"
             >
               <RotateCcw size={15} />
               <span>Retry</span>
@@ -568,12 +530,7 @@ export const StudentManagement = () => {
                             type="button"
                             onClick={() => handleOpenEdit(std)}
                             title="Edit Student"
-                            style={{
-                              padding: '0.35rem 0.6rem',
-                              backgroundColor: 'var(--bg-subtle)',
-                              color: 'var(--text-primary)',
-                              border: '1px solid var(--border-color)',
-                            }}
+                            className="btn-action btn-action-edit"
                           >
                             <Edit2 size={14} />
                           </button>
@@ -581,12 +538,7 @@ export const StudentManagement = () => {
                             type="button"
                             onClick={() => setDeleteTargetStudent(std)}
                             title="Delete Student"
-                            style={{
-                              padding: '0.35rem 0.6rem',
-                              backgroundColor: 'var(--status-absent-bg)',
-                              color: 'var(--status-absent-text)',
-                              border: '1px solid var(--status-absent-border)',
-                            }}
+                            className="btn-action btn-action-delete"
                           >
                             <Trash2 size={14} />
                           </button>
@@ -812,23 +764,14 @@ export const StudentManagement = () => {
             <button
               type="button"
               onClick={() => setIsModalOpen(false)}
-              style={{
-                backgroundColor: 'var(--bg-subtle)',
-                color: 'var(--text-primary)',
-                border: '1px solid var(--border-color)',
-              }}
+              className="btn-secondary"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={uploadingAvatar}
-              style={{
-                backgroundColor: 'var(--primary)',
-                color: '#ffffff',
-                opacity: uploadingAvatar ? 0.7 : 1,
-                cursor: uploadingAvatar ? 'not-allowed' : 'pointer',
-              }}
+              className="btn-primary"
             >
               {uploadingAvatar
                 ? 'Uploading Photo...'
