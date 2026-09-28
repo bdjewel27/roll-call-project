@@ -205,11 +205,53 @@ To function properly, the Supabase backend project must have the following compo
 
 4. **Authentication**:
    * Supabase Auth enabled with Email and Password provider.
-   * Initial administrator accounts can be provisioned directly through the Supabase Auth dashboard with appropriate user metadata (`role: 'admin'`).
+   * Initial administrator accounts are provisioned via the Supabase Auth dashboard with appropriate role metadata.
 
 ---
 
-## 9. Production Deployment
+## 9. Initial User Accounts & Testing Guide
+
+### Security & Account Policy
+For security hygiene, this repository does not include hardcoded passwords or pre-provisioned demo accounts in source control. All user accounts must be provisioned within your own Supabase project.
+
+### Initial Administrator Setup
+Public self-registration is intentionally disabled. The initial root administrator account must be created directly in the Supabase Dashboard:
+
+1. Open your **Supabase Project Dashboard**.
+2. Navigate to **Authentication** > **Users**.
+3. Click **Add User** > **Create User**.
+4. Enter an administrative email address and choose a secure password.
+5. In the **User Metadata** field, assign the `admin` role:
+   ```json
+   {
+     "role": "admin",
+     "full_name": "System Administrator"
+   }
+   ```
+6. Save the user. The database trigger `handle_new_user` automatically creates the corresponding `public.profiles` record and applies the Administrator role.
+
+### Teacher Account Setup
+Once the administrator account is provisioned:
+
+1. Open the application and sign in as **Administrator** using your admin credentials.
+2. Navigate to **Teacher Management** from the sidebar.
+3. Click **Register New Teacher**.
+4. Enter the teacher's details:
+   * **Full Name**
+   * **Email Address**
+   * **Phone Number** (11 digits)
+   * **Subject / Department**
+   * **Temporary Password** (minimum 6 characters required)
+5. Submit the form. The application provisions the teacher's Supabase Auth user via an isolated authentication client and generates their matching `public.profiles` entry without interrupting the administrator's active session.
+
+### Testing & Role Verification
+* **Administrator Login**: On the login screen, select **Administrator** and enter your admin credentials. Upon successful sign-in, you are directed to the Admin Dashboard (`#/admin`).
+* **Teacher Login**: Select **Teacher** and sign in with the teacher's credentials. You are directed to the Teacher Dashboard (`#/teacher`).
+* **Access Control**: Client-side route protection (`ProtectedRoute`) prevents unauthorized access across roles (e.g. teachers navigating directly to `#/admin` are safely redirected to `#/unauthorized`).
+
+---
+
+## 10. Production Deployment
 
 The project is configured for automated deployment to **GitHub Pages**:
 
