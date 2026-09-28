@@ -145,7 +145,10 @@ export const StudentManagement = () => {
   }, [selectedClassFilter, showToast]);
 
   useEffect(() => {
-    loadData();
+    const fetch = async () => {
+      await loadData();
+    };
+    fetch();
   }, [loadData]);
 
   const handleOpenCreate = () => {

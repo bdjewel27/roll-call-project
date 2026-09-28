@@ -98,7 +98,10 @@ export const TeacherDashboard = () => {
   }, [user, todayDate]);
 
   useEffect(() => {
-    loadDashboardData();
+    const fetch = async () => {
+      await loadDashboardData();
+    };
+    fetch();
   }, [loadDashboardData]);
 
   return (

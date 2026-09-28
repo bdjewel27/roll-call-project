@@ -58,7 +58,10 @@ export const ReportsPage = () => {
   }, [showToast]);
 
   useEffect(() => {
-    loadReports();
+    const fetch = async () => {
+      await loadReports();
+    };
+    fetch();
   }, [loadReports]);
 
   // Aggregated analytics

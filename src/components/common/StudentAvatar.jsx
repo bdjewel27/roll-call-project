@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
 // In-memory cache for avatar fetch statuses
 const loadedImageCache = new Set();
@@ -26,11 +26,13 @@ export const StudentAvatar = React.memo(({
   style = {},
 }) => {
   const avatarSrc = student?.avatar_url || student?.avatarUrl;
+  const [prevAvatarSrc, setPrevAvatarSrc] = useState(avatarSrc);
   const [hasError, setHasError] = useState(() => failedImageCache.has(avatarSrc));
 
-  useEffect(() => {
+  if (prevAvatarSrc !== avatarSrc) {
+    setPrevAvatarSrc(avatarSrc);
     setHasError(failedImageCache.has(avatarSrc));
-  }, [avatarSrc]);
+  }
 
   const borderRadius = shape === 'circle' ? '9999px' : '8px';
 

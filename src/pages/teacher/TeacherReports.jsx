@@ -55,7 +55,10 @@ export const TeacherReports = () => {
   }, [user, showToast]);
 
   useEffect(() => {
-    loadMetrics();
+    const fetch = async () => {
+      await loadMetrics();
+    };
+    fetch();
   }, [loadMetrics]);
 
   // Export CSV generator

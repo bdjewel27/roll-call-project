@@ -37,7 +37,10 @@ export const TeacherManagement = () => {
   }, [showToast]);
 
   useEffect(() => {
-    loadData();
+    const fetch = async () => {
+      await loadData();
+    };
+    fetch();
   }, [loadData]);
 
   const handleOpenCreate = () => {

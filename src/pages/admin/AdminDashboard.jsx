@@ -99,7 +99,10 @@ export const AdminDashboard = () => {
   }, [todayDate]);
 
   useEffect(() => {
-    loadDashboardData();
+    const fetch = async () => {
+      await loadDashboardData();
+    };
+    fetch();
   }, [loadDashboardData]);
 
   const markedClassesCount = classAttendanceStatus.filter((c) => c.isMarked).length;

@@ -66,7 +66,10 @@ export const AttendanceHistory = () => {
   }, [user, showToast]);
 
   useEffect(() => {
-    loadHistory();
+    const fetch = async () => {
+      await loadHistory();
+    };
+    fetch();
   }, [loadHistory]);
 
   const handleOpenDetail = (session) => {

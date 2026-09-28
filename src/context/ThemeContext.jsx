@@ -37,4 +37,5 @@ export const ThemeProvider = ({ children }) => {
   );
 };
 
+// oxlint-disable-next-line react/only-export-components
 export const useTheme = () => useContext(ThemeContext);

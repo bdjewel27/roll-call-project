@@ -67,7 +67,10 @@ export const MyClasses = () => {
   }, [user, todayDate, showToast]);
 
   useEffect(() => {
-    loadClasses();
+    const fetch = async () => {
+      await loadClasses();
+    };
+    fetch();
   }, [loadClasses]);
 
   const handleOpenRoster = async (cls) => {

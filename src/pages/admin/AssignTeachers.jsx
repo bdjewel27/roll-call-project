@@ -36,7 +36,10 @@ export const AssignTeachers = () => {
   }, [showToast]);
 
   useEffect(() => {
-    loadData();
+    const fetch = async () => {
+      await loadData();
+    };
+    fetch();
   }, [loadData]);
 
   const handleAssign = async (classId, teacherId) => {

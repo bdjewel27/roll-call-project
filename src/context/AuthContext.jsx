@@ -142,6 +142,7 @@ export const AuthProvider = ({ children }) => {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
+// oxlint-disable-next-line react/only-export-components
 export const useAuthContext = () => {
   const context = useContext(AuthContext);
   if (!context) {

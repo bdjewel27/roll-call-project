@@ -148,7 +148,10 @@ export const MarkAttendance = () => {
   }, [selectedClassId, selectedDate, showToast]);
 
   useEffect(() => {
-    loadRosterAndAttendance();
+    const fetch = async () => {
+      await loadRosterAndAttendance();
+    };
+    fetch();
   }, [loadRosterAndAttendance]);
 
   const hasPushedHistoryRef = useRef(false);

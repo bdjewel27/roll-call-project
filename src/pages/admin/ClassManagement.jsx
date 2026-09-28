@@ -44,7 +44,10 @@ export const ClassManagement = () => {
   }, [showToast]);
 
   useEffect(() => {
-    loadClasses();
+    const fetch = async () => {
+      await loadClasses();
+    };
+    fetch();
   }, [loadClasses]);
 
   const handleOpenCreate = () => {
