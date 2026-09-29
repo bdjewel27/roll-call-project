@@ -335,8 +335,11 @@ export const ClassManagement = () => {
               id="class-name-input"
               type="text"
               placeholder="e.g. Grade 10 - Section A"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              value={formData.name || ''}
+              onChange={(e) => {
+                const val = e.target.value;
+                setFormData((prev) => ({ ...prev, name: val }));
+              }}
               required
               style={{ width: '100%' }}
             />
@@ -351,8 +354,11 @@ export const ClassManagement = () => {
                 id="class-grade-input"
                 type="text"
                 placeholder="e.g. 10"
-                value={formData.grade}
-                onChange={(e) => setFormData({ ...formData, grade: e.target.value })}
+                value={formData.grade || ''}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setFormData((prev) => ({ ...prev, grade: val }));
+                }}
                 style={{ width: '100%' }}
               />
             </div>
@@ -365,8 +371,11 @@ export const ClassManagement = () => {
                 id="class-section-input"
                 type="text"
                 placeholder="e.g. A or Science"
-                value={formData.section}
-                onChange={(e) => setFormData({ ...formData, section: e.target.value })}
+                value={formData.section || ''}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setFormData((prev) => ({ ...prev, section: val }));
+                }}
                 style={{ width: '100%' }}
               />
             </div>
@@ -381,8 +390,11 @@ export const ClassManagement = () => {
                 id="class-room-input"
                 type="text"
                 placeholder="e.g. Room 201"
-                value={formData.room}
-                onChange={(e) => setFormData({ ...formData, room: e.target.value })}
+                value={formData.room || ''}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setFormData((prev) => ({ ...prev, room: val }));
+                }}
                 style={{ width: '100%' }}
               />
             </div>
@@ -395,8 +407,11 @@ export const ClassManagement = () => {
                 id="class-academic-year-input"
                 type="text"
                 placeholder="e.g. 2026-2027"
-                value={formData.academicYear}
-                onChange={(e) => setFormData({ ...formData, academicYear: e.target.value })}
+                value={formData.academicYear || ''}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setFormData((prev) => ({ ...prev, academicYear: val }));
+                }}
                 style={{ width: '100%' }}
               />
             </div>

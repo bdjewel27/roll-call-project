@@ -295,8 +295,11 @@ export const TeacherManagement = () => {
               id="teacher-name-input"
               type="text"
               placeholder="e.g. Sarah Jenkins"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              value={formData.name || ''}
+              onChange={(e) => {
+                const val = e.target.value;
+                setFormData((prev) => ({ ...prev, name: val }));
+              }}
               required
               style={{ width: '100%' }}
             />
@@ -310,8 +313,11 @@ export const TeacherManagement = () => {
               id="teacher-email-input"
               type="email"
               placeholder="e.g. teacher@school.edu"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              value={formData.email || ''}
+              onChange={(e) => {
+                const val = e.target.value;
+                setFormData((prev) => ({ ...prev, email: val }));
+              }}
               required
               disabled={!!editingTeacher}
               style={{
@@ -336,8 +342,11 @@ export const TeacherManagement = () => {
                 id="teacher-password-input"
                 type="password"
                 placeholder="Temporary login password"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                value={formData.password || ''}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setFormData((prev) => ({ ...prev, password: val }));
+                }}
                 required
                 minLength={6}
                 style={{ width: '100%' }}
@@ -358,10 +367,10 @@ export const TeacherManagement = () => {
                 type="tel"
                 maxLength={11}
                 placeholder="01XXXXXXXXX"
-                value={formData.phone}
+                value={formData.phone || ''}
                 onChange={(e) => {
                   const cleaned = e.target.value.replace(/\D/g, '').slice(0, 11);
-                  setFormData({ ...formData, phone: cleaned });
+                  setFormData((prev) => ({ ...prev, phone: cleaned }));
                 }}
                 style={{ width: '100%' }}
               />
@@ -375,8 +384,11 @@ export const TeacherManagement = () => {
                 id="teacher-subject-input"
                 type="text"
                 placeholder="e.g. Mathematics"
-                value={formData.subject}
-                onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                value={formData.subject || ''}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setFormData((prev) => ({ ...prev, subject: val }));
+                }}
                 style={{ width: '100%' }}
               />
             </div>

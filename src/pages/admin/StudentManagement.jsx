@@ -669,8 +669,11 @@ export const StudentManagement = () => {
                 type="text"
                 inputMode="numeric"
                 placeholder="e.g. 101"
-                value={formData.rollNo}
-                onChange={(e) => setFormData({ ...formData, rollNo: e.target.value.replace(/\D/g, '') })}
+                value={formData.rollNo || ''}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/\D/g, '');
+                  setFormData((prev) => ({ ...prev, rollNo: val }));
+                }}
                 required
                 style={{ width: '100%' }}
               />
@@ -684,8 +687,11 @@ export const StudentManagement = () => {
                 id="student-name-input"
                 type="text"
                 placeholder="e.g. Alice Walker"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                value={formData.name || ''}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setFormData((prev) => ({ ...prev, name: val }));
+                }}
                 required
                 style={{ width: '100%' }}
               />
@@ -699,8 +705,11 @@ export const StudentManagement = () => {
               </label>
               <select
                 id="student-gender-select"
-                value={formData.gender}
-                onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                value={formData.gender || 'Female'}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setFormData((prev) => ({ ...prev, gender: val }));
+                }}
                 style={{ width: '100%' }}
               >
                 <option value="Female">Female</option>
@@ -715,8 +724,11 @@ export const StudentManagement = () => {
               </label>
               <select
                 id="student-class-select"
-                value={formData.classId}
-                onChange={(e) => setFormData({ ...formData, classId: e.target.value })}
+                value={formData.classId || ''}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setFormData((prev) => ({ ...prev, classId: val }));
+                }}
                 required
                 style={{ width: '100%' }}
               >
@@ -738,8 +750,11 @@ export const StudentManagement = () => {
                 id="student-guardian-name-input"
                 type="text"
                 placeholder="e.g. Robert Walker"
-                value={formData.guardianName}
-                onChange={(e) => setFormData({ ...formData, guardianName: e.target.value })}
+                value={formData.guardianName || ''}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setFormData((prev) => ({ ...prev, guardianName: val }));
+                }}
                 style={{ width: '100%' }}
               />
             </div>
@@ -753,10 +768,10 @@ export const StudentManagement = () => {
                 type="tel"
                 maxLength={11}
                 placeholder="01XXXXXXXXX"
-                value={formData.guardianPhone}
+                value={formData.guardianPhone || ''}
                 onChange={(e) => {
                   const cleaned = e.target.value.replace(/\D/g, '').slice(0, 11);
-                  setFormData({ ...formData, guardianPhone: cleaned });
+                  setFormData((prev) => ({ ...prev, guardianPhone: cleaned }));
                 }}
                 style={{ width: '100%' }}
               />

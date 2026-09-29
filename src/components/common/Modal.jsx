@@ -16,6 +16,16 @@ export const Modal = ({
   const titleId = useId();
   const modalRef = useRef(null);
   const previousActiveElementRef = useRef(null);
+  const onCloseRef = useRef(onClose);
+  const initialFocusRefRef = useRef(initialFocusRef);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  });
+
+  useEffect(() => {
+    initialFocusRefRef.current = initialFocusRef;
+  });
 
   useEffect(() => {
     if (!isOpen) return;
@@ -27,10 +37,19 @@ export const Modal = ({
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
 
-    // Move initial focus
+    // Move initial focus ONCE when modal opens
     const focusTimeout = setTimeout(() => {
-      if (initialFocusRef?.current) {
-        initialFocusRef.current.focus();
+      // If user or browser already focused an input inside the modal, do not steal focus
+      if (
+        modalRef.current &&
+        modalRef.current.contains(document.activeElement) &&
+        document.activeElement !== modalRef.current
+      ) {
+        return;
+      }
+
+      if (initialFocusRefRef.current?.current) {
+        initialFocusRefRef.current.current.focus();
       } else if (modalRef.current) {
         // Query focusables inside content first (excluding header close button)
         const contentContainer = modalRef.current.querySelector('.modal-content-area');
@@ -61,7 +80,7 @@ export const Modal = ({
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
         e.preventDefault();
-        onClose();
+        onCloseRef.current?.();
         return;
       }
 
@@ -115,7 +134,7 @@ export const Modal = ({
         previousActiveElementRef.current.focus();
       }
     };
-  }, [isOpen, onClose, initialFocusRef]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
