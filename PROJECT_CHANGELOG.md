@@ -231,3 +231,15 @@ We successfully transformed the Roll Call Attendance system into a fast, secure,
 - Successfully deploying the application live to GitHub Pages so users can access the system on the web immediately.
 
 The platform is stable, secure, and ready for end-users.
+
+---
+15. PHASE 2 QA AUDIT FIXES
+---
+
+* Added 35 unit tests (Vitest) for core utilities (ormatters.js, csvExport.js) with 100% pass rate.
+* Fixed Auth Role-Mismatch Vulnerability: Strictly validates UI selected role against database profiles.role on login.
+* Fixed Auth Race Condition: Used isLoggingInRef to prevent rogue navigation before role validation completes.
+* Disabled Autocomplete: Enforced utoComplete="off" on LoginPage.jsx to clear hardcoded credentials.
+* English Localization: Removed all Bengali characters from the codebase and replaced them with professional English.
+* Fixed Modal Focus Issue: Prevented cursor jumping by stabilizing React state and refactoring Modal.jsx focus trap.
+* Passed static checks: oxlint, 	ype-check, and uild all pass cleanly with 0 errors.

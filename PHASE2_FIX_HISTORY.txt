@@ -1,0 +1,35 @@
+﻿Phase 2 Fix History & QA Audit Report
+--------------------------------------
+This file contains the chat history and summary of fixes implemented during the Phase 2 QA Audit.
+
+1. Added Unit Tests (Vitest)
+- Implemented 35 robust unit tests for core utilities (ormatters.js, csvExport.js).
+- Tests ensure accurate timezone handling (Asia/Dhaka) and bulletproof CSV export generation.
+- Achieved 100% pass rate.
+
+2. Fixed Auth Role-Mismatch Vulnerability
+- Issue: Users could select "Admin" but provide Teacher credentials, and the system would still log them in incorrectly.
+- Fix: Updated AuthContext.jsx to fetch profiles.role instantly after Supabase authentication. If the selected UI role does not strictly match the database role, the system immediately logs the user out and throws a clear error.
+- Fixed a race condition in onAuthStateChange by introducing isLoggingInRef to prevent unauthorized redirects during the validation process.
+
+3. Removed Hardcoded Login Credentials & Autofill
+- Issue: Login page retained autofill credentials.
+- Fix: Set initial states to empty strings and enforced utoComplete="off" and utoComplete="new-password" in LoginPage.jsx.
+
+4. Localized Bengali Text to English
+- Issue: Dashboard, modals, and reports contained mixed Bengali and English text.
+- Fix: Scanned the entire src/ directory and replaced all instances of Bengali characters ([\u0980-\u09FF]) with professional English to ensure a consistent, professional UI. Verified with a global regex search (0 instances remain).
+
+5. Fixed Modal Input Focus & Cursor Jumping
+- Issue: Typing in the "Enroll New Student" or "Add Teacher" modals caused the input to lose focus or the cursor to jump after one character.
+- Fix: Refactored Modal.jsx to use a stabilized focus trap that only runs on [isOpen] transitions.
+- Removed nested component declarations inside StudentManagement.jsx and other management pages. Used functional state updates (setFormData(prev => ...)) to prevent unnecessary re-renders.
+
+6. Zero Regressions & Clean Build
+- Ran 
+px oxlint src: 0 errors, 0 warnings.
+- Ran 
+pm run type-check: Passed without errors.
+- Ran 
+pm run build: Clean production build in Vite.
+- Manually tested UI routing and modals to guarantee 0 regressions on existing functionality.
