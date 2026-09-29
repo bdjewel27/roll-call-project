@@ -7,6 +7,7 @@ import { dataService } from '../../services/dataService';
 import { formatDate, getTodayDateString } from '../../utils/formatters';
 import { exportAttendanceHistoryCSV } from '../../utils/csvExport';
 import { ATTENDANCE_BENCHMARK } from '../../constants/attendanceStatus';
+import { StudentAttendanceModal } from '../../components/attendance/StudentAttendanceModal';
 import {
   BarChart3,
   Download,
@@ -14,6 +15,7 @@ import {
   UserX,
   Clock,
   FileSpreadsheet,
+  Users,
 } from 'lucide-react';
 
 export const ReportsPage = () => {
@@ -23,15 +25,23 @@ export const ReportsPage = () => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [historyLogs, setHistoryLogs] = useState([]);
+  const [reportView, setReportView] = useState('sessions');
+  const [studentMetrics, setStudentMetrics] = useState([]);
+  const [selectedStudentForModal, setSelectedStudentForModal] = useState(null);
 
   const loadReports = useCallback(async () => {
     try {
-      const logs = await dataService.getAttendanceHistory(
-        selectedClassId === 'ALL' ? null : selectedClassId,
-        startDate || null,
-        endDate || null
-      );
+      const targetClass = selectedClassId === 'ALL' ? null : selectedClassId;
+      const [logs, metrics] = await Promise.all([
+        dataService.getAttendanceHistory(
+          targetClass,
+          startDate || null,
+          endDate || null
+        ),
+        dataService.getStudentAttendanceMetrics(targetClass),
+      ]);
       setHistoryLogs(logs);
+      setStudentMetrics(metrics);
     } catch (err) {
       console.error('[ReportsPage] Error loading reports:', err);
       showToast('Error loading attendance reports', 'error');
@@ -243,102 +253,258 @@ export const ReportsPage = () => {
       </Card>
 
       {/* Breakdown Table */}
-      <Card title="Session Attendance Registry" subtitle={`Showing ${historyLogs.length} logged ${historyLogs.length === 1 ? 'session' : 'sessions'}`}>
-        {historyLogs.length === 0 ? (
+      <Card
+        title={reportView === 'sessions' ? 'Session Attendance Registry' : 'Student Performance Roster'}
+        subtitle={
+          reportView === 'sessions'
+            ? `Showing ${historyLogs.length} logged ${historyLogs.length === 1 ? 'session' : 'sessions'}`
+            : `Showing ${studentMetrics.length} enrolled ${studentMetrics.length === 1 ? 'student' : 'students'}`
+        }
+        extra={
+          <div className="filter-tabs-wrapper">
+            <button
+              type="button"
+              onClick={() => setReportView('sessions')}
+              className={`filter-tab ${reportView === 'sessions' ? 'active' : ''}`}
+            >
+              By Sessions ({historyLogs.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setReportView('students')}
+              className={`filter-tab ${reportView === 'students' ? 'active' : ''}`}
+            >
+              By Students ({studentMetrics.length})
+            </button>
+          </div>
+        }
+      >
+        {reportView === 'sessions' ? (
+          historyLogs.length === 0 ? (
+            <EmptyState
+              icon={BarChart3}
+              title="No report records found"
+              description="No attendance data matches your selected class or date parameters."
+            />
+          ) : (
+            <div className="table-responsive">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Session Date</th>
+                    <th>Class Name</th>
+                    <th>Total Enrolled</th>
+                    <th>Present</th>
+                    <th>Absent</th>
+                    <th>Late</th>
+                    <th>Leave</th>
+                    <th>Rate</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {historyLogs.map((log) => (
+                    <tr key={`${log.classId}_${log.date}`}>
+                      <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                        {formatDate(log.date)}
+                      </td>
+                      <td>
+                        <span style={{ fontWeight: 600 }}>{log.className}</span>
+                      </td>
+                      <td>{log.stats.total}</td>
+                      <td>
+                        <span style={{ color: 'var(--status-present-text)', fontWeight: 700 }}>
+                          {log.stats.present}
+                        </span>
+                      </td>
+                      <td>
+                        <span style={{ color: 'var(--status-absent-text)', fontWeight: 700 }}>
+                          {log.stats.absent}
+                        </span>
+                      </td>
+                      <td>
+                        <span style={{ color: 'var(--status-late-text)', fontWeight: 700 }}>
+                          {log.stats.late}
+                        </span>
+                      </td>
+                      <td>
+                        <span style={{ color: 'var(--status-leave-text)', fontWeight: 700 }}>
+                          {log.stats.leave}
+                        </span>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                          <span
+                            style={{
+                              fontWeight: 700,
+                              color: log.stats.rate >= ATTENDANCE_BENCHMARK.AT_RISK_THRESHOLD ? 'var(--status-present-text)' : 'var(--status-absent-text)',
+                            }}
+                          >
+                            {log.stats.rate}%
+                          </span>
+                          {log.stats.rate < ATTENDANCE_BENCHMARK.AT_RISK_THRESHOLD ? (
+                            <span
+                              style={{
+                                padding: '0.15rem 0.45rem',
+                                borderRadius: '9999px',
+                                fontSize: '0.7rem',
+                                fontWeight: 700,
+                                backgroundColor: 'var(--status-absent-bg)',
+                                color: 'var(--status-absent-text)',
+                                border: '1px solid var(--status-absent-border)',
+                                lineHeight: 1.2,
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              ⚠ At Risk
+                            </span>
+                          ) : (
+                            <span
+                              style={{
+                                padding: '0.15rem 0.45rem',
+                                borderRadius: '9999px',
+                                fontSize: '0.7rem',
+                                fontWeight: 600,
+                                backgroundColor: 'var(--status-present-bg)',
+                                color: 'var(--status-present-text)',
+                                border: '1px solid var(--status-present-border)',
+                                lineHeight: 1.2,
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              ✓ Good
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )
+        ) : studentMetrics.length === 0 ? (
           <EmptyState
-            icon={BarChart3}
-            title="No report records found"
-            description="No attendance data matches your selected class or date parameters."
+            icon={Users}
+            title="No student data found"
+            description="No student metrics available for the selected filters."
           />
         ) : (
           <div className="table-responsive">
             <table>
               <thead>
                 <tr>
-                  <th>Session Date</th>
-                  <th>Class Name</th>
-                  <th>Total Enrolled</th>
+                  <th>Roll #</th>
+                  <th>Student Name</th>
+                  <th>Sessions</th>
                   <th>Present</th>
                   <th>Absent</th>
                   <th>Late</th>
                   <th>Leave</th>
-                  <th>Rate</th>
+                  <th>Attendance %</th>
+                  <th>Status</th>
                 </tr>
               </thead>
               <tbody>
-                {historyLogs.map((log) => (
-                  <tr key={`${log.classId}_${log.date}`}>
+                {studentMetrics.map((m) => (
+                  <tr key={m.student.id}>
+                    <td style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>
+                      {m.student.rollNo}
+                    </td>
                     <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
-                      {formatDate(log.date)}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const currentClass = classes.find((c) => c.id === m.student.classId);
+                          setSelectedStudentForModal({
+                            ...m,
+                            className: currentClass?.name || 'Class Record',
+                          });
+                        }}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          padding: 0,
+                          font: 'inherit',
+                          fontWeight: 600,
+                          color: 'var(--primary)',
+                          textDecoration: 'underline',
+                          textUnderlineOffset: '3px',
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                        }}
+                        title={`Click to view absence details for ${m.student.name}`}
+                        aria-label={`View absence details for ${m.student.name}`}
+                      >
+                        {m.student.name}
+                      </button>
+                    </td>
+                    <td>{m.totalSessions}</td>
+                    <td>
+                      <span style={{ color: 'var(--status-present-text)', fontWeight: 600 }}>{m.present}</span>
                     </td>
                     <td>
-                      <span style={{ fontWeight: 600 }}>{log.className}</span>
-                    </td>
-                    <td>{log.stats.total}</td>
-                    <td>
-                      <span style={{ color: 'var(--status-present-text)', fontWeight: 700 }}>
-                        {log.stats.present}
-                      </span>
+                      <span style={{ color: 'var(--status-absent-text)', fontWeight: 600 }}>{m.absent}</span>
                     </td>
                     <td>
-                      <span style={{ color: 'var(--status-absent-text)', fontWeight: 700 }}>
-                        {log.stats.absent}
-                      </span>
+                      <span style={{ color: 'var(--status-late-text)', fontWeight: 600 }}>{m.late}</span>
                     </td>
                     <td>
-                      <span style={{ color: 'var(--status-late-text)', fontWeight: 700 }}>
-                        {log.stats.late}
-                      </span>
+                      <span style={{ color: 'var(--status-leave-text)', fontWeight: 600 }}>{m.leave}</span>
                     </td>
                     <td>
-                      <span style={{ color: 'var(--status-leave-text)', fontWeight: 700 }}>
-                        {log.stats.leave}
-                      </span>
-                    </td>
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                        <span
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <div
                           style={{
-                            fontWeight: 700,
-                            color: log.stats.rate >= ATTENDANCE_BENCHMARK.AT_RISK_THRESHOLD ? 'var(--status-present-text)' : 'var(--status-absent-text)',
+                            flex: 1,
+                            maxWidth: '80px',
+                            height: '6px',
+                            backgroundColor: 'var(--bg-subtle)',
+                            borderRadius: '9999px',
+                            overflow: 'hidden',
                           }}
                         >
-                          {log.stats.rate}%
-                        </span>
-                        {log.stats.rate < ATTENDANCE_BENCHMARK.AT_RISK_THRESHOLD ? (
-                          <span
+                          <div
                             style={{
-                              padding: '0.15rem 0.45rem',
+                              width: `${m.rate}%`,
+                              height: '100%',
+                              backgroundColor: m.rate < ATTENDANCE_BENCHMARK.AT_RISK_THRESHOLD ? 'var(--status-absent)' : 'var(--status-present)',
                               borderRadius: '9999px',
-                              fontSize: '0.7rem',
-                              fontWeight: 700,
-                              backgroundColor: 'var(--status-absent-bg)',
-                              color: 'var(--status-absent-text)',
-                              border: '1px solid var(--status-absent-border)',
-                              lineHeight: 1.2,
-                              whiteSpace: 'nowrap',
                             }}
-                          >
-                            ⚠ At Risk
-                          </span>
-                        ) : (
-                          <span
-                            style={{
-                              padding: '0.15rem 0.45rem',
-                              borderRadius: '9999px',
-                              fontSize: '0.7rem',
-                              fontWeight: 600,
-                              backgroundColor: 'var(--status-present-bg)',
-                              color: 'var(--status-present-text)',
-                              border: '1px solid var(--status-present-border)',
-                              lineHeight: 1.2,
-                              whiteSpace: 'nowrap',
-                            }}
-                          >
-                            ✓ Good
-                          </span>
-                        )}
+                          />
+                        </div>
+                        <span style={{ fontWeight: 700, fontSize: '0.85rem' }}>{m.rate}%</span>
                       </div>
+                    </td>
+                    <td>
+                      {m.isAtRisk ? (
+                        <span
+                          style={{
+                            padding: '0.2rem 0.55rem',
+                            borderRadius: '9999px',
+                            fontSize: '0.725rem',
+                            fontWeight: 700,
+                            backgroundColor: 'var(--status-absent-bg)',
+                            color: 'var(--status-absent-text)',
+                            border: '1px solid var(--status-absent-border)',
+                          }}
+                        >
+                          ⚠ At Risk
+                        </span>
+                      ) : (
+                        <span
+                          style={{
+                            padding: '0.2rem 0.55rem',
+                            borderRadius: '9999px',
+                            fontSize: '0.725rem',
+                            fontWeight: 600,
+                            backgroundColor: 'var(--status-present-bg)',
+                            color: 'var(--status-present-text)',
+                            border: '1px solid var(--status-present-border)',
+                          }}
+                        >
+                          ✓ Good
+                        </span>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -347,6 +513,13 @@ export const ReportsPage = () => {
           </div>
         )}
       </Card>
+
+      {/* Date-by-date student attendance drill-down modal */}
+      <StudentAttendanceModal
+        isOpen={!!selectedStudentForModal}
+        onClose={() => setSelectedStudentForModal(null)}
+        studentData={selectedStudentForModal}
+      />
     </div>
   );
 };

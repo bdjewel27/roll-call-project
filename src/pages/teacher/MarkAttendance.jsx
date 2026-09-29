@@ -32,6 +32,7 @@ export const MarkAttendance = () => {
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [rosterAttendance, setRosterAttendance] = useState([]);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [isAllPresentConfirmOpen, setIsAllPresentConfirmOpen] = useState(false);
   const [isExistingRecord, setIsExistingRecord] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -325,11 +326,20 @@ export const MarkAttendance = () => {
   const handleSaveClick = (e) => {
     e.preventDefault();
     if (loadError || rosterAttendance.length === 0) return;
+
     if (selectedDate !== getTodayDateString() && isExistingRecord) {
       setIsConfirmOpen(true);
-    } else {
-      executeSave();
+      return;
     }
+
+    // Detect when teacher is saving attendance where every student's status is still set to default 'Present'
+    const isAllPresent = rosterAttendance.every((s) => s.status === ATTENDANCE_STATUS.PRESENT);
+    if (!isExistingRecord && isAllPresent) {
+      setIsAllPresentConfirmOpen(true);
+      return;
+    }
+
+    executeSave();
   };
 
   // Statistics calculation
@@ -718,6 +728,21 @@ export const MarkAttendance = () => {
           selectedDate
         )}. Are you sure you want to overwrite it?`}
         confirmText="Yes, Overwrite"
+        isDanger={false}
+      />
+
+      {/* Confirmation guard when saving with all students default Present */}
+      <ConfirmModal
+        isOpen={isAllPresentConfirmOpen}
+        onClose={() => setIsAllPresentConfirmOpen(false)}
+        onConfirm={() => {
+          setIsAllPresentConfirmOpen(false);
+          executeSave();
+        }}
+        title="সবাই কি উপস্থিত? (All Students Present?)"
+        message="সবাই কি উপস্থিত? আপনি কারও অবস্থা পরিবর্তন করেননি। আপনি কি নিশ্চিত যে সবাই উপস্থিত হিসেবে হাজিরা সংরক্ষণ করতে চান?"
+        confirmText="হ্যাঁ, সংরক্ষণ করুন"
+        cancelText="ফিরে যান"
         isDanger={false}
       />
     </div>

@@ -7,6 +7,8 @@ import { dataService } from '../../services/dataService';
 import { ATTENDANCE_STATUS } from '../../constants/attendanceStatus';
 import { formatDate, getTodayDateString } from '../../utils/formatters';
 import { Link } from 'react-router-dom';
+import { StudentAvatar } from '../../components/common/StudentAvatar';
+import { StudentAttendanceModal } from '../../components/attendance/StudentAttendanceModal';
 import {
   School,
   Users,
@@ -15,6 +17,7 @@ import {
   ArrowRight,
   TrendingUp,
   AlertCircle,
+  AlertTriangle,
   RotateCcw,
 } from 'lucide-react';
 
@@ -22,6 +25,8 @@ export const TeacherDashboard = () => {
   const { user } = useAuth();
   const [todayDate] = useState(getTodayDateString());
   const [assignedClassesStatus, setAssignedClassesStatus] = useState([]);
+  const [atRiskStudents, setAtRiskStudents] = useState([]);
+  const [selectedStudentForModal, setSelectedStudentForModal] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [summaryStats, setSummaryStats] = useState({
@@ -40,9 +45,19 @@ export const TeacherDashboard = () => {
       // Fetch classes directly from Supabase via dataService
       const teacherClasses = await dataService.getClassesForTeacher(teacherId);
       const assignedClassIds = (teacherClasses || []).map((c) => c.id).filter(Boolean);
-      const todayLogs = assignedClassIds.length > 0
-        ? await dataService.getAttendanceHistory(assignedClassIds, todayDate, todayDate)
-        : [];
+      const [todayLogs, studentMetrics] = await Promise.all([
+        assignedClassIds.length > 0
+          ? dataService.getAttendanceHistory(assignedClassIds, todayDate, todayDate)
+          : Promise.resolve([]),
+        assignedClassIds.length > 0
+          ? dataService.getStudentAttendanceMetrics(assignedClassIds)
+          : Promise.resolve([]),
+      ]);
+
+      const flaggedStudents = (studentMetrics || []).filter(
+        (m) => (m.isAtRisk || m.isConsecutiveAbsent) && m.totalSessions > 0
+      );
+      setAtRiskStudents(flaggedStudents);
 
       const historyMap = {};
       (todayLogs || []).forEach((log) => {
@@ -203,6 +218,166 @@ export const TeacherDashboard = () => {
             />
           </div>
 
+          {/* Proactive At-Risk & Consecutive Absence Alerts */}
+          <Card
+            title="জরুরি মনোযোগ প্রয়োজন (Students at Risk)"
+            subtitle="শিক্ষার্থী যাদের উপস্থিতির হার ৭৫% এর কম অথবা সাম্প্রতিক ৩+ দিন যাবত অনুপস্থিত"
+            extra={
+              atRiskStudents.length > 0 ? (
+                <span
+                  style={{
+                    padding: '0.2rem 0.65rem',
+                    borderRadius: '9999px',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    backgroundColor: 'var(--status-absent-bg)',
+                    color: 'var(--status-absent-text)',
+                    border: '1px solid var(--status-absent-border)',
+                  }}
+                >
+                  {atRiskStudents.length} {atRiskStudents.length === 1 ? 'Student' : 'Students'}
+                </span>
+              ) : null
+            }
+          >
+            {loading ? (
+              <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '1rem' }}>
+                Analyzing student attendance patterns...
+              </p>
+            ) : atRiskStudents.length === 0 ? (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  padding: '1rem 1.25rem',
+                  borderRadius: '10px',
+                  backgroundColor: 'var(--status-present-bg)',
+                  border: '1px solid var(--status-present-border)',
+                  color: 'var(--status-present-text)',
+                }}
+              >
+                <CheckCircle2 size={22} style={{ flexShrink: 0 }} />
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: '0.925rem' }}>
+                    সবকিছু স্বাভাবিক — কোনো শিক্ষার্থী ঝুঁকিপূর্ণ সীমায় নেই
+                  </div>
+                  <div style={{ fontSize: '0.8rem', opacity: 0.9 }}>
+                    আপনার কোনো শিক্ষার্থীর হাজিরার হার ৭৫% এর নিচে নেই এবং কেউ ৩ দিন বা তার বেশি অনুপস্থিত থাকেনি।
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {atRiskStudents.map((m) => {
+                  const assignedClass = assignedClassesStatus.find((c) => c.id === m.student.classId);
+                  return (
+                    <div
+                      key={m.student.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '0.85rem 1.15rem',
+                        borderRadius: '10px',
+                        backgroundColor: 'var(--bg-subtle)',
+                        border: '1px solid var(--border-color)',
+                        flexWrap: 'wrap',
+                        gap: '0.75rem',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                        <StudentAvatar student={m.student} size={40} shape="circle" />
+                        <div>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setSelectedStudentForModal({
+                                ...m,
+                                className: assignedClass?.name || 'Assigned Class',
+                              })
+                            }
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              padding: 0,
+                              font: 'inherit',
+                              fontWeight: 700,
+                              fontSize: '0.95rem',
+                              color: 'var(--text-primary)',
+                              textDecoration: 'underline',
+                              textUnderlineOffset: '2px',
+                              cursor: 'pointer',
+                              textAlign: 'left',
+                            }}
+                            title={`Click to view details for ${m.student.name}`}
+                          >
+                            {m.student.name}
+                          </button>
+                          <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.15rem' }}>
+                            Roll #{m.student.rollNo} &bull; {assignedClass?.name || 'Class'}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+                        {m.isConsecutiveAbsent && (
+                          <span
+                            style={{
+                              padding: '0.25rem 0.65rem',
+                              borderRadius: '9999px',
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                              backgroundColor: 'var(--status-absent-bg)',
+                              color: 'var(--status-absent-text)',
+                              border: '1px solid var(--status-absent-border)',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.35rem',
+                            }}
+                          >
+                            <AlertTriangle size={13} />
+                            <span>{m.consecutiveAbsentDays} দিন যাবৎ অনুপস্থিত</span>
+                          </span>
+                        )}
+
+                        {m.isAtRisk && (
+                          <span
+                            style={{
+                              padding: '0.25rem 0.65rem',
+                              borderRadius: '9999px',
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                              backgroundColor: 'var(--status-late-bg)',
+                              color: 'var(--status-late-text)',
+                              border: '1px solid var(--status-late-border)',
+                            }}
+                          >
+                            {m.rate}% At Risk
+                          </span>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setSelectedStudentForModal({
+                              ...m,
+                              className: assignedClass?.name || 'Assigned Class',
+                            })
+                          }
+                          className="btn-secondary"
+                          style={{ padding: '0.4rem 0.75rem', fontSize: '0.8rem' }}
+                        >
+                          বিস্তারিত (History)
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </Card>
+
       {/* Today's Roll Call Tracker */}
       <Card
         title="Today's Roll Call Status"
@@ -273,6 +448,13 @@ export const TeacherDashboard = () => {
           )}
         </div>
       </Card>
+
+      {/* Student Attendance Detail Modal */}
+      <StudentAttendanceModal
+        isOpen={!!selectedStudentForModal}
+        onClose={() => setSelectedStudentForModal(null)}
+        studentData={selectedStudentForModal}
+      />
         </>
       )}
     </div>

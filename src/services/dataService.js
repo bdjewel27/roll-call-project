@@ -868,7 +868,7 @@ export const dataService = {
 
         let entry = metricsMap.get(studentLog.studentId);
         if (!entry) {
-          entry = { total: 0, present: 0, absent: 0, late: 0, leave: 0 };
+          entry = { total: 0, present: 0, absent: 0, late: 0, leave: 0, sessions: [] };
           metricsMap.set(studentLog.studentId, entry);
         }
 
@@ -877,8 +877,31 @@ export const dataService = {
         else if (studentLog.status === ATTENDANCE_STATUS.ABSENT) entry.absent++;
         else if (studentLog.status === ATTENDANCE_STATUS.LATE) entry.late++;
         else if (studentLog.status === ATTENDANCE_STATUS.LEAVE) entry.leave++;
+
+        entry.sessions.push({
+          sessionId: session.id,
+          date: session.date,
+          className: session.className,
+          status: studentLog.status,
+          remark: studentLog.remark || '',
+        });
       });
     });
+
+    const calculateConsecutiveAbsences = (sessionList = []) => {
+      const sorted = [...sessionList].sort(
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+      );
+      let count = 0;
+      for (const s of sorted) {
+        if (s.status === ATTENDANCE_STATUS.ABSENT) {
+          count++;
+        } else {
+          break;
+        }
+      }
+      return count;
+    };
 
     const activeStudentIds = new Set(students.map((s) => s.id));
     const activeMetrics = students.map((std) => {
@@ -888,10 +911,12 @@ export const dataService = {
         absent: 0,
         late: 0,
         leave: 0,
+        sessions: [],
       };
 
-      const { total, present, absent, late, leave } = entry;
+      const { total, present, absent, late, leave, sessions = [] } = entry;
       const rate = total > 0 ? Math.round(((present + late) / total) * 100) : 100;
+      const consecutiveAbsentDays = calculateConsecutiveAbsences(sessions);
 
       return {
         student: std,
@@ -902,6 +927,9 @@ export const dataService = {
         leave,
         rate,
         isAtRisk: rate < ATTENDANCE_BENCHMARK.AT_RISK_THRESHOLD && total > 0,
+        isConsecutiveAbsent: consecutiveAbsentDays >= 3,
+        consecutiveAbsentDays,
+        sessions,
       };
     });
 
@@ -915,8 +943,9 @@ export const dataService = {
           classId: typeof classId === 'string' && classId !== 'ALL' ? classId : '',
           isActive: false,
         };
-        const { total, present, absent, late, leave } = entry;
+        const { total, present, absent, late, leave, sessions = [] } = entry;
         const rate = total > 0 ? Math.round(((present + late) / total) * 100) : 100;
+        const consecutiveAbsentDays = calculateConsecutiveAbsences(sessions);
 
         historicalMetrics.push({
           student: std,
@@ -927,6 +956,9 @@ export const dataService = {
           leave,
           rate,
           isAtRisk: rate < ATTENDANCE_BENCHMARK.AT_RISK_THRESHOLD && total > 0,
+          isConsecutiveAbsent: consecutiveAbsentDays >= 3,
+          consecutiveAbsentDays,
+          sessions,
         });
       }
     });

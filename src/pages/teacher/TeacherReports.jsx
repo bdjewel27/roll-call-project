@@ -8,6 +8,7 @@ import { dataService } from '../../services/dataService';
 import { exportStudentMetricsCSV } from '../../utils/csvExport';
 import { getTodayDateString } from '../../utils/formatters';
 import { ATTENDANCE_BENCHMARK } from '../../constants/attendanceStatus';
+import { StudentAttendanceModal } from '../../components/attendance/StudentAttendanceModal';
 import {
   FileBarChart,
   Download,
@@ -22,6 +23,7 @@ export const TeacherReports = () => {
   const [classesLoaded, setClassesLoaded] = useState(false);
   const [selectedClassId, setSelectedClassId] = useState('ALL');
   const [studentMetrics, setStudentMetrics] = useState([]);
+  const [selectedStudentForModal, setSelectedStudentForModal] = useState(null);
 
   const loadMetrics = useCallback(async () => {
     if (!classesLoaded) return;
@@ -203,7 +205,32 @@ export const TeacherReports = () => {
                       {m.student.rollNo}
                     </td>
                     <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
-                      {m.student.name}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const currentClass = classes.find((c) => c.id === m.student.classId);
+                          setSelectedStudentForModal({
+                            ...m,
+                            className: currentClass?.name || 'Class Record',
+                          });
+                        }}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          padding: 0,
+                          font: 'inherit',
+                          fontWeight: 600,
+                          color: 'var(--primary)',
+                          textDecoration: 'underline',
+                          textUnderlineOffset: '3px',
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                        }}
+                        title={`Click to view absence details for ${m.student.name}`}
+                        aria-label={`View absence details for ${m.student.name}`}
+                      >
+                        {m.student.name}
+                      </button>
                     </td>
                     <td>{m.totalSessions}</td>
                     <td>
@@ -280,6 +307,13 @@ export const TeacherReports = () => {
           </div>
         )}
       </Card>
+
+      {/* Date-by-date student attendance drill-down modal */}
+      <StudentAttendanceModal
+        isOpen={!!selectedStudentForModal}
+        onClose={() => setSelectedStudentForModal(null)}
+        studentData={selectedStudentForModal}
+      />
     </div>
   );
 };
