@@ -35,13 +35,14 @@ export const TeacherDashboard = () => {
     setLoading(true);
     setError(null);
     try {
-      const teacherId = user?.id || 'tch-1';
+      const teacherId = user?.id || null;
 
       // Fetch classes directly from Supabase via dataService
-      const [teacherClasses, todayLogs] = await Promise.all([
-        dataService.getClassesForTeacher(teacherId),
-        dataService.getAttendanceHistory(null, todayDate, todayDate),
-      ]);
+      const teacherClasses = await dataService.getClassesForTeacher(teacherId);
+      const assignedClassIds = (teacherClasses || []).map((c) => c.id).filter(Boolean);
+      const todayLogs = assignedClassIds.length > 0
+        ? await dataService.getAttendanceHistory(assignedClassIds, todayDate, todayDate)
+        : [];
 
       const historyMap = {};
       (todayLogs || []).forEach((log) => {

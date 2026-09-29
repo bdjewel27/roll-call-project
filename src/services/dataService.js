@@ -219,7 +219,13 @@ export const dataService = {
 
   // --- STUDENTS ---
   async getStudents(classId = null, forceRefresh = false) {
-    const cacheKey = classId || 'ALL';
+    if (Array.isArray(classId) && classId.length === 0) {
+      return [];
+    }
+
+    const cacheKey = Array.isArray(classId)
+      ? `CLASSES_${classId.slice().sort().join(',')}`
+      : classId || 'ALL';
     const now = Date.now();
     const cached = memoryCache.students.get(cacheKey);
     if (!forceRefresh && cached && (now - cached.timestamp < CACHE_TTL_MS)) {
@@ -233,7 +239,9 @@ export const dataService = {
       .eq('is_active', true)
       .order('roll_no');
 
-    if (classId) {
+    if (Array.isArray(classId)) {
+      query = query.in('class_id', classId);
+    } else if (classId && classId !== 'ALL') {
       query = query.eq('class_id', classId);
     }
 
@@ -241,12 +249,17 @@ export const dataService = {
 
     // Fallback if avatar_url column is not present in legacy schema
     if (error && error.message?.includes('avatar_url')) {
-      const fallbackQuery = supabase
+      let fallbackQuery = supabase
         .from('students')
         .select('id, roll_no, full_name, gender, class_id, guardian_name, guardian_phone')
         .eq('is_active', true)
         .order('roll_no');
-      const res = classId ? await fallbackQuery.eq('class_id', classId) : await fallbackQuery;
+      if (Array.isArray(classId)) {
+        fallbackQuery = fallbackQuery.in('class_id', classId);
+      } else if (classId && classId !== 'ALL') {
+        fallbackQuery = fallbackQuery.eq('class_id', classId);
+      }
+      const res = await fallbackQuery;
       data = res.data;
       error = res.error;
     }
@@ -643,10 +656,14 @@ export const dataService = {
     let sDate = startDate;
     let eDate = endDate;
 
-    if (typeof classId === 'object' && classId !== null) {
+    if (typeof classId === 'object' && classId !== null && !Array.isArray(classId)) {
       cId = classId.classId;
       sDate = classId.startDate;
       eDate = classId.endDate;
+    }
+
+    if (Array.isArray(cId) && cId.length === 0) {
+      return [];
     }
 
     let query = supabase
@@ -678,7 +695,9 @@ export const dataService = {
       `)
       .order('date', { ascending: false });
 
-    if (cId && cId !== 'ALL') {
+    if (Array.isArray(cId)) {
+      query = query.in('class_id', cId);
+    } else if (cId && cId !== 'ALL') {
       query = query.eq('class_id', cId);
     }
     if (sDate) {
@@ -732,8 +751,13 @@ export const dataService = {
 
   // Get student attendance metrics for reports
   async getStudentAttendanceMetrics(classId = null) {
-    const students = await this.getStudents(classId && classId !== 'ALL' ? classId : null);
-    const history = await this.getAttendanceHistory(classId && classId !== 'ALL' ? classId : null);
+    if (Array.isArray(classId) && classId.length === 0) {
+      return [];
+    }
+
+    const targetClass = classId && classId !== 'ALL' ? classId : null;
+    const students = await this.getStudents(targetClass);
+    const history = await this.getAttendanceHistory(targetClass);
 
     const metricsMap = new Map();
     const studentMetaMap = new Map();
@@ -747,7 +771,7 @@ export const dataService = {
             id: studentLog.studentId,
             rollNo: studentLog.rollNo || '-',
             name: studentLog.studentName || 'Unknown Student',
-            classId: session.classId || (classId && classId !== 'ALL' ? classId : ''),
+            classId: session.classId || (typeof classId === 'string' && classId !== 'ALL' ? classId : ''),
             isActive: false,
           });
         }
@@ -798,7 +822,7 @@ export const dataService = {
           id: studentId,
           rollNo: '-',
           name: 'Unknown Student',
-          classId: classId && classId !== 'ALL' ? classId : '',
+          classId: typeof classId === 'string' && classId !== 'ALL' ? classId : '',
           isActive: false,
         };
         const { total, present, absent, late, leave } = entry;

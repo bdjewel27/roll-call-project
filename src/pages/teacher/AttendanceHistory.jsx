@@ -21,6 +21,7 @@ export const AttendanceHistory = () => {
   const { user } = useAuth();
   const { showToast } = useToast();
   const [classes, setClasses] = useState([]);
+  const [classesLoaded, setClassesLoaded] = useState(false);
   const [selectedClassId, setSelectedClassId] = useState('ALL');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -29,10 +30,24 @@ export const AttendanceHistory = () => {
   const [loading, setLoading] = useState(false);
 
   const loadHistory = useCallback(async () => {
+    if (!classesLoaded) return;
     setLoading(true);
     try {
+      let targetClassId;
+      if (selectedClassId === 'ALL') {
+        const assignedIds = classes.map((c) => c.id).filter(Boolean);
+        if (assignedIds.length === 0) {
+          setHistoryLogs([]);
+          setLoading(false);
+          return;
+        }
+        targetClassId = assignedIds;
+      } else {
+        targetClassId = selectedClassId;
+      }
+
       const logs = await dataService.getAttendanceHistory(
-        selectedClassId === 'ALL' ? null : selectedClassId,
+        targetClassId,
         startDate || null,
         endDate || null
       );
@@ -43,20 +58,24 @@ export const AttendanceHistory = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedClassId, startDate, endDate, showToast]);
+  }, [classesLoaded, classes, selectedClassId, startDate, endDate, showToast]);
 
   useEffect(() => {
     let isMounted = true;
     const loadInitData = async () => {
       try {
         const teacherId = user?.id || null;
-        let teacherClasses = await dataService.getClassesForTeacher(teacherId);
+        const teacherClasses = await dataService.getClassesForTeacher(teacherId);
         if (isMounted) {
           setClasses(teacherClasses);
+          setClassesLoaded(true);
         }
       } catch (err) {
         console.error('[AttendanceHistory] Error loading classes:', err);
         showToast('Error loading assigned classes', 'error');
+        if (isMounted) {
+          setClassesLoaded(true);
+        }
       }
     };
     loadInitData();
@@ -67,10 +86,12 @@ export const AttendanceHistory = () => {
 
   useEffect(() => {
     const fetch = async () => {
-      await loadHistory();
+      if (classesLoaded) {
+        await loadHistory();
+      }
     };
     fetch();
-  }, [loadHistory]);
+  }, [classesLoaded, loadHistory]);
 
   const handleOpenDetail = (session) => {
     setSelectedSessionForModal(session);

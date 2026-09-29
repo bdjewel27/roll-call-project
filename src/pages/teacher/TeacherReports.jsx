@@ -19,33 +19,49 @@ export const TeacherReports = () => {
   const { user } = useAuth();
   const { showToast } = useToast();
   const [classes, setClasses] = useState([]);
+  const [classesLoaded, setClassesLoaded] = useState(false);
   const [selectedClassId, setSelectedClassId] = useState('ALL');
   const [studentMetrics, setStudentMetrics] = useState([]);
 
   const loadMetrics = useCallback(async () => {
+    if (!classesLoaded) return;
     try {
-      const metrics = await dataService.getStudentAttendanceMetrics(
-        selectedClassId === 'ALL' ? null : selectedClassId
-      );
+      let targetClassId;
+      if (selectedClassId === 'ALL') {
+        const assignedIds = classes.map((c) => c.id).filter(Boolean);
+        if (assignedIds.length === 0) {
+          setStudentMetrics([]);
+          return;
+        }
+        targetClassId = assignedIds;
+      } else {
+        targetClassId = selectedClassId;
+      }
+
+      const metrics = await dataService.getStudentAttendanceMetrics(targetClassId);
       setStudentMetrics(metrics);
     } catch (err) {
       console.error('[TeacherReports] Error loading metrics:', err);
       showToast('Error loading attendance metrics', 'error');
     }
-  }, [selectedClassId, showToast]);
+  }, [classesLoaded, classes, selectedClassId, showToast]);
 
   useEffect(() => {
     let isMounted = true;
     const fetchClasses = async () => {
       try {
         const teacherId = user?.id || null;
-        let teacherClasses = await dataService.getClassesForTeacher(teacherId);
+        const teacherClasses = await dataService.getClassesForTeacher(teacherId);
         if (isMounted) {
           setClasses(teacherClasses);
+          setClassesLoaded(true);
         }
       } catch (err) {
         console.error('[TeacherReports] Error loading classes:', err);
         showToast('Error loading assigned classes', 'error');
+        if (isMounted) {
+          setClassesLoaded(true);
+        }
       }
     };
     fetchClasses();
@@ -56,10 +72,12 @@ export const TeacherReports = () => {
 
   useEffect(() => {
     const fetch = async () => {
-      await loadMetrics();
+      if (classesLoaded) {
+        await loadMetrics();
+      }
     };
     fetch();
-  }, [loadMetrics]);
+  }, [classesLoaded, loadMetrics]);
 
   // Export CSV generator
   const handleExportCSV = () => {

@@ -36,10 +36,11 @@ export const MyClasses = () => {
     setError(null);
     try {
       const teacherId = user?.id || null;
-      const [list, todayLogs] = await Promise.all([
-        dataService.getClassesForTeacher(teacherId),
-        dataService.getAttendanceHistory(null, todayDate, todayDate),
-      ]);
+      const list = await dataService.getClassesForTeacher(teacherId);
+      const assignedClassIds = (list || []).map((c) => c.id).filter(Boolean);
+      const todayLogs = assignedClassIds.length > 0
+        ? await dataService.getAttendanceHistory(assignedClassIds, todayDate, todayDate)
+        : [];
 
       const historyMap = {};
       (todayLogs || []).forEach((log) => {
