@@ -27,7 +27,8 @@ export const ToastProvider = ({ children }) => {
     <ToastContext.Provider value={{ showToast }}>
       {children}
       <div
-        role="region"
+        role="status"
+        aria-live="polite"
         aria-label="Notifications"
         style={{
           position: 'fixed',

@@ -296,14 +296,49 @@ export const ReportsPage = () => {
                       </span>
                     </td>
                     <td>
-                      <span
-                        style={{
-                          fontWeight: 700,
-                          color: log.stats.rate >= ATTENDANCE_BENCHMARK.AT_RISK_THRESHOLD ? 'var(--status-present-text)' : 'var(--status-absent-text)',
-                        }}
-                      >
-                        {log.stats.rate}%
-                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        <span
+                          style={{
+                            fontWeight: 700,
+                            color: log.stats.rate >= ATTENDANCE_BENCHMARK.AT_RISK_THRESHOLD ? 'var(--status-present-text)' : 'var(--status-absent-text)',
+                          }}
+                        >
+                          {log.stats.rate}%
+                        </span>
+                        {log.stats.rate < ATTENDANCE_BENCHMARK.AT_RISK_THRESHOLD ? (
+                          <span
+                            style={{
+                              padding: '0.15rem 0.45rem',
+                              borderRadius: '9999px',
+                              fontSize: '0.7rem',
+                              fontWeight: 700,
+                              backgroundColor: 'var(--status-absent-bg)',
+                              color: 'var(--status-absent-text)',
+                              border: '1px solid var(--status-absent-border)',
+                              lineHeight: 1.2,
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            ⚠ At Risk
+                          </span>
+                        ) : (
+                          <span
+                            style={{
+                              padding: '0.15rem 0.45rem',
+                              borderRadius: '9999px',
+                              fontSize: '0.7rem',
+                              fontWeight: 600,
+                              backgroundColor: 'var(--status-present-bg)',
+                              color: 'var(--status-present-text)',
+                              border: '1px solid var(--status-present-border)',
+                              lineHeight: 1.2,
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            ✓ Good
+                          </span>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}

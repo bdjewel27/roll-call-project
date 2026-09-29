@@ -604,7 +604,7 @@ export const MarkAttendance = () => {
           />
         ) : (
           <div className="table-responsive">
-            <table>
+            <table className="roster-table">
               <thead>
                 <tr>
                   <th style={{ width: '90px' }}>Roll #</th>
@@ -616,11 +616,11 @@ export const MarkAttendance = () => {
               <tbody>
                 {filteredStudents.map((student) => {
                   return (
-                    <tr key={student.id}>
-                      <td style={{ fontWeight: 700, color: 'var(--text-secondary)' }}>
+                    <tr key={student.id} className="roster-row-card">
+                      <td className="roster-cell-roll" style={{ fontWeight: 700, color: 'var(--text-secondary)' }}>
                         {student.rollNo}
                       </td>
-                      <td>
+                      <td className="roster-cell-student">
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                           <StudentAvatar student={student} shape="circle" />
                           <div>
@@ -628,14 +628,15 @@ export const MarkAttendance = () => {
                               {student.name}
                             </div>
                             <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                              <span className="roster-mobile-roll">Roll #{student.rollNo} &bull; </span>
                               {student.gender || 'Student'}
                             </div>
                           </div>
                         </div>
                       </td>
-                      <td>
+                      <td className="roster-cell-status">
                         {/* 4-Status Pill Toggles */}
-                        <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+                        <div className="roster-status-grid" style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
                           {/* Present */}
                           <button
                             type="button"
@@ -677,9 +678,11 @@ export const MarkAttendance = () => {
                           </button>
                         </div>
                       </td>
-                      <td>
+                      <td className="roster-cell-remark">
                         <input
                           type="text"
+                          aria-label={`Remarks for ${student.name}`}
+                          className="roster-remark-input"
                           placeholder={
                             student.status === ATTENDANCE_STATUS.LATE
                               ? 'e.g. Arrived 8:20 AM'

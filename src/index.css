@@ -690,3 +690,83 @@ tr:hover td {
   padding-top: 0.85rem;
   border-top: 1px solid var(--border-color);
 }
+
+/* Roll Call Responsive Table / Mobile Student Cards */
+.roster-mobile-roll {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .roster-table thead {
+    display: none;
+  }
+
+  .roster-table,
+  .roster-table tbody,
+  .roster-table tr.roster-row-card,
+  .roster-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .roster-table tr.roster-row-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 0.85rem;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .roster-table tr.roster-row-card:last-child {
+    margin-bottom: 0;
+  }
+
+  .roster-cell-roll {
+    display: none !important;
+  }
+
+  .roster-mobile-roll {
+    display: inline;
+    font-weight: 700;
+  }
+
+  .roster-cell-student {
+    padding: 0 0 0.75rem 0 !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    margin-bottom: 0.75rem;
+  }
+
+  .roster-cell-status {
+    padding: 0 !important;
+    border: none !important;
+    margin-bottom: 0.75rem;
+  }
+
+  .roster-status-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.5rem !important;
+    width: 100%;
+  }
+
+  .roster-status-grid .status-toggle-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 0.65rem 0.5rem !important;
+    font-size: 0.875rem !important;
+    min-height: 42px;
+    border-radius: 8px;
+  }
+
+  .roster-cell-remark {
+    padding: 0 !important;
+    border: none !important;
+  }
+
+  .roster-remark-input {
+    width: 100%;
+    min-height: 40px;
+    border-radius: 8px;
+  }
+}
