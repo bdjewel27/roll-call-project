@@ -105,7 +105,7 @@ export const StudentAttendanceModal = ({
           >
             <AlertTriangle size={18} style={{ flexShrink: 0 }} />
             <span>
-              জরুরি সতর্কতা: এই শিক্ষার্থী সাম্প্রতিক {studentData.consecutiveAbsentDays}টি সেশনে ধারাবাহিকভাবে অনুপস্থিত রয়েছে!
+              Urgent Alert: This student has been absent for {studentData.consecutiveAbsentDays} consecutive sessions!
             </span>
           </div>
         )}
@@ -145,10 +145,10 @@ export const StudentAttendanceModal = ({
         <div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.6rem' }}>
             <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-              অনুপস্থিতি ও বিলম্বের বিবরণ (Absence & Tardy Dates)
+              Absence & Tardy History
             </h4>
             <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-              মোট {nonPresentSessions.length} দিন
+              Total {nonPresentSessions.length} {nonPresentSessions.length === 1 ? 'day' : 'days'}
             </span>
           </div>
 
@@ -168,10 +168,10 @@ export const StudentAttendanceModal = ({
               <CheckCircle2 size={24} style={{ flexShrink: 0 }} />
               <div>
                 <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>
-                  সম্পূর্ণ উপস্থিতি (১০০% উপস্থিত)
+                  Perfect Attendance (100% Present)
                 </div>
                 <div style={{ fontSize: '0.8rem', opacity: 0.9 }}>
-                  নির্বাচিত সময়কালে কোনো অনুপস্থিতি, বিলম্ব বা ছুটির রেকর্ড নেই।
+                  No records of absence, tardiness, or leave during the selected period.
                 </div>
               </div>
             </div>
@@ -252,7 +252,7 @@ export const StudentAttendanceModal = ({
             className="btn-secondary"
             style={{ padding: '0.55rem 1.25rem', fontSize: '0.875rem' }}
           >
-            বন্ধ করুন (Close)
+            Close
           </button>
         </div>
       </div>

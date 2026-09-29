@@ -739,10 +739,10 @@ export const MarkAttendance = () => {
           setIsAllPresentConfirmOpen(false);
           executeSave();
         }}
-        title="সবাই কি উপস্থিত? (All Students Present?)"
-        message="সবাই কি উপস্থিত? আপনি কারও অবস্থা পরিবর্তন করেননি। আপনি কি নিশ্চিত যে সবাই উপস্থিত হিসেবে হাজিরা সংরক্ষণ করতে চান?"
-        confirmText="হ্যাঁ, সংরক্ষণ করুন"
-        cancelText="ফিরে যান"
+        title="Confirm All Students Present"
+        message="Every student is currently set to Present by default. Are you sure you want to save attendance with all students marked present?"
+        confirmText="Yes, Save Attendance"
+        cancelText="Review Roster"
         isDanger={false}
       />
     </div>
