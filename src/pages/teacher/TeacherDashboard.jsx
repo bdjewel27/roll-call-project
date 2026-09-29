@@ -220,8 +220,8 @@ export const TeacherDashboard = () => {
 
           {/* Proactive At-Risk & Consecutive Absence Alerts */}
           <Card
-            title="জরুরি মনোযোগ প্রয়োজন (Students at Risk)"
-            subtitle="শিক্ষার্থী যাদের উপস্থিতির হার ৭৫% এর কম অথবা সাম্প্রতিক ৩+ দিন যাবত অনুপস্থিত"
+            title="Students at Risk"
+            subtitle="Students with attendance below 75% or absent for 3+ consecutive days"
             extra={
               atRiskStudents.length > 0 ? (
                 <span
@@ -260,10 +260,10 @@ export const TeacherDashboard = () => {
                 <CheckCircle2 size={22} style={{ flexShrink: 0 }} />
                 <div>
                   <div style={{ fontWeight: 700, fontSize: '0.925rem' }}>
-                    সবকিছু স্বাভাবিক — কোনো শিক্ষার্থী ঝুঁকিপূর্ণ সীমায় নেই
+                    All clear — no students are currently at risk
                   </div>
                   <div style={{ fontSize: '0.8rem', opacity: 0.9 }}>
-                    আপনার কোনো শিক্ষার্থীর হাজিরার হার ৭৫% এর নিচে নেই এবং কেউ ৩ দিন বা তার বেশি অনুপস্থিত থাকেনি।
+                    No students currently have attendance below 75% or have been absent for 3 or more consecutive days.
                   </div>
                 </div>
               </div>
@@ -337,7 +337,7 @@ export const TeacherDashboard = () => {
                             }}
                           >
                             <AlertTriangle size={13} />
-                            <span>{m.consecutiveAbsentDays} দিন যাবৎ অনুপস্থিত</span>
+                            <span>Absent for {m.consecutiveAbsentDays} consecutive days</span>
                           </span>
                         )}
 
@@ -368,7 +368,7 @@ export const TeacherDashboard = () => {
                           className="btn-secondary"
                           style={{ padding: '0.4rem 0.75rem', fontSize: '0.8rem' }}
                         >
-                          বিস্তারিত (History)
+                          View History
                         </button>
                       </div>
                     </div>
