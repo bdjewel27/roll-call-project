@@ -433,79 +433,128 @@ export const dataService = {
       throw new Error('Teacher name and email are required.');
     }
 
-    // 1. Create teacher account in Supabase Auth using isolated client so admin session is not replaced
-    const authClient = createAuthClient();
-    const { data: authData, error: authError } = await authClient.auth.signUp({
-      email,
-      password: teacherData.password,
-      options: {
-        data: {
-          full_name: fullName,
-          role: 'teacher',
-          phone: teacherData.phone?.trim() || null,
-          subject: teacherData.subject?.trim() || null,
+    // 1. Invoke Supabase Edge Function to securely manage teacher creation via service role
+    try {
+      const { data, error } = await supabase.functions.invoke('manage-teachers', {
+        body: {
+          action: 'createTeacher',
+          teacherData: {
+            name: fullName,
+            email,
+            password: teacherData.password,
+            phone: teacherData.phone?.trim() || null,
+            subject: teacherData.subject?.trim() || null,
+            assignedClassIds: teacherData.assignedClassIds || [],
+          },
         },
-      },
-    });
+      });
 
-    if (authError) {
-      throw authError;
-    }
+      if (error) {
+        let errMsg = error.message;
+        if (error.context?.json) {
+          try {
+            const body = await error.context.json();
+            if (body?.error) errMsg = body.error;
+          } catch {
+            // ignore json parse error
+          }
+        }
+        throw new Error(errMsg || 'Failed to create teacher via edge function.');
+      }
 
-    const userId = authData?.user?.id;
-    if (!userId) {
-      throw new Error('Failed to create teacher in Supabase Auth: No user ID returned.');
-    }
+      if (data?.error) {
+        throw new Error(data.error);
+      }
 
-    // Check if user already exists (Supabase returns empty identities when user already exists)
-    if (authData.user.identities && authData.user.identities.length === 0) {
-      throw new Error('A user with this email address already exists in Supabase Auth.');
-    }
+      if (data?.data) {
+        return data.data;
+      }
+    } catch (edgeErr) {
+      const isUnavailable =
+        edgeErr.message?.includes('Failed to send') ||
+        edgeErr.message?.includes('not found') ||
+        edgeErr.message?.includes('FunctionsFetchError') ||
+        edgeErr.message?.includes('404') ||
+        edgeErr.message?.includes('relay');
 
-    // 2. Ensure profile record is created/upserted in public.profiles table
-    const profilePayload = {
-      id: userId,
-      full_name: fullName,
-      email: email,
-      phone: teacherData.phone?.trim() || null,
-      subject: teacherData.subject?.trim() || null,
-      role: 'teacher',
-    };
+      if (!isUnavailable) {
+        // Validation or business logic error from edge function (e.g. duplicate email)
+        throw edgeErr;
+      }
 
-    let { data: profileRow, error: profileError } = await supabase
-      .from('profiles')
-      .upsert(profilePayload, { onConflict: 'id' })
-      .select()
-      .maybeSingle();
+      console.warn('[RollCall] manage-teachers edge function not available, using fallback:', edgeErr.message);
 
-    if (profileError) {
-      console.warn('[RollCall] Note on profiles upsert:', profileError.message);
-      // Fallback direct insert if upsert is restricted
-      const { data: insertedRow, error: insertError } = await supabase
+      // Fallback: Create teacher account using isolated client so admin session is preserved
+      const authClient = createAuthClient();
+      const { data: authData, error: authError } = await authClient.auth.signUp({
+        email,
+        password: teacherData.password,
+        options: {
+          data: {
+            full_name: fullName,
+            role: 'teacher',
+            phone: teacherData.phone?.trim() || null,
+            subject: teacherData.subject?.trim() || null,
+          },
+        },
+      });
+
+      if (authError) {
+        throw authError;
+      }
+
+      const userId = authData?.user?.id;
+      if (!userId) {
+        throw new Error('Failed to create teacher in Supabase Auth: No user ID returned.');
+      }
+
+      if (authData.user.identities && authData.user.identities.length === 0) {
+        throw new Error('A user with this email address already exists in Supabase Auth.');
+      }
+
+      const profilePayload = {
+        id: userId,
+        full_name: fullName,
+        email: email,
+        phone: teacherData.phone?.trim() || null,
+        subject: teacherData.subject?.trim() || null,
+        role: 'teacher',
+      };
+
+      let { data: profileRow, error: profileError } = await supabase
         .from('profiles')
-        .insert([profilePayload])
+        .upsert(profilePayload, { onConflict: 'id' })
         .select()
         .maybeSingle();
 
-      if (insertError) {
-        throw new Error(`Failed to create teacher profile: ${insertError.message || profileError.message}`);
+      if (profileError) {
+        console.warn('[RollCall] Note on profiles upsert:', profileError.message);
+        const { data: insertedRow, error: insertError } = await supabase
+          .from('profiles')
+          .insert([profilePayload])
+          .select()
+          .maybeSingle();
+
+        if (insertError) {
+          throw new Error(`Failed to create teacher profile: ${insertError.message || profileError.message}`);
+        }
+
+        profileRow = insertedRow;
       }
 
-      profileRow = insertedRow;
-    }
+      if (!profileRow) {
+        throw new Error('Failed to create teacher profile: No profile record returned.');
+      }
 
-    if (!profileRow) {
-      throw new Error('Failed to create teacher profile: No profile record returned.');
+      return {
+        id: profileRow.id,
+        name: profileRow.full_name || fullName,
+        email: profileRow.email || email,
+        phone: profileRow.phone || teacherData.phone || '',
+        subject: profileRow.subject || teacherData.subject || '',
+        assignedClassIds: [],
+      };
     }
-
-    return {
-      id: profileRow.id,
-      name: profileRow.full_name || fullName,
-      email: profileRow.email || email,
-      phone: profileRow.phone || teacherData.phone || '',
-      subject: profileRow.subject || teacherData.subject || '',
-      assignedClassIds: [],
-    };
   },
 
   async updateTeacher(id, updates) {
@@ -550,29 +599,70 @@ export const dataService = {
       throw new Error('Teacher ID is required to delete teacher.');
     }
 
-    // Remove any assignments in teacher_class_assignments
-    const { error: assignError } = await supabase
-      .from('teacher_class_assignments')
-      .delete()
-      .eq('teacher_id', id);
+    try {
+      const { data, error } = await supabase.functions.invoke('manage-teachers', {
+        body: {
+          action: 'deleteTeacher',
+          teacherId: id,
+        },
+      });
 
-    if (assignError) {
-      console.error('[RollCall] Error removing teacher assignments:', assignError.message);
-      throw assignError;
+      if (error) {
+        let errMsg = error.message;
+        if (error.context?.json) {
+          try {
+            const body = await error.context.json();
+            if (body?.error) errMsg = body.error;
+          } catch {
+            // ignore
+          }
+        }
+        throw new Error(errMsg || 'Failed to delete teacher via edge function.');
+      }
+
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+
+      return true;
+    } catch (edgeErr) {
+      const isUnavailable =
+        edgeErr.message?.includes('Failed to send') ||
+        edgeErr.message?.includes('not found') ||
+        edgeErr.message?.includes('FunctionsFetchError') ||
+        edgeErr.message?.includes('404') ||
+        edgeErr.message?.includes('relay');
+
+      if (!isUnavailable) {
+        throw edgeErr;
+      }
+
+      console.warn('[RollCall] manage-teachers edge function not available, using fallback:', edgeErr.message);
+
+      // Fallback: Remove any assignments in teacher_class_assignments
+      const { error: assignError } = await supabase
+        .from('teacher_class_assignments')
+        .delete()
+        .eq('teacher_id', id);
+
+      if (assignError) {
+        console.error('[RollCall] Error removing teacher assignments:', assignError.message);
+        throw assignError;
+      }
+
+      // Remove profile from public.profiles where id matches
+      const { error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error('[RollCall] Error deleting teacher profile:', error.message);
+        throw error;
+      }
+
+      return true;
     }
-
-    // Remove profile from public.profiles where id matches
-    const { error } = await supabase
-      .from('profiles')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      console.error('[RollCall] Error deleting teacher profile:', error.message);
-      throw error;
-    }
-
-    return true;
   },
 
   // --- ATTENDANCE ---

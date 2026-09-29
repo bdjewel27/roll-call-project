@@ -35,20 +35,34 @@ export const AuthProvider = ({ children }) => {
 
       const role = normalizeRole(profile?.role);
 
+      // If user exists in Auth but has no profile or valid role in profiles table:
+      // immediately reject login, sign out, and invalidate auth session
+      if (!profile || !role) {
+        console.warn('[RollCall Auth] Unauthorized login: No profile found for user', authUser.id);
+        try {
+          await supabase.auth.signOut();
+        } catch (e) {
+          console.warn('[RollCall Auth] Sign out error during profile rejection:', e);
+        }
+        invalidateCache();
+        return null;
+      }
+
       return {
         id: authUser.id,
         email: authUser.email,
         role,
-        fullName: profile?.full_name || authUser.email?.split('@')[0] || 'User',
+        fullName: profile.full_name || authUser.email?.split('@')[0] || 'User',
       };
     } catch (err) {
       console.warn('[RollCall Auth] Profile lookup exception:', err);
-      return {
-        id: authUser.id,
-        email: authUser.email,
-        role: null,
-        fullName: authUser.email?.split('@')[0] || 'User',
-      };
+      try {
+        await supabase.auth.signOut();
+      } catch (e) {
+        console.warn('[RollCall Auth] Sign out error:', e);
+      }
+      invalidateCache();
+      return null;
     }
   };
 
@@ -110,6 +124,9 @@ export const AuthProvider = ({ children }) => {
       }
 
       const fullUser = await fetchProfile(data.user);
+      if (!fullUser) {
+        throw new Error('Unauthorized account: No active profile record found.');
+      }
       setUser(fullUser);
       return fullUser;
     } finally {
