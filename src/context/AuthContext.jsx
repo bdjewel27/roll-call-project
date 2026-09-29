@@ -84,8 +84,8 @@ export const AuthProvider = ({ children }) => {
     // 2. Listen to Auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
-      if (isLoggingInRef.current && event === 'SIGNED_IN') {
-        // Skip duplicate profile fetch and race condition; login() is actively handling it
+      if (isLoggingInRef.current) {
+        // Skip all auth state changes while login() is actively verifying role
         return;
       }
       if (session?.user) {
@@ -105,9 +105,12 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   // Pure Supabase Auth sign-in with email & password
-  const login = async (email = '', password = '') => {
+  const login = async (selectedRole, email = '', password = '') => {
     if (!email || !password) {
       throw new Error('Email and password are required.');
+    }
+    if (!selectedRole) {
+      throw new Error('Selected role is required for login.');
     }
 
     invalidateCache();
@@ -123,10 +126,32 @@ export const AuthProvider = ({ children }) => {
         throw error;
       }
 
+      if (!data?.user) {
+        throw new Error('Login failed: No user returned.');
+      }
+
+      // Fetch the user's role from the profiles table using the user's ID
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', data.user.id)
+        .single();
+
+      const profileRole = profile?.role?.toLowerCase() || '';
+      const uiRole = selectedRole.toLowerCase();
+
+      if (uiRole !== profileRole) {
+        await supabase.auth.signOut();
+        setUser(null);
+        throw new Error(`Role mismatch: This account is registered as a ${profileRole || 'unknown role'}, not an ${uiRole}.`);
+      }
+
+      // If roles match, proceed to fetch the full profile and set user
       const fullUser = await fetchProfile(data.user);
       if (!fullUser) {
         throw new Error('Unauthorized account: No active profile record found.');
       }
+
       setUser(fullUser);
       return fullUser;
     } finally {

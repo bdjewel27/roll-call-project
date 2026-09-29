@@ -45,7 +45,7 @@ export const LoginPage = () => {
     setErrorMsg('');
     setSubmitting(true);
     try {
-      const loggedUser = await login(email.trim(), password);
+      const loggedUser = await login(selectedRole, email.trim(), password);
       const destination = getSafeRedirectPath(from, loggedUser?.role);
       navigate(destination, { replace: true });
     } catch (err) {
