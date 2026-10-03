@@ -246,17 +246,25 @@ export const dataService = {
   },
 
   // --- STUDENTS ---
-  async getStudents(classId: string | string[] | null = null, forceRefresh = false): Promise<Student[]> {
+  async getStudents(
+    classId: string | string[] | null = null,
+    forceRefresh: boolean | { signal?: AbortSignal; forceRefresh?: boolean } = false,
+    options?: { signal?: AbortSignal }
+  ): Promise<Student[]> {
     if (Array.isArray(classId) && classId.length === 0) {
       return [];
     }
+
+    const isOptionsObj = typeof forceRefresh === 'object' && forceRefresh !== null;
+    const isForce = isOptionsObj ? !!forceRefresh.forceRefresh : !!forceRefresh;
+    const signal = isOptionsObj ? forceRefresh.signal : options?.signal;
 
     const cacheKey = Array.isArray(classId)
       ? `CLASSES_${classId.slice().sort().join(',')}`
       : classId || 'ALL';
     const now = Date.now();
     const cached = memoryCache.students.get(cacheKey);
-    if (!forceRefresh && cached && now - cached.timestamp < CACHE_TTL_MS) {
+    if (!isForce && cached && now - cached.timestamp < CACHE_TTL_MS) {
       return cached.data;
     }
 
@@ -267,6 +275,10 @@ export const dataService = {
       .eq('is_active', true)
       .order('roll_no');
 
+    if (signal) {
+      query = query.abortSignal(signal);
+    }
+
     if (Array.isArray(classId)) {
       query = query.in('class_id', classId);
     } else if (classId && classId !== 'ALL') {
@@ -274,6 +286,7 @@ export const dataService = {
     }
 
     const initialRes = await query;
+    if (signal?.aborted) return [];
     let data: any[] | null = initialRes.data;
     let error = initialRes.error;
 
@@ -284,17 +297,22 @@ export const dataService = {
         .select('id, roll_no, full_name, gender, class_id, guardian_name, guardian_phone')
         .eq('is_active', true)
         .order('roll_no');
+      if (signal) {
+        fallbackQuery = fallbackQuery.abortSignal(signal);
+      }
       if (Array.isArray(classId)) {
         fallbackQuery = fallbackQuery.in('class_id', classId);
       } else if (classId && classId !== 'ALL') {
         fallbackQuery = fallbackQuery.eq('class_id', classId);
       }
       const res = await fallbackQuery;
+      if (signal?.aborted) return [];
       data = res.data;
       error = res.error;
     }
 
     if (error) {
+      if (signal?.aborted || error.message?.includes('AbortError')) return [];
       console.error('[RollCall] Error fetching students:', error.message);
       throw error;
     }
@@ -629,23 +647,46 @@ export const dataService = {
   },
 
   // --- ATTENDANCE ---
-  async getAttendanceRecord(classId: string, date: string): Promise<AttendanceRecord | null> {
-    const { data: session, error: sErr } = await supabase
+  async getAttendanceRecord(
+    classId: string,
+    date: string,
+    options?: { signal?: AbortSignal }
+  ): Promise<AttendanceRecord | null> {
+    const signal = options?.signal;
+
+    let sessionQuery = supabase
       .from('attendance_sessions')
       .select('id, class_id, date, marked_by, marked_at')
       .eq('class_id', classId)
-      .eq('date', date)
-      .maybeSingle();
+      .eq('date', date);
 
-    if (sErr) throw sErr;
+    if (signal) {
+      sessionQuery = sessionQuery.abortSignal(signal);
+    }
+
+    const { data: session, error: sErr } = await sessionQuery.maybeSingle();
+
+    if (signal?.aborted) return null;
+    if (sErr) {
+      if (signal?.aborted || sErr.message?.includes('AbortError')) return null;
+      throw sErr;
+    }
     if (!session) return null;
 
-    const { data: records, error: rErr } = await supabase
+    let recordsQuery = supabase
       .from('attendance_records')
       .select('*, students(id, roll_no, full_name, gender, avatar_url, is_active)')
       .eq('session_id', session.id);
 
+    if (signal) {
+      recordsQuery = recordsQuery.abortSignal(signal);
+    }
+
+    const { data: records, error: rErr } = await recordsQuery;
+
+    if (signal?.aborted) return null;
     if (rErr) {
+      if (signal?.aborted || rErr.message?.includes('AbortError')) return null;
       console.error('[RollCall] Error fetching attendance records:', rErr.message);
       throw rErr;
     }
@@ -680,6 +721,10 @@ export const dataService = {
     studentRecords: Array<{ studentId?: string; student_id?: string; status: AttendanceStatus; remark?: string | null }>,
     teacherId: string | null = null
   ): Promise<{ classId: string; date: string; students: any[] }> {
+    if (!studentRecords || !Array.isArray(studentRecords) || studentRecords.length === 0) {
+      throw new Error('Attendance records cannot be empty or null.');
+    }
+
     const isValidUuid = (str: any): boolean =>
       typeof str === 'string' &&
       /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(str);
@@ -711,16 +756,21 @@ export const dataService = {
   async getAttendanceHistory(
     classId: string | string[] | AttendanceFilterParams | null = null,
     startDate: string | null = null,
-    endDate: string | null = null
+    endDate: string | null = null,
+    options?: { signal?: AbortSignal }
   ): Promise<AttendanceSessionSummary[]> {
     let cId: string | string[] | null = null;
     let sDate: string | null = startDate;
     let eDate: string | null = endDate;
+    let signal: AbortSignal | undefined = options?.signal;
 
     if (typeof classId === 'object' && classId !== null && !Array.isArray(classId)) {
       cId = classId.classId ?? null;
       sDate = classId.startDate ?? null;
       eDate = classId.endDate ?? null;
+      if (!signal && (classId as any).signal) {
+        signal = (classId as any).signal;
+      }
     } else {
       cId = classId;
     }
@@ -770,9 +820,15 @@ export const dataService = {
       query = query.lte('date', eDate);
     }
 
+    if (signal) {
+      query = query.abortSignal(signal);
+    }
+
     const { data: sessions, error } = await query;
 
+    if (signal?.aborted) return [];
     if (error) {
+      if (signal?.aborted || error.message?.includes('AbortError')) return [];
       console.error('[RollCall] Error fetching attendance history:', error.message);
       throw error;
     }

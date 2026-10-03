@@ -69,16 +69,29 @@ export const MarkAttendance = () => {
     return () => { mounted = false; };
   }, [user, location.state, showToast]);
 
+  const abortControllerRef = useRef(null);
+
   // Load attendance or roster when class or date changes
   const loadRosterAndAttendance = useCallback(async () => {
     if (!selectedClassId) return;
+
+    // Abort any in-flight request to prevent race conditions on fast date/class change
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+    const { signal } = controller;
+
     setLoading(true);
     setLoadError(false);
     try {
       const [students, existingSession] = await Promise.all([
-        dataService.getStudents(selectedClassId),
-        dataService.getAttendanceRecord(selectedClassId, selectedDate),
+        dataService.getStudents(selectedClassId, { signal }),
+        dataService.getAttendanceRecord(selectedClassId, selectedDate, { signal }),
       ]);
+
+      if (signal.aborted) return;
 
       if (existingSession && existingSession.students && existingSession.students.length > 0) {
         setIsExistingRecord(true);
@@ -121,8 +134,10 @@ export const MarkAttendance = () => {
           return String(a.rollNo).localeCompare(String(b.rollNo));
         });
 
+        if (signal.aborted) return;
         setRosterAttendance(combined);
       } else {
+        if (signal.aborted) return;
         setIsExistingRecord(false);
         // Default new roll call: everyone is set to Present by default for speed
         const initial = students.map((std) => ({
@@ -138,13 +153,19 @@ export const MarkAttendance = () => {
         setRosterAttendance(initial);
       }
     } catch (err) {
+      if (signal.aborted || err?.name === 'AbortError') {
+        // Ignored: request superseded by a newer date/class selection
+        return;
+      }
       console.error('Failed to load roster/attendance:', err);
       setLoadError(true);
       setRosterAttendance([]);
       showToast('Error loading attendance roster', 'error');
     } finally {
-      setLoading(false);
-      setHasUnsavedChanges(false);
+      if (!signal.aborted) {
+        setLoading(false);
+        setHasUnsavedChanges(false);
+      }
     }
   }, [selectedClassId, selectedDate, showToast]);
 
@@ -153,6 +174,12 @@ export const MarkAttendance = () => {
       await loadRosterAndAttendance();
     };
     fetch();
+
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
   }, [loadRosterAndAttendance]);
 
   const hasPushedHistoryRef = useRef(false);

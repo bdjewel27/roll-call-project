@@ -70,23 +70,49 @@ serve(async (req) => {
       },
     });
 
+    const isValidEmail = (email: unknown): boolean =>
+      typeof email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+
+    const isValidUuid = (uuid: unknown): boolean =>
+      typeof uuid === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(uuid.trim());
+
     const body = await req.json().catch(() => ({}));
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid request body: expected a JSON object.' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const { action, teacherData, teacherId: providedTeacherId, id } = body;
     const targetTeacherId = providedTeacherId || id;
 
     // --- ACTION: createTeacher ---
     if (action === 'createTeacher') {
       const data = teacherData || body;
-      const email = (data.email || '').trim();
-      const password = data.password || '';
-      const fullName = (data.name || data.fullName || '').trim();
-      const phone = (data.phone || '').trim() || null;
-      const subject = (data.subject || '').trim() || null;
-      const assignedClassIds = Array.isArray(data.assignedClassIds) ? data.assignedClassIds : [];
-
-      if (!email || !fullName) {
+      if (!data || typeof data !== 'object' || Array.isArray(data)) {
         return new Response(
-          JSON.stringify({ error: 'Teacher full name and email are required.' }),
+          JSON.stringify({ error: 'Invalid teacher payload.' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const email = typeof data.email === 'string' ? data.email.trim().toLowerCase() : '';
+      const password = typeof data.password === 'string' ? data.password : '';
+      const fullName = (typeof data.name === 'string' ? data.name : typeof data.fullName === 'string' ? data.fullName : '').trim();
+      const phone = typeof data.phone === 'string' && data.phone.trim() ? data.phone.trim() : null;
+      const subject = typeof data.subject === 'string' && data.subject.trim() ? data.subject.trim() : null;
+
+      if (!fullName) {
+        return new Response(
+          JSON.stringify({ error: 'Teacher full name is required.' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (!email || !isValidEmail(email)) {
+        return new Response(
+          JSON.stringify({ error: 'A valid email address is required.' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
@@ -96,6 +122,25 @@ serve(async (req) => {
           JSON.stringify({ error: 'Password must be at least 6 characters.' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
+      }
+
+      let assignedClassIds: string[] = [];
+      if (data.assignedClassIds !== undefined) {
+        if (!Array.isArray(data.assignedClassIds)) {
+          return new Response(
+            JSON.stringify({ error: 'assignedClassIds must be an array of class IDs.' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        for (const cId of data.assignedClassIds) {
+          if (!isValidUuid(cId)) {
+            return new Response(
+              JSON.stringify({ error: `Invalid class ID format: "${cId}". Must be a valid UUID.` }),
+              { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+        }
+        assignedClassIds = data.assignedClassIds;
       }
 
       // 1. Create teacher auth user with service role
@@ -206,14 +251,67 @@ serve(async (req) => {
 
     // --- ACTION: deleteTeacher ---
     if (action === 'deleteTeacher') {
-      if (!targetTeacherId) {
+      if (!targetTeacherId || !isValidUuid(targetTeacherId)) {
         return new Response(
-          JSON.stringify({ error: 'Teacher ID is required to delete teacher.' }),
+          JSON.stringify({ error: 'A valid teacher ID (UUID) is required to delete teacher.' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
-      // 1. Delete associated class assignments
+      // 1. Prevent administrator self-deletion
+      if (targetTeacherId === callerUser.id) {
+        return new Response(
+          JSON.stringify({ error: 'Forbidden: You cannot delete your own administrator account.' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // 2. Verify target user in public.profiles table
+      const { data: targetProfile, error: profileFetchError } = await adminClient
+        .from('profiles')
+        .select('id, role, full_name, email')
+        .eq('id', targetTeacherId)
+        .maybeSingle();
+
+      if (profileFetchError) {
+        return new Response(
+          JSON.stringify({ error: `Failed to verify target account: ${profileFetchError.message}` }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Strict admin protection: Never allow deleting an administrator account
+      if (targetProfile?.role === 'admin') {
+        return new Response(
+          JSON.stringify({ error: 'Forbidden: Cannot delete an administrator account using this function.' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Also check auth user metadata for safety
+      const { data: targetAuthUser, error: authFetchError } = await adminClient.auth.admin.getUserById(targetTeacherId);
+      if (!authFetchError && targetAuthUser?.user?.user_metadata?.role === 'admin') {
+        return new Response(
+          JSON.stringify({ error: 'Forbidden: Cannot delete an administrator account using this function.' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (!targetProfile && !targetAuthUser?.user) {
+        return new Response(
+          JSON.stringify({ error: 'Teacher not found.' }),
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (targetProfile && targetProfile.role !== 'teacher') {
+        return new Response(
+          JSON.stringify({ error: 'Forbidden: This function can only be used to delete teacher accounts.' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // 3. Delete associated class assignments
       const { error: assignError } = await adminClient
         .from('teacher_class_assignments')
         .delete()

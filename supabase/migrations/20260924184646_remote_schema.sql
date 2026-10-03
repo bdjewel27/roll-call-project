@@ -161,7 +161,7 @@ ALTER TABLE "public"."students"
   ADD CONSTRAINT "students_class_id_fkey" FOREIGN KEY (class_id) REFERENCES public.classes(id) ON DELETE RESTRICT;
 
 ALTER TABLE "public"."attendance_records"
-  ADD CONSTRAINT "fk_records_student_class" FOREIGN KEY (student_id, class_id) REFERENCES public.students(id, class_id) ON DELETE CASCADE;
+  ADD CONSTRAINT "fk_records_student" FOREIGN KEY (student_id) REFERENCES public.students(id) ON DELETE CASCADE;
 
 ALTER TABLE "public"."teacher_class_assignments"
   ADD CONSTRAINT "teacher_class_assignments_class_id_fkey" FOREIGN KEY (class_id) REFERENCES public.classes(id) ON DELETE CASCADE;
@@ -333,7 +333,7 @@ COMMENT ON COLUMN "public"."profiles"."subject" IS 'Department/Subject taught; N
 
 COMMENT ON COLUMN "public"."students"."is_active" IS 'False indicates an inactive or transferred student.';
 
-COMMENT ON TABLE "public"."attendance_records" IS 'Per-student attendance records. Enforces class consistency via composite FKs.';
+COMMENT ON TABLE "public"."attendance_records" IS 'Per-student attendance records. Linked to students and sessions with preserved historical class integrity.';
 
 COMMENT ON TABLE "public"."attendance_sessions" IS 'Daily roll-call session per class. Deletion of classes with sessions restricted.';
 

@@ -1,14 +1,8 @@
--- Migration: Atomic Attendance Save Function
--- File: supabase/migrations/20260925234500_atomic_save_attendance.sql
+-- Migration: Secure save_attendance_atomic RPC
 -- Description:
---   Implements public.save_attendance_atomic RPC to replace the non-atomic
---   client-side DELETE + INSERT attendance save flow.
---   Enforces role-based authorization, validates auth.uid(), prevents impersonation,
---   and ensures full transactional atomicity for attendance replacement.
-
---------------------------------------------------------------------------------
--- 1. ATOMIC ATTENDANCE SAVE FUNCTION (SECURITY DEFINER)
---------------------------------------------------------------------------------
+--   1. Validates that p_records is not empty or null BEFORE any deletion of existing session records.
+--   2. Binds marked_by strictly to auth.uid(), preventing client-spoofed teacher attribution.
+--   3. Updates marked_by and marked_at on session upsert conflicts.
 
 CREATE OR REPLACE FUNCTION public.save_attendance_atomic(
   p_class_id uuid,
@@ -46,7 +40,7 @@ BEGIN
       USING ERRCODE = '22023';
   END IF;
 
-  -- 4. Enforce role-based authorization and teacher attribution
+  -- 4. Enforce role-based authorization: admin or assigned teacher
   IF NOT (public.is_admin() OR public.is_assigned_teacher(p_class_id)) THEN
     RAISE EXCEPTION 'Forbidden: User is not authorized to save attendance for class %', p_class_id
       USING ERRCODE = '42501';
@@ -95,10 +89,6 @@ BEGIN
   );
 END;
 $$;
-
---------------------------------------------------------------------------------
--- 2. PERMISSIONS & GRANTS
---------------------------------------------------------------------------------
 
 REVOKE ALL ON FUNCTION public.save_attendance_atomic(uuid, date, jsonb, uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.save_attendance_atomic(uuid, date, jsonb, uuid) TO authenticated;

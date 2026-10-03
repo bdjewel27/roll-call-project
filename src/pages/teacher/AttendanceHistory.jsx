@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Card } from '../../components/common/Card';
 import { Modal } from '../../components/common/Modal';
 import { StatusBadge } from '../../components/common/StatusBadge';
@@ -28,17 +28,28 @@ export const AttendanceHistory = () => {
   const [historyLogs, setHistoryLogs] = useState([]);
   const [selectedSessionForModal, setSelectedSessionForModal] = useState(null);
   const [loading, setLoading] = useState(false);
+  const abortControllerRef = useRef(null);
 
   const loadHistory = useCallback(async () => {
     if (!classesLoaded) return;
+
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+    const { signal } = controller;
+
     setLoading(true);
     try {
       let targetClassId;
       if (selectedClassId === 'ALL') {
         const assignedIds = classes.map((c) => c.id).filter(Boolean);
         if (assignedIds.length === 0) {
-          setHistoryLogs([]);
-          setLoading(false);
+          if (!signal.aborted) {
+            setHistoryLogs([]);
+            setLoading(false);
+          }
           return;
         }
         targetClassId = assignedIds;
@@ -49,14 +60,20 @@ export const AttendanceHistory = () => {
       const logs = await dataService.getAttendanceHistory(
         targetClassId,
         startDate || null,
-        endDate || null
+        endDate || null,
+        { signal }
       );
-      setHistoryLogs(logs);
+      if (!signal.aborted) {
+        setHistoryLogs(logs);
+      }
     } catch (err) {
+      if (signal.aborted || err?.name === 'AbortError') return;
       console.error('[AttendanceHistory] Error loading history:', err);
       showToast('Error loading attendance history', 'error');
     } finally {
-      setLoading(false);
+      if (!signal.aborted) {
+        setLoading(false);
+      }
     }
   }, [classesLoaded, classes, selectedClassId, startDate, endDate, showToast]);
 
@@ -91,6 +108,12 @@ export const AttendanceHistory = () => {
       }
     };
     fetch();
+
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
   }, [classesLoaded, loadHistory]);
 
   const handleOpenDetail = (session) => {
