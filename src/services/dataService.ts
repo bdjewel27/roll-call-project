@@ -1,6 +1,6 @@
 import { supabase } from './supabaseClient';
-import { ATTENDANCE_STATUS, ATTENDANCE_BENCHMARK } from '../constants/attendanceStatus';
-import { calculateAttendanceStats } from '../utils/formatters';
+import { ATTENDANCE_STATUS } from '../constants/attendanceStatus';
+import { calculateAttendanceStats, getStudentAttendanceStatus } from '../utils/formatters';
 import type {
   ClassModel,
   CreateClassPayload,
@@ -17,6 +17,7 @@ import type {
   AttendanceSessionSummary,
   AttendanceSessionDetail,
   StudentAttendanceMetric,
+  StudentAttendanceStatusInfo,
   AttendanceFilterParams,
 } from '../types';
 
@@ -934,7 +935,47 @@ export const dataService = {
       });
     });
 
-    const calculateConsecutiveAbsences = (sessionList: AttendanceSessionDetail[] = []): number => {
+    // Map each class to its chronological list of sessions (sorted descending by date)
+    const classSessionsMap = new Map<string, AttendanceSessionSummary[]>();
+    history.forEach((session) => {
+      const classKey = session.classId;
+      if (!classSessionsMap.has(classKey)) {
+        classSessionsMap.set(classKey, []);
+      }
+      classSessionsMap.get(classKey)!.push(session);
+    });
+
+    classSessionsMap.forEach((sessionsList) => {
+      sessionsList.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    });
+
+    const computeConsecutiveAbsences = (
+      studentId: string,
+      studentClassId?: string | null,
+      sessionList: AttendanceSessionDetail[] = []
+    ): number => {
+      // Priority 1: Check against class's full chronological sessions from latest to earliest
+      const classSessions = studentClassId ? classSessionsMap.get(studentClassId) : null;
+      if (classSessions && classSessions.length > 0) {
+        let count = 0;
+        for (const session of classSessions) {
+          const record = (session.students || []).find((s: any) => (s.studentId || s.id) === studentId);
+          if (record) {
+            if (record.status === ATTENDANCE_STATUS.ABSENT) {
+              count++;
+            } else {
+              // Present, Late, or Leave: any presence or non-absence breaks and resets the streak
+              break;
+            }
+          } else {
+            // Not recorded in this held session -> breaks streak
+            break;
+          }
+        }
+        return count;
+      }
+
+      // Priority 2: Fallback to the student's logged sessions sorted chronologically descending
       const sorted = [...sessionList].sort(
         (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
       );
@@ -962,7 +1003,12 @@ export const dataService = {
 
       const { total, present, absent, late, leave, sessions = [] } = entry;
       const rate = total > 0 ? Math.round(((present + late) / total) * 100) : 100;
-      const consecutiveAbsentDays = calculateConsecutiveAbsences(sessions);
+      const consecutiveAbsentDays = computeConsecutiveAbsences(std.id, std.classId, sessions);
+      const statusInfo: StudentAttendanceStatusInfo = getStudentAttendanceStatus({
+        totalSessions: total,
+        rate,
+        consecutiveAbsentDays,
+      });
 
       return {
         student: std,
@@ -972,9 +1018,11 @@ export const dataService = {
         late,
         leave,
         rate,
-        isAtRisk: rate < ATTENDANCE_BENCHMARK.AT_RISK_THRESHOLD && total > 0,
-        isConsecutiveAbsent: consecutiveAbsentDays >= 3,
+        isAtRisk: statusInfo.isAtRisk,
+        isConsecutiveAbsent: statusInfo.isConsecutiveAbsent,
         consecutiveAbsentDays,
+        riskReason: statusInfo.reason,
+        statusLabel: statusInfo.label,
         sessions,
       };
     });
@@ -991,7 +1039,12 @@ export const dataService = {
         };
         const { total, present, absent, late, leave, sessions = [] } = entry;
         const rate = total > 0 ? Math.round(((present + late) / total) * 100) : 100;
-        const consecutiveAbsentDays = calculateConsecutiveAbsences(sessions);
+        const consecutiveAbsentDays = computeConsecutiveAbsences(studentId, std.classId, sessions);
+        const statusInfo: StudentAttendanceStatusInfo = getStudentAttendanceStatus({
+          totalSessions: total,
+          rate,
+          consecutiveAbsentDays,
+        });
 
         historicalMetrics.push({
           student: std,
@@ -1001,9 +1054,11 @@ export const dataService = {
           late,
           leave,
           rate,
-          isAtRisk: rate < ATTENDANCE_BENCHMARK.AT_RISK_THRESHOLD && total > 0,
-          isConsecutiveAbsent: consecutiveAbsentDays >= 3,
+          isAtRisk: statusInfo.isAtRisk,
+          isConsecutiveAbsent: statusInfo.isConsecutiveAbsent,
           consecutiveAbsentDays,
+          riskReason: statusInfo.reason,
+          statusLabel: statusInfo.label,
           sessions,
         });
       }

@@ -3,6 +3,7 @@ import {
   formatDate,
   getTodayDateString,
   calculateAttendanceStats,
+  getStudentAttendanceStatus,
   BANGLADESH_TIMEZONE,
 } from '../formatters';
 
@@ -169,6 +170,77 @@ describe('formatters utility', () => {
       expect(stats.present).toBe(0);
       expect(stats.absent).toBe(0);
       expect(stats.rate).toBe(0);
+    });
+  });
+
+  describe('getStudentAttendanceStatus', () => {
+    it('returns default Good Standing for null or empty metric input', () => {
+      const res = getStudentAttendanceStatus(null);
+      expect(res.isAtRisk).toBe(false);
+      expect(res.status).toBe('Good Standing');
+      expect(res.label).toBe('Good Standing');
+    });
+
+    it('returns Good Standing when attendance is >= 75% and consecutive absences < 3', () => {
+      const res = getStudentAttendanceStatus({
+        totalSessions: 10,
+        rate: 90,
+        consecutiveAbsentDays: 1,
+      });
+      expect(res.isAtRisk).toBe(false);
+      expect(res.status).toBe('Good Standing');
+      expect(res.label).toBe('Good Standing');
+      expect(res.reason).toBe('');
+    });
+
+    it('identifies At Risk due to Below 75% attendance', () => {
+      const res = getStudentAttendanceStatus({
+        totalSessions: 10,
+        rate: 60,
+        consecutiveAbsentDays: 1,
+      });
+      expect(res.isAtRisk).toBe(true);
+      expect(res.isBelowThreshold).toBe(true);
+      expect(res.isConsecutiveAbsent).toBe(false);
+      expect(res.label).toBe('At Risk (Below 75%)');
+      expect(res.reason).toBe('Below 75%');
+    });
+
+    it('identifies At Risk due to 3+ Consecutive Absences even if overall rate >= 75%', () => {
+      const res = getStudentAttendanceStatus({
+        totalSessions: 20,
+        rate: 80,
+        consecutiveAbsentDays: 3,
+      });
+      expect(res.isAtRisk).toBe(true);
+      expect(res.isBelowThreshold).toBe(false);
+      expect(res.isConsecutiveAbsent).toBe(true);
+      expect(res.label).toBe('At Risk (3+ Consecutive Absences)');
+      expect(res.reason).toBe('3+ Consecutive Absences');
+    });
+
+    it('identifies combined risk when both Below 75% and 3+ Consecutive Absences occur', () => {
+      const res = getStudentAttendanceStatus({
+        totalSessions: 10,
+        rate: 60,
+        consecutiveAbsentDays: 4,
+      });
+      expect(res.isAtRisk).toBe(true);
+      expect(res.isBelowThreshold).toBe(true);
+      expect(res.isConsecutiveAbsent).toBe(true);
+      expect(res.label).toBe('At Risk (Below 75% & 3+ Consecutive Absences)');
+      expect(res.reason).toBe('Below 75% & 3+ Consecutive Absences');
+    });
+
+    it('does not flag a student with 0 total sessions as at risk', () => {
+      const res = getStudentAttendanceStatus({
+        totalSessions: 0,
+        rate: 0,
+        consecutiveAbsentDays: 0,
+      });
+      expect(res.isAtRisk).toBe(false);
+      expect(res.status).toBe('Good Standing');
+      expect(res.label).toBe('Good Standing');
     });
   });
 });

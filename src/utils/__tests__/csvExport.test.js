@@ -7,7 +7,6 @@ import {
   ATTENDANCE_HISTORY_CSV_HEADERS,
   STUDENT_METRICS_CSV_HEADERS,
 } from '../csvExport';
-import { ATTENDANCE_BENCHMARK } from '../../constants/attendanceStatus';
 
 describe('csvExport utility', () => {
   describe('escapeCSVCell', () => {
@@ -163,10 +162,34 @@ describe('csvExport utility', () => {
           rate: 65,
           isAtRisk: true,
         },
+        {
+          student: { rollNo: '103', name: 'Farhana Akter', classId: 'cls-1' },
+          totalSessions: 10,
+          present: 7,
+          absent: 3,
+          late: 0,
+          leave: 0,
+          rate: 70,
+          consecutiveAbsentDays: 3,
+          isConsecutiveAbsent: true,
+          isAtRisk: true,
+        },
+        {
+          student: { rollNo: '104', name: 'Rahim Mia', classId: 'cls-1' },
+          totalSessions: 10,
+          present: 7,
+          absent: 3,
+          late: 0,
+          leave: 0,
+          rate: 80,
+          consecutiveAbsentDays: 3,
+          isConsecutiveAbsent: true,
+          isAtRisk: true,
+        },
       ];
 
       const rows = formatStudentMetricsRows(metrics);
-      expect(rows).toHaveLength(2);
+      expect(rows).toHaveLength(4);
       expect(rows[0]).toEqual([
         '101',
         'Nusrat Jahan',
@@ -189,7 +212,31 @@ describe('csvExport utility', () => {
         1,
         0,
         '65%',
-        `At Risk (< ${ATTENDANCE_BENCHMARK.AT_RISK_THRESHOLD}%)`,
+        'At Risk (Below 75%)',
+      ]);
+      expect(rows[2]).toEqual([
+        '103',
+        'Farhana Akter',
+        'cls-1',
+        10,
+        7,
+        3,
+        0,
+        0,
+        '70%',
+        'At Risk (Below 75% & 3+ Consecutive Absences)',
+      ]);
+      expect(rows[3]).toEqual([
+        '104',
+        'Rahim Mia',
+        'cls-1',
+        10,
+        7,
+        3,
+        0,
+        0,
+        '80%',
+        'At Risk (3+ Consecutive Absences)',
       ]);
     });
   });

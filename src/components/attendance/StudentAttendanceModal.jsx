@@ -2,8 +2,8 @@ import React, { useRef } from 'react';
 import { Modal } from '../common/Modal';
 import { StatusBadge } from '../common/StatusBadge';
 import { StudentAvatar } from '../common/StudentAvatar';
-import { formatDate } from '../../utils/formatters';
-import { ATTENDANCE_STATUS, ATTENDANCE_BENCHMARK } from '../../constants/attendanceStatus';
+import { formatDate, getStudentAttendanceStatus } from '../../utils/formatters';
+import { ATTENDANCE_STATUS } from '../../constants/attendanceStatus';
 import { CheckCircle2, AlertTriangle, Calendar, FileText } from 'lucide-react';
 
 export const StudentAttendanceModal = ({
@@ -24,8 +24,9 @@ export const StudentAttendanceModal = ({
     .filter((s) => s.status && s.status !== ATTENDANCE_STATUS.PRESENT)
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-  const isAtRisk = studentData.rate < ATTENDANCE_BENCHMARK.AT_RISK_THRESHOLD && studentData.totalSessions > 0;
-  const isConsecutiveAbsent = studentData.consecutiveAbsentDays >= 3;
+  const statusInfo = getStudentAttendanceStatus(studentData);
+  const isAtRisk = statusInfo.isAtRisk;
+  const isConsecutiveAbsent = statusInfo.isConsecutiveAbsent;
 
   return (
     <Modal
@@ -96,14 +97,14 @@ export const StudentAttendanceModal = ({
               style={{
                 fontSize: '0.725rem',
                 fontWeight: 700,
-                padding: '0.15rem 0.5rem',
+                padding: '0.2rem 0.65rem',
                 borderRadius: '9999px',
                 backgroundColor: isAtRisk ? 'var(--status-absent-bg)' : 'var(--status-present-bg)',
                 color: isAtRisk ? 'var(--status-absent-text)' : 'var(--status-present-text)',
                 border: `1px solid ${isAtRisk ? 'var(--status-absent-border)' : 'var(--status-present-border)'}`,
               }}
             >
-              {isAtRisk ? '⚠ At Risk' : '✓ Good Standing'}
+              {isAtRisk ? `⚠ ${statusInfo.label}` : '✓ Good Standing'}
             </span>
           </div>
         </div>
@@ -126,7 +127,7 @@ export const StudentAttendanceModal = ({
           >
             <AlertTriangle size={18} style={{ flexShrink: 0 }} />
             <span>
-              Urgent Alert: This student has been absent for {studentData.consecutiveAbsentDays} consecutive sessions!
+              Urgent Alert: This student has been absent for {statusInfo.consecutiveAbsentDays} consecutive class sessions!
             </span>
           </div>
         )}

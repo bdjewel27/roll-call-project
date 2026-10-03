@@ -5,7 +5,7 @@ import { EmptyState } from '../../components/common/EmptyState';
 import { useAuth } from '../../hooks/useAuth';
 import { dataService } from '../../services/dataService';
 import { ATTENDANCE_STATUS } from '../../constants/attendanceStatus';
-import { formatDate, getTodayDateString } from '../../utils/formatters';
+import { formatDate, getTodayDateString, getStudentAttendanceStatus } from '../../utils/formatters';
 import { Link } from 'react-router-dom';
 import { StudentAvatar } from '../../components/common/StudentAvatar';
 import { StudentAttendanceModal } from '../../components/attendance/StudentAttendanceModal';
@@ -321,41 +321,48 @@ export const TeacherDashboard = () => {
                       </div>
 
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
-                        {m.isConsecutiveAbsent && (
-                          <span
-                            style={{
-                              padding: '0.25rem 0.65rem',
-                              borderRadius: '9999px',
-                              fontSize: '0.75rem',
-                              fontWeight: 700,
-                              backgroundColor: 'var(--status-absent-bg)',
-                              color: 'var(--status-absent-text)',
-                              border: '1px solid var(--status-absent-border)',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '0.35rem',
-                            }}
-                          >
-                            <AlertTriangle size={13} />
-                            <span>Absent for {m.consecutiveAbsentDays} consecutive days</span>
-                          </span>
-                        )}
+                        {(() => {
+                          const statusInfo = getStudentAttendanceStatus(m);
+                          return (
+                            <>
+                              {statusInfo.isConsecutiveAbsent && (
+                                <span
+                                  style={{
+                                    padding: '0.25rem 0.65rem',
+                                    borderRadius: '9999px',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 700,
+                                    backgroundColor: 'var(--status-absent-bg)',
+                                    color: 'var(--status-absent-text)',
+                                    border: '1px solid var(--status-absent-border)',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.35rem',
+                                  }}
+                                >
+                                  <AlertTriangle size={13} />
+                                  <span>{statusInfo.consecutiveAbsentDays} Consecutive Absences</span>
+                                </span>
+                              )}
 
-                        {m.isAtRisk && (
-                          <span
-                            style={{
-                              padding: '0.25rem 0.65rem',
-                              borderRadius: '9999px',
-                              fontSize: '0.75rem',
-                              fontWeight: 700,
-                              backgroundColor: 'var(--status-late-bg)',
-                              color: 'var(--status-late-text)',
-                              border: '1px solid var(--status-late-border)',
-                            }}
-                          >
-                            {m.rate}% At Risk
-                          </span>
-                        )}
+                              {statusInfo.isBelowThreshold && (
+                                <span
+                                  style={{
+                                    padding: '0.25rem 0.65rem',
+                                    borderRadius: '9999px',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 700,
+                                    backgroundColor: 'var(--status-late-bg)',
+                                    color: 'var(--status-late-text)',
+                                    border: '1px solid var(--status-late-border)',
+                                  }}
+                                >
+                                  {m.rate}% (Below 75%)
+                                </span>
+                              )}
+                            </>
+                          );
+                        })()}
 
                         <button
                           type="button"

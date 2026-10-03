@@ -201,7 +201,20 @@ export interface StudentAttendanceMetric {
   isAtRisk: boolean;
   isConsecutiveAbsent?: boolean;
   consecutiveAbsentDays?: number;
+  riskReason?: string;
+  statusLabel?: string;
   sessions?: AttendanceSessionDetail[];
+}
+
+export interface StudentAttendanceStatusInfo {
+  isAtRisk: boolean;
+  isBelowThreshold: boolean;
+  isConsecutiveAbsent: boolean;
+  consecutiveAbsentDays: number;
+  status: string;
+  reason: string;
+  label: string;
+  shortLabel: string;
 }
 
 // --- QUERY FILTERS & PARAMS ---

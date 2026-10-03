@@ -2,6 +2,8 @@
  * Utility functions for date formatting, strings, and statistics calculations
  */
 
+import { ATTENDANCE_BENCHMARK } from '../constants/attendanceStatus';
+
 export const formatDate = (dateInput) => {
   if (!dateInput) return '';
   if (typeof dateInput === 'string' && /^\d{4}-\d{2}-\d{2}/.test(dateInput)) {
@@ -79,3 +81,74 @@ export const calculateAttendanceStats = (records = []) => {
     percentage: rate,
   };
 };
+
+/**
+ * Centralized logic to evaluate a student's attendance standing and specific risk reason.
+ * A student is 'At Risk' if:
+ * 1. Attendance percentage is below threshold (< 75%) with at least 1 session, OR
+ * 2. Absent for 3 or more consecutive class sessions.
+ *
+ * @param {Object} metric - Object containing rate, totalSessions/total, consecutiveAbsentDays, isConsecutiveAbsent, isAtRisk
+ * @returns {{ isAtRisk: boolean, isBelowThreshold: boolean, isConsecutiveAbsent: boolean, consecutiveAbsentDays: number, status: string, reason: string, label: string, shortLabel: string }}
+ */
+export const getStudentAttendanceStatus = (metric) => {
+  if (!metric) {
+    return {
+      isAtRisk: false,
+      isBelowThreshold: false,
+      isConsecutiveAbsent: false,
+      consecutiveAbsentDays: 0,
+      status: 'Good Standing',
+      reason: '',
+      label: 'Good Standing',
+      shortLabel: '✓ Good',
+    };
+  }
+
+  const total = typeof metric.totalSessions === 'number'
+    ? metric.totalSessions
+    : typeof metric.total === 'number'
+    ? metric.total
+    : 0;
+
+  const rate = typeof metric.rate === 'number' ? metric.rate : 100;
+  const consecutiveDays = typeof metric.consecutiveAbsentDays === 'number' ? metric.consecutiveAbsentDays : 0;
+
+  const isBelowThreshold = total > 0 && rate < ATTENDANCE_BENCHMARK.AT_RISK_THRESHOLD;
+  const isConsecutiveAbsent = !!metric.isConsecutiveAbsent || consecutiveDays >= 3;
+
+  // Handles explicit isAtRisk boolean when provided without full session counts (e.g. mock test cases)
+  const isAtRisk = (total > 0 && (isBelowThreshold || isConsecutiveAbsent)) || (total === 0 && metric.isAtRisk === true);
+
+  let reason = '';
+  let label = 'Good Standing';
+  let shortLabel = '✓ Good';
+
+  if (isAtRisk) {
+    if (isBelowThreshold && isConsecutiveAbsent) {
+      reason = `Below ${ATTENDANCE_BENCHMARK.AT_RISK_THRESHOLD}% & 3+ Consecutive Absences`;
+      label = `At Risk (Below ${ATTENDANCE_BENCHMARK.AT_RISK_THRESHOLD}% & 3+ Consecutive Absences)`;
+      shortLabel = '⚠ At Risk';
+    } else if (isConsecutiveAbsent) {
+      reason = '3+ Consecutive Absences';
+      label = 'At Risk (3+ Consecutive Absences)';
+      shortLabel = '⚠ At Risk';
+    } else {
+      reason = `Below ${ATTENDANCE_BENCHMARK.AT_RISK_THRESHOLD}%`;
+      label = `At Risk (Below ${ATTENDANCE_BENCHMARK.AT_RISK_THRESHOLD}%)`;
+      shortLabel = '⚠ At Risk';
+    }
+  }
+
+  return {
+    isAtRisk,
+    isBelowThreshold,
+    isConsecutiveAbsent,
+    consecutiveAbsentDays: consecutiveDays,
+    status: isAtRisk ? 'At Risk' : 'Good Standing',
+    reason,
+    label,
+    shortLabel,
+  };
+};
+

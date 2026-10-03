@@ -6,7 +6,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../context/ToastContext';
 import { dataService } from '../../services/dataService';
 import { exportStudentMetricsCSV } from '../../utils/csvExport';
-import { getTodayDateString } from '../../utils/formatters';
+import { getTodayDateString, getStudentAttendanceStatus } from '../../utils/formatters';
 import { ATTENDANCE_BENCHMARK } from '../../constants/attendanceStatus';
 import { StudentAttendanceModal } from '../../components/attendance/StudentAttendanceModal';
 import {
@@ -271,35 +271,41 @@ export const TeacherReports = () => {
                       </div>
                     </td>
                     <td>
-                      {m.isAtRisk ? (
-                        <span
-                          style={{
-                            padding: '0.2rem 0.55rem',
-                            borderRadius: '9999px',
-                            fontSize: '0.725rem',
-                            fontWeight: 700,
-                            backgroundColor: 'var(--status-absent-bg)',
-                            color: 'var(--status-absent-text)',
-                            border: '1px solid var(--status-absent-border)',
-                          }}
-                        >
-                          ⚠ At Risk
-                        </span>
-                      ) : (
-                        <span
-                          style={{
-                            padding: '0.2rem 0.55rem',
-                            borderRadius: '9999px',
-                            fontSize: '0.725rem',
-                            fontWeight: 600,
-                            backgroundColor: 'var(--status-present-bg)',
-                            color: 'var(--status-present-text)',
-                            border: '1px solid var(--status-present-border)',
-                          }}
-                        >
-                          ✓ Good
-                        </span>
-                      )}
+                      {(() => {
+                        const statusInfo = getStudentAttendanceStatus(m);
+                        return statusInfo.isAtRisk ? (
+                          <span
+                            style={{
+                              padding: '0.2rem 0.6rem',
+                              borderRadius: '9999px',
+                              fontSize: '0.725rem',
+                              fontWeight: 700,
+                              backgroundColor: 'var(--status-absent-bg)',
+                              color: 'var(--status-absent-text)',
+                              border: '1px solid var(--status-absent-border)',
+                              whiteSpace: 'nowrap',
+                            }}
+                            title={statusInfo.label}
+                          >
+                            ⚠ {statusInfo.label}
+                          </span>
+                        ) : (
+                          <span
+                            style={{
+                              padding: '0.2rem 0.6rem',
+                              borderRadius: '9999px',
+                              fontSize: '0.725rem',
+                              fontWeight: 600,
+                              backgroundColor: 'var(--status-present-bg)',
+                              color: 'var(--status-present-text)',
+                              border: '1px solid var(--status-present-border)',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            ✓ Good Standing
+                          </span>
+                        );
+                      })()}
                     </td>
                   </tr>
                 ))}

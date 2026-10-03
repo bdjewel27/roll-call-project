@@ -2,7 +2,7 @@
  * CSV Export utility functions
  * Uses Blob and URL.createObjectURL for reliable file downloads.
  */
-import { ATTENDANCE_BENCHMARK } from '../constants/attendanceStatus';
+import { getStudentAttendanceStatus } from './formatters';
 
 /**
  * Sanitizes and escapes a single CSV cell value according to RFC 4180 and
@@ -153,18 +153,21 @@ export const STUDENT_METRICS_CSV_HEADERS = [
  * @returns {Array<Array<string|number>>}
  */
 export const formatStudentMetricsRows = (studentMetrics) => {
-  return (studentMetrics || []).map((m) => [
-    m.student?.rollNo || '',
-    m.student?.name || '',
-    m.student?.classId || '',
-    typeof m.totalSessions === 'number' ? m.totalSessions : 0,
-    typeof m.present === 'number' ? m.present : 0,
-    typeof m.absent === 'number' ? m.absent : 0,
-    typeof m.late === 'number' ? m.late : 0,
-    typeof m.leave === 'number' ? m.leave : 0,
-    `${m.rate ?? 0}%`,
-    m.isAtRisk ? `At Risk (< ${ATTENDANCE_BENCHMARK.AT_RISK_THRESHOLD}%)` : 'Good Standing',
-  ]);
+  return (studentMetrics || []).map((m) => {
+    const statusInfo = getStudentAttendanceStatus(m);
+    return [
+      m.student?.rollNo || '',
+      m.student?.name || '',
+      m.student?.classId || '',
+      typeof m.totalSessions === 'number' ? m.totalSessions : 0,
+      typeof m.present === 'number' ? m.present : 0,
+      typeof m.absent === 'number' ? m.absent : 0,
+      typeof m.late === 'number' ? m.late : 0,
+      typeof m.leave === 'number' ? m.leave : 0,
+      `${m.rate ?? 0}%`,
+      statusInfo.label,
+    ];
+  });
 };
 
 /**
