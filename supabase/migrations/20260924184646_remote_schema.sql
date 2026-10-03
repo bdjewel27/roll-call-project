@@ -1,20 +1,12 @@
 SET local check_function_bodies = off;
 
-ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" REVOKE ALL ON SEQUENCES FROM "service_role";
-
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT EXECUTE ON FUNCTIONS TO PUBLIC;
 
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" REVOKE ALL ON FUNCTIONS FROM "anon";
 
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" REVOKE ALL ON FUNCTIONS FROM "authenticated";
 
-ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" REVOKE ALL ON FUNCTIONS FROM "service_role";
-
-ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" REVOKE ALL ON TABLES FROM "service_role";
-
 REVOKE ALL ON SCHEMA "public" FROM "pg_database_owner";
-
-REVOKE ALL ON SCHEMA "public" FROM "service_role";
 
 COMMENT ON SCHEMA "public" IS NULL;
 
@@ -61,7 +53,7 @@ ALTER TABLE "public"."classes"
   ENABLE ROW LEVEL SECURITY;
 
 CREATE TABLE "public"."profiles" (
-  "id"         uuid                     NOT NULL DEFAULT gen_random_uuid(),
+  "id"         uuid                     NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   "full_name"  text                     NOT NULL,
   "email"      text                     NOT NULL,
   "phone"      text,

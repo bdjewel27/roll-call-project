@@ -119,6 +119,9 @@ The frontend is structured around modular layers separating presentation, global
 
 ## 6. Development Setup
 
+### Database Setup (Source of Truth)
+**IMPORTANT:** The absolute source of truth for the database schema is the `supabase/migrations/` directory. When deploying or setting up a new Supabase project, you must use these migration files. The `supabase/schema.sql` file is maintained merely as a synchronized reference and should not be used as the primary installation source.
+
 ### Prerequisites
 * **Node.js**: `v20.0.0` or higher (verified with Node 20+; GitHub Actions CI runs on Node 22).
 * **npm**: `v10.0.0` or higher.
