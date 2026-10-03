@@ -39,7 +39,7 @@ export const Card = ({ title, subtitle, extra, children, className = '', style =
               </p>
             )}
           </div>
-          {extra && <div>{extra}</div>}
+          {extra && <div style={{ maxWidth: '100%', minWidth: 0 }}>{extra}</div>}
         </div>
       )}
       {children}

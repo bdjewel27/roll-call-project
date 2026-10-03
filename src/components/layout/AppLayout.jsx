@@ -13,10 +13,12 @@ export const AppLayout = () => {
         display: 'flex',
         flexDirection: 'column',
         backgroundColor: 'var(--bg-page)',
+        maxWidth: '100vw',
+        overflowX: 'hidden',
       }}
     >
       <Navbar onToggleMobileNav={() => setMobileNavOpen((prev) => !prev)} />
-      <div style={{ display: 'flex', flex: 1, position: 'relative', minWidth: 0 }}>
+      <div style={{ display: 'flex', flex: 1, position: 'relative', minWidth: 0, maxWidth: '100vw', overflowX: 'hidden' }}>
         <Sidebar isOpen={mobileNavOpen} onClose={() => setMobileNavOpen(false)} />
         <main
           className="main-content"
@@ -37,7 +39,7 @@ export const AppLayout = () => {
       <style>{`
         @media (max-width: 640px) {
           main {
-            padding: 1rem !important;
+            padding: 0.85rem 0.75rem !important;
           }
         }
       `}</style>

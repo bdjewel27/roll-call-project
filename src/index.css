@@ -4,6 +4,12 @@
   padding: 0;
 }
 
+html, body, #root {
+  max-width: 100vw;
+  overflow-x: hidden;
+  width: 100%;
+}
+
 :root {
   /* Light Theme (Blue + Slate + Status Colors) */
   --bg-page: #f8fafc;
