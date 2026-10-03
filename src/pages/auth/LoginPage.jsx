@@ -186,7 +186,7 @@ export const LoginPage = () => {
           </button>
         </div>
 
-        <form onSubmit={handleLogin} autoComplete="off" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div>
             <label htmlFor="login-email" style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.35rem' }}>
               Email Address
@@ -195,7 +195,7 @@ export const LoginPage = () => {
               id="login-email"
               type="email"
               required
-              autoComplete="off"
+              autoComplete="username"
               placeholder={selectedRole === ROLES.ADMIN ? 'admin@school.edu' : 'teacher@school.edu'}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -211,7 +211,7 @@ export const LoginPage = () => {
               id="login-password"
               type="password"
               required
-              autoComplete="new-password"
+              autoComplete="current-password"
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
