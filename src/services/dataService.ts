@@ -1,15 +1,39 @@
-import { supabase, createAuthClient } from './supabaseClient';
+import { supabase } from './supabaseClient';
 import { ATTENDANCE_STATUS, ATTENDANCE_BENCHMARK } from '../constants/attendanceStatus';
 import { calculateAttendanceStats } from '../utils/formatters';
+import type {
+  ClassModel,
+  CreateClassPayload,
+  UpdateClassPayload,
+  Student,
+  CreateStudentPayload,
+  UpdateStudentPayload,
+  Teacher,
+  CreateTeacherPayload,
+  UpdateTeacherPayload,
+  AttendanceStatus,
+  AttendanceItem,
+  AttendanceRecord,
+  AttendanceSessionSummary,
+  AttendanceSessionDetail,
+  StudentAttendanceMetric,
+  AttendanceFilterParams,
+} from '../types';
 
 // --- 60-SECOND IN-MEMORY CACHE ---
 const CACHE_TTL_MS = 60 * 1000;
-const memoryCache = {
+
+interface MemoryCache {
+  classes: { data: ClassModel[] | null; timestamp: number };
+  students: Map<string, { data: Student[]; timestamp: number }>;
+}
+
+const memoryCache: MemoryCache = {
   classes: { data: null, timestamp: 0 },
   students: new Map(), // key: classId || 'ALL' -> { data, timestamp }
 };
 
-export const invalidateCache = (type = null) => {
+export const invalidateCache = (type: 'classes' | 'students' | null = null): void => {
   if (!type || type === 'classes') {
     memoryCache.classes = { data: null, timestamp: 0 };
   }
@@ -22,9 +46,9 @@ export const dataService = {
   invalidateCache,
 
   // --- CLASSES ---
-  async getClasses(forceRefresh = false) {
+  async getClasses(forceRefresh = false): Promise<ClassModel[]> {
     const now = Date.now();
-    if (!forceRefresh && memoryCache.classes.data && (now - memoryCache.classes.timestamp < CACHE_TTL_MS)) {
+    if (!forceRefresh && memoryCache.classes.data && now - memoryCache.classes.timestamp < CACHE_TTL_MS) {
       return memoryCache.classes.data;
     }
 
@@ -49,8 +73,8 @@ export const dataService = {
       throw assignError;
     }
 
-    const assignmentMap = {};
-    (assignments || []).forEach((a) => {
+    const assignmentMap: Record<string, string[]> = {};
+    (assignments || []).forEach((a: any) => {
       if (!assignmentMap[a.class_id]) assignmentMap[a.class_id] = [];
       assignmentMap[a.class_id].push(a.teacher_id);
     });
@@ -66,15 +90,16 @@ export const dataService = {
       throw studentsError;
     }
 
-    const studentCountMap = {};
-    (activeStudents || []).forEach((s) => {
+    const studentCountMap: Record<string, number> = {};
+    (activeStudents || []).forEach((s: any) => {
       if (s.class_id) {
         studentCountMap[s.class_id] = (studentCountMap[s.class_id] || 0) + 1;
       }
     });
 
-    const classesWithCount = (classes || []).map((cls) => ({
+    const classesWithCount: ClassModel[] = (classes || []).map((cls: any) => ({
       ...cls,
+      academicYear: cls.academic_year,
       studentCount: studentCountMap[cls.id] || 0,
       assignedTeacherIds: assignmentMap[cls.id] || [],
     }));
@@ -83,7 +108,7 @@ export const dataService = {
     return classesWithCount;
   },
 
-  async getClassById(id) {
+  async getClassById(id: string): Promise<ClassModel | null> {
     const { data, error } = await supabase
       .from('classes')
       .select('*')
@@ -94,10 +119,13 @@ export const dataService = {
       console.error('[RollCall] Error fetching class:', error.message);
       return null;
     }
-    return data;
+    return {
+      ...data,
+      academicYear: data.academic_year,
+    };
   },
 
-  async createClass(classData) {
+  async createClass(classData: CreateClassPayload): Promise<ClassModel> {
     const { data, error } = await supabase
       .from('classes')
       .insert([
@@ -123,8 +151,8 @@ export const dataService = {
     };
   },
 
-  async updateClass(id, updates) {
-    const payload = {};
+  async updateClass(id: string, updates: UpdateClassPayload): Promise<ClassModel> {
+    const payload: Record<string, any> = {};
     if (updates.name !== undefined) payload.name = updates.name;
     if (updates.grade !== undefined) payload.grade = updates.grade;
     if (updates.section !== undefined) payload.section = updates.section;
@@ -149,7 +177,7 @@ export const dataService = {
     };
   },
 
-  async deleteClass(id) {
+  async deleteClass(id: string): Promise<boolean> {
     // Soft-delete to preserve historical records
     const { error } = await supabase
       .from('classes')
@@ -161,13 +189,13 @@ export const dataService = {
     return true;
   },
 
-  async getClassesForTeacher(teacherId) {
+  async getClassesForTeacher(teacherId?: string | null): Promise<ClassModel[]> {
     const allClasses = await this.getClasses();
     if (!teacherId) return allClasses;
     return allClasses.filter((c) => (c.assignedTeacherIds || []).includes(teacherId));
   },
 
-  async assignTeacherToClass(classId, teacherId) {
+  async assignTeacherToClass(classId: string, teacherId: string): Promise<boolean> {
     const { error } = await supabase
       .from('teacher_class_assignments')
       .insert([{ class_id: classId, teacher_id: teacherId }]);
@@ -179,7 +207,7 @@ export const dataService = {
     return true;
   },
 
-  async unassignTeacherFromClass(classId, teacherId) {
+  async unassignTeacherFromClass(classId: string, teacherId: string): Promise<boolean> {
     const { error } = await supabase
       .from('teacher_class_assignments')
       .delete()
@@ -192,10 +220,10 @@ export const dataService = {
   },
 
   // --- AVATAR / STORAGE ---
-  async uploadAvatar(file, customFileName = null) {
+  async uploadAvatar(file: File, customFileName: string | null = null): Promise<string | null> {
     if (!file) return null;
     const fileExt = file.name ? file.name.split('.').pop() : 'png';
-    const cleanExt = fileExt.replace(/[^a-z0-9]/gi, '').toLowerCase() || 'png';
+    const cleanExt = fileExt?.replace(/[^a-z0-9]/gi, '').toLowerCase() || 'png';
     const fileName = customFileName || `avatar_${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${cleanExt}`;
 
     const { error } = await supabase.storage
@@ -218,7 +246,7 @@ export const dataService = {
   },
 
   // --- STUDENTS ---
-  async getStudents(classId = null, forceRefresh = false) {
+  async getStudents(classId: string | string[] | null = null, forceRefresh = false): Promise<Student[]> {
     if (Array.isArray(classId) && classId.length === 0) {
       return [];
     }
@@ -228,7 +256,7 @@ export const dataService = {
       : classId || 'ALL';
     const now = Date.now();
     const cached = memoryCache.students.get(cacheKey);
-    if (!forceRefresh && cached && (now - cached.timestamp < CACHE_TTL_MS)) {
+    if (!forceRefresh && cached && now - cached.timestamp < CACHE_TTL_MS) {
       return cached.data;
     }
 
@@ -245,7 +273,9 @@ export const dataService = {
       query = query.eq('class_id', classId);
     }
 
-    let { data, error } = await query;
+    const initialRes = await query;
+    let data: any[] | null = initialRes.data;
+    let error = initialRes.error;
 
     // Fallback if avatar_url column is not present in legacy schema
     if (error && error.message?.includes('avatar_url')) {
@@ -269,7 +299,7 @@ export const dataService = {
       throw error;
     }
 
-    const result = (data || []).map((s) => ({
+    const result: Student[] = (data || []).map((s: any) => ({
       id: s.id,
       rollNo: s.roll_no,
       name: s.full_name,
@@ -285,10 +315,10 @@ export const dataService = {
     return result;
   },
 
-  async createStudent(studentData) {
+  async createStudent(studentData: CreateStudentPayload): Promise<Student> {
     const avatarUrl = studentData.avatarUrl || null;
 
-    const payload = {
+    const payload: Record<string, any> = {
       roll_no: studentData.rollNo,
       full_name: studentData.name,
       gender: studentData.gender,
@@ -334,14 +364,14 @@ export const dataService = {
     };
   },
 
-  async addStudent(studentData) {
+  async addStudent(studentData: CreateStudentPayload): Promise<Student> {
     return this.createStudent(studentData);
   },
 
-  async updateStudent(id, updates) {
+  async updateStudent(id: string, updates: UpdateStudentPayload): Promise<Student> {
     const avatarUrl = updates.avatarUrl;
 
-    const payload = {};
+    const payload: Record<string, any> = {};
     if (updates.rollNo !== undefined) payload.roll_no = updates.rollNo;
     if (updates.name !== undefined) payload.full_name = updates.name;
     if (updates.gender !== undefined) payload.gender = updates.gender;
@@ -375,17 +405,17 @@ export const dataService = {
     const row = Array.isArray(data) ? data[0] : data;
     return {
       id,
-      rollNo: row?.roll_no || updates.rollNo,
-      name: row?.full_name || updates.name,
+      rollNo: row?.roll_no || updates.rollNo || '',
+      name: row?.full_name || updates.name || '',
       gender: row?.gender || updates.gender,
-      classId: row?.class_id || updates.classId,
+      classId: row?.class_id || updates.classId || '',
       guardianName: row?.guardian_name || updates.guardianName,
       guardianPhone: row?.guardian_phone || updates.guardianPhone,
       avatarUrl: row?.avatar_url || avatarUrl || updates.avatarUrl || null,
     };
   },
 
-  async deleteStudent(id) {
+  async deleteStudent(id: string): Promise<boolean> {
     // Soft-delete to preserve history
     const { error } = await supabase
       .from('students')
@@ -399,7 +429,7 @@ export const dataService = {
   },
 
   // --- TEACHERS ---
-  async getTeachers() {
+  async getTeachers(): Promise<Teacher[]> {
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
@@ -411,7 +441,7 @@ export const dataService = {
       throw error;
     }
 
-    return (data || []).map((t) => ({
+    return (data || []).map((t: any) => ({
       id: t.id,
       name: t.full_name,
       email: t.email,
@@ -421,7 +451,7 @@ export const dataService = {
     }));
   },
 
-  async createTeacher(teacherData = {}) {
+  async createTeacher(teacherData: CreateTeacherPayload = {} as CreateTeacherPayload): Promise<Teacher> {
     if (!teacherData?.password || teacherData.password.length < 6) {
       throw new Error('Temporary password must be at least 6 characters.');
     }
@@ -433,7 +463,7 @@ export const dataService = {
       throw new Error('Teacher name and email are required.');
     }
 
-    // 1. Invoke Supabase Edge Function to securely manage teacher creation via service role
+    // Invoke Supabase Edge Function to securely manage teacher creation via service role
     try {
       const { data, error } = await supabase.functions.invoke('manage-teachers', {
         body: {
@@ -469,7 +499,9 @@ export const dataService = {
       if (data?.data) {
         return data.data;
       }
-    } catch (edgeErr) {
+
+      throw new Error('Failed to create teacher. No data returned.');
+    } catch (edgeErr: any) {
       const isUnavailable =
         edgeErr.message?.includes('Failed to send') ||
         edgeErr.message?.includes('not found') ||
@@ -484,8 +516,8 @@ export const dataService = {
     }
   },
 
-  async updateTeacher(id, updates) {
-    const payload = {};
+  async updateTeacher(id: string, updates: UpdateTeacherPayload): Promise<Teacher> {
+    const payload: Record<string, any> = {};
     if (updates.name !== undefined) payload.full_name = updates.name;
     if (updates.email !== undefined) payload.email = updates.email;
     if (updates.phone !== undefined) payload.phone = updates.phone;
@@ -521,7 +553,7 @@ export const dataService = {
     };
   },
 
-  async deleteTeacher(id) {
+  async deleteTeacher(id: string): Promise<boolean> {
     if (!id) {
       throw new Error('Teacher ID is required to delete teacher.');
     }
@@ -552,7 +584,7 @@ export const dataService = {
       }
 
       return true;
-    } catch (edgeErr) {
+    } catch (edgeErr: any) {
       const isUnavailable =
         edgeErr.message?.includes('Failed to send') ||
         edgeErr.message?.includes('not found') ||
@@ -593,7 +625,7 @@ export const dataService = {
   },
 
   // --- ATTENDANCE ---
-  async getAttendanceRecord(classId, date) {
+  async getAttendanceRecord(classId: string, date: string): Promise<AttendanceRecord | null> {
     const { data: session, error: sErr } = await supabase
       .from('attendance_sessions')
       .select('id, class_id, date, marked_by, marked_at')
@@ -619,9 +651,9 @@ export const dataService = {
       date: session.date,
       markedBy: session.marked_by,
       markedAt: session.marked_at,
-      students: (records || []).map((r) => ({
+      students: (records || []).map((r: any) => ({
         studentId: r.student_id,
-        status: r.status,
+        status: r.status as AttendanceStatus,
         remark: r.remark || '',
         student: r.students
           ? {
@@ -638,8 +670,13 @@ export const dataService = {
     };
   },
 
-  async saveAttendance(classId, date, studentRecords, teacherId = null) {
-    const isValidUuid = (str) =>
+  async saveAttendance(
+    classId: string,
+    date: string,
+    studentRecords: Array<{ studentId?: string; student_id?: string; status: AttendanceStatus; remark?: string | null }>,
+    teacherId: string | null = null
+  ): Promise<{ classId: string; date: string; students: any[] }> {
+    const isValidUuid = (str: any): boolean =>
       typeof str === 'string' &&
       /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(str);
 
@@ -667,16 +704,21 @@ export const dataService = {
   },
 
   // Returns all attendance logs with optional filter, querying Supabase
-  async getAttendanceHistory(classId = null, startDate = null, endDate = null) {
-    // Support object argument or positional parameters: getAttendanceHistory({ classId, startDate, endDate }) or getAttendanceHistory(classId, startDate, endDate)
-    let cId = classId;
-    let sDate = startDate;
-    let eDate = endDate;
+  async getAttendanceHistory(
+    classId: string | string[] | AttendanceFilterParams | null = null,
+    startDate: string | null = null,
+    endDate: string | null = null
+  ): Promise<AttendanceSessionSummary[]> {
+    let cId: string | string[] | null = null;
+    let sDate: string | null = startDate;
+    let eDate: string | null = endDate;
 
     if (typeof classId === 'object' && classId !== null && !Array.isArray(classId)) {
-      cId = classId.classId;
-      sDate = classId.startDate;
-      eDate = classId.endDate;
+      cId = classId.classId ?? null;
+      sDate = classId.startDate ?? null;
+      eDate = classId.endDate ?? null;
+    } else {
+      cId = classId;
     }
 
     if (Array.isArray(cId) && cId.length === 0) {
@@ -739,16 +781,16 @@ export const dataService = {
       throw error;
     }
 
-    return (sessions || []).map((session) => {
+    return (sessions || []).map((session: any) => {
       const records = session.attendance_records || [];
       const stats = calculateAttendanceStats(records);
 
-      const students = records.map((r) => ({
+      const students: AttendanceItem[] = records.map((r: any) => ({
         id: r.id,
         studentId: r.student_id,
         rollNo: r.students?.roll_no || '-',
         studentName: r.students?.full_name || 'Unknown Student',
-        status: r.status,
+        status: r.status as AttendanceStatus,
         remark: r.remark || '',
       }));
 
@@ -767,7 +809,7 @@ export const dataService = {
   },
 
   // Get student attendance metrics for reports
-  async getStudentAttendanceMetrics(classId = null) {
+  async getStudentAttendanceMetrics(classId: string | string[] | null = null): Promise<StudentAttendanceMetric[]> {
     if (Array.isArray(classId) && classId.length === 0) {
       return [];
     }
@@ -776,8 +818,17 @@ export const dataService = {
     const students = await this.getStudents(targetClass);
     const history = await this.getAttendanceHistory(targetClass);
 
-    const metricsMap = new Map();
-    const studentMetaMap = new Map();
+    interface MetricEntry {
+      total: number;
+      present: number;
+      absent: number;
+      late: number;
+      leave: number;
+      sessions: AttendanceSessionDetail[];
+    }
+
+    const metricsMap = new Map<string, MetricEntry>();
+    const studentMetaMap = new Map<string, Student>();
 
     history.forEach((session) => {
       (session.students || []).forEach((studentLog) => {
@@ -815,7 +866,7 @@ export const dataService = {
       });
     });
 
-    const calculateConsecutiveAbsences = (sessionList = []) => {
+    const calculateConsecutiveAbsences = (sessionList: AttendanceSessionDetail[] = []): number => {
       const sorted = [...sessionList].sort(
         (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
       );
@@ -831,7 +882,7 @@ export const dataService = {
     };
 
     const activeStudentIds = new Set(students.map((s) => s.id));
-    const activeMetrics = students.map((std) => {
+    const activeMetrics: StudentAttendanceMetric[] = students.map((std) => {
       const entry = metricsMap.get(std.id) || {
         total: 0,
         present: 0,
@@ -860,7 +911,7 @@ export const dataService = {
       };
     });
 
-    const historicalMetrics = [];
+    const historicalMetrics: StudentAttendanceMetric[] = [];
     metricsMap.forEach((entry, studentId) => {
       if (!activeStudentIds.has(studentId)) {
         const std = studentMetaMap.get(studentId) || {
@@ -891,8 +942,8 @@ export const dataService = {
     });
 
     return [...activeMetrics, ...historicalMetrics].sort((a, b) => {
-      const rollA = parseInt(a.student.rollNo, 10);
-      const rollB = parseInt(b.student.rollNo, 10);
+      const rollA = parseInt(String(a.student.rollNo), 10);
+      const rollB = parseInt(String(b.student.rollNo), 10);
       if (!isNaN(rollA) && !isNaN(rollB)) return rollA - rollB;
       return String(a.student.rollNo).localeCompare(String(b.student.rollNo));
     });

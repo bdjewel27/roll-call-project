@@ -125,6 +125,7 @@ export interface CreateTeacherPayload {
   password?: string;
   phone?: string;
   subject?: string;
+  assignedClassIds?: string[];
 }
 
 export interface UpdateTeacherPayload {
@@ -132,6 +133,7 @@ export interface UpdateTeacherPayload {
   email?: string;
   phone?: string;
   subject?: string;
+  assignedClassIds?: string[];
 }
 
 // --- ATTENDANCE RECORDS & SESSIONS ---
@@ -180,6 +182,14 @@ export interface AttendanceSessionSummary {
   students: AttendanceItem[];
 }
 
+export interface AttendanceSessionDetail {
+  sessionId: string;
+  date: string;
+  className?: string;
+  status: AttendanceStatus;
+  remark?: string;
+}
+
 export interface StudentAttendanceMetric {
   student: Student | Partial<Student>;
   totalSessions: number;
@@ -189,6 +199,9 @@ export interface StudentAttendanceMetric {
   leave: number;
   rate: number;
   isAtRisk: boolean;
+  isConsecutiveAbsent?: boolean;
+  consecutiveAbsentDays?: number;
+  sessions?: AttendanceSessionDetail[];
 }
 
 // --- QUERY FILTERS & PARAMS ---
