@@ -1,35 +1,41 @@
-﻿Phase 2 Fix History & QA Audit Report
+Phase 2 Fix History & QA Audit Report
 --------------------------------------
-This file contains the chat history and summary of fixes implemented during the Phase 2 QA Audit.
+This document provides a factual record of fixes, enhancements, and test coverage implemented during the Phase 2 QA Audit and subsequent hardening iterations.
 
-1. Added Unit Tests (Vitest)
-- Implemented 35 robust unit tests for core utilities (ormatters.js, csvExport.js).
-- Tests ensure accurate timezone handling (Asia/Dhaka) and bulletproof CSV export generation.
-- Achieved 100% pass rate.
+1. Unit Testing & Verification
+- Test runner: Vitest (v5.0.2).
+- Scope: Vitest covers utilities and CSV export (formatters.js, csvExport.js) with 42 automated tests.
+- Coverage includes Bangladesh timezone handling (Asia/Dhaka), RFC 4180 / OWASP CSV formula injection defense (CWE-1236), centralized at-risk evaluation, chronological consecutive absence tracking, and handling of new students with zero recorded sessions.
+- Static analysis: Linter (npx oxlint src) passes with 0 errors and 0 warnings.
+- TypeScript validation: npm run type-check (tsc --noEmit) validates dataService.ts, types, and core interfaces with 0 errors.
 
-2. Fixed Auth Role-Mismatch Vulnerability
-- Issue: Users could select "Admin" but provide Teacher credentials, and the system would still log them in incorrectly.
-- Fix: Updated AuthContext.jsx to fetch profiles.role instantly after Supabase authentication. If the selected UI role does not strictly match the database role, the system immediately logs the user out and throws a clear error.
-- Fixed a race condition in onAuthStateChange by introducing isLoggingInRef to prevent unauthorized redirects during the validation process.
+2. Auth Role Mismatch Handling
+- Issue: If a user selected one role in the UI (e.g., Admin) but authenticated with credentials of a different role (e.g., Teacher), the application UI could get into an inconsistent role state.
+- Resolution: AuthContext.jsx queries profiles.role immediately after Supabase authentication. If the selected role does not match the database profile, the session is terminated with an explicit role-mismatch notification.
+- An isLoggingInRef guard prevents race conditions and rogue state transitions during sign-in verification.
 
-3. Removed Hardcoded Login Credentials & Autofill
-- Issue: Login page retained autofill credentials.
-- Fix: Set initial states to empty strings and enforced utoComplete="off" and utoComplete="new-password" in LoginPage.jsx.
+3. Login Form Accessibility & Password Manager Support (WCAG 1.3.5)
+- Issue: Forms originally attempted to suppress browser autofill with autocomplete="off", which interfered with password managers and accessibility guidelines.
+- Resolution: Updated LoginPage.jsx to standard input semantics:
+  * Removed autocomplete="off" from the form container.
+  * Configured username/email input with autocomplete="username".
+  * Configured password input with autocomplete="current-password".
 
-4. Localized Bengali Text to English
-- Issue: Dashboard, modals, and reports contained mixed Bengali and English text.
-- Fix: Scanned the entire src/ directory and replaced all instances of Bengali characters ([\u0980-\u09FF]) with professional English to ensure a consistent, professional UI. Verified with a global regex search (0 instances remain).
+4. UI Text Localization
+- Issue: Inconsistent localization with mixed Bengali and English strings across dashboards and reports.
+- Resolution: Standardized UI labels, tables, tooltips, and modal messages in src/ to consistent English text for clarity and internationalization readiness.
 
-5. Fixed Modal Input Focus & Cursor Jumping
-- Issue: Typing in the "Enroll New Student" or "Add Teacher" modals caused the input to lose focus or the cursor to jump after one character.
-- Fix: Refactored Modal.jsx to use a stabilized focus trap that only runs on [isOpen] transitions.
-- Removed nested component declarations inside StudentManagement.jsx and other management pages. Used functional state updates (setFormData(prev => ...)) to prevent unnecessary re-renders.
+5. Modal Input Focus & Re-render Stability
+- Issue: Inputs in creation modals could lose focus or exhibit cursor jumping during state updates.
+- Resolution: Refactored Modal.jsx focus trap to synchronize strictly on modal visibility transitions ([isOpen]).
+- Refactored form inputs in management pages (StudentManagement.jsx, etc.) to use functional state updaters (setFormData(prev => ...)) and eliminated inline nested component declarations.
 
-6. Zero Regressions & Clean Build
-- Ran 
-px oxlint src: 0 errors, 0 warnings.
-- Ran 
-pm run type-check: Passed without errors.
-- Ran 
-pm run build: Clean production build in Vite.
-- Manually tested UI routing and modals to guarantee 0 regressions on existing functionality.
+6. Attendance Metrics & Empty-State Accuracy
+- Centralized Status Logic: Unified getStudentAttendanceStatus() across dashboards, report rosters, detail modals, and CSV exports.
+- Consecutive Absences: Computed from chronological held class sessions (most recent backwards) with explicit risk reason tagging.
+- Honest Empty States: Avoided showing misleading 0% when no roll calls have been submitted yet today (shows 'Pending' with class submission counts); students with 0 total sessions display 'N/A' and 'No sessions recorded' rather than artificial 100% or Perfect Attendance.
+- Actionable Morning View: Reordered dashboard layout to place Today's Roll Call Progress at the top, and summarized At-Risk lists to the top 3 with dedicated drill-down links.
+
+7. Build & Environment Verification
+- npm run build (Vite) compiles production assets cleanly without errors.
+- Both schema.sql and migrations maintain database schema consistency, cascading profile deletions, and explicit service_role access.
