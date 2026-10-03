@@ -150,6 +150,9 @@ serve(async (req) => {
       }
 
       // 3. Insert class assignments if provided
+      let actualAssignedClassIds: string[] = [];
+      let assignmentErrorMsg: string | null = null;
+
       if (assignedClassIds.length > 0) {
         const assignmentRows = assignedClassIds.map((cId: string) => ({
           teacher_id: newUserId,
@@ -161,8 +164,29 @@ serve(async (req) => {
           .insert(assignmentRows);
 
         if (assignError) {
-          console.warn('Warning: class assignment failed during teacher creation:', assignError.message);
+          console.error('Error assigning classes during teacher creation:', assignError.message);
+          assignmentErrorMsg = `Teacher created, but assigning classes failed: ${assignError.message}`;
+        } else {
+          actualAssignedClassIds = assignedClassIds;
         }
+      }
+
+      if (assignmentErrorMsg) {
+        return new Response(
+          JSON.stringify({
+            data: {
+              id: profileRow?.id || newUserId,
+              name: profileRow?.full_name || fullName,
+              email: profileRow?.email || email,
+              phone: profileRow?.phone || phone || '',
+              subject: profileRow?.subject || subject || '',
+              assignedClassIds: [],
+            },
+            warning: assignmentErrorMsg,
+            message: assignmentErrorMsg,
+          }),
+          { status: 207, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
 
       return new Response(
@@ -173,7 +197,7 @@ serve(async (req) => {
             email: profileRow?.email || email,
             phone: profileRow?.phone || phone || '',
             subject: profileRow?.subject || subject || '',
-            assignedClassIds,
+            assignedClassIds: actualAssignedClassIds,
           },
         }),
         { status: 201, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -216,7 +240,13 @@ serve(async (req) => {
       const { error: authDeleteError } = await adminClient.auth.admin.deleteUser(targetTeacherId);
 
       if (authDeleteError) {
-        console.warn('Warning deleting auth account (may already be deleted):', authDeleteError.message);
+        console.error('Error deleting teacher auth account:', authDeleteError.message);
+        return new Response(
+          JSON.stringify({
+            error: `Failed to completely delete teacher: Profile was removed, but login account deletion failed (${authDeleteError.message}).`,
+          }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
 
       return new Response(

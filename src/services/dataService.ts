@@ -496,6 +496,10 @@ export const dataService = {
         throw new Error(data.error);
       }
 
+      if (data?.warning) {
+        console.warn('[RollCall] ' + data.warning);
+      }
+
       if (data?.data) {
         return data.data;
       }
