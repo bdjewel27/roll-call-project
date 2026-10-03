@@ -392,7 +392,7 @@ export const MarkAttendance = () => {
   const selectedClass = classes.find((c) => c.id === selectedClassId);
 
   return (
-    <div className="page-container" style={{ width: '100%', minWidth: 0 }}>
+    <div className="page-container attendance-page-container" style={{ width: '100%', minWidth: 0 }}>
       {/* Page Header */}
       <div className="page-header">
         <div>
@@ -743,7 +743,53 @@ export const MarkAttendance = () => {
             </table>
           </div>
         )}
+
+        {/* Bottom Save Action Bar below roster table */}
+        {rosterAttendance.length > 0 && !loading && !loadError && (
+          <div className="roster-bottom-action-bar">
+            <div className="roster-bottom-summary">
+              {isExistingRecord ? (
+                <span>Editing existing record for <strong>{selectedClass?.name || 'Class'}</strong></span>
+              ) : (
+                <span>{hasUnsavedChanges ? 'Unsaved changes' : 'All set'} &bull; <strong>{selectedClass?.name || 'Class'}</strong> ({rosterAttendance.length} students)</span>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={handleSaveClick}
+              disabled={saving || loading || loadError}
+              className="btn-primary roster-bottom-save-btn"
+            >
+              <Save size={18} />
+              <span>{saving ? 'Saving...' : (hasUnsavedChanges ? 'Save Changes' : 'Save Attendance')}</span>
+            </button>
+          </div>
+        )}
       </Card>
+
+      {/* Sticky Mobile Bottom Save Bar */}
+      {rosterAttendance.length > 0 && !loading && !loadError && (
+        <div className="mobile-sticky-save-bar" role="region" aria-label="Quick Save Attendance">
+          <div className="mobile-sticky-content">
+            <div className="mobile-sticky-info">
+              <span className="mobile-sticky-class">{selectedClass?.name || 'Class'}</span>
+              <span className="mobile-sticky-status">
+                {saving ? 'Saving...' : hasUnsavedChanges ? 'Unsaved changes' : `${rosterAttendance.length} students`}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={handleSaveClick}
+              disabled={saving || loading || loadError}
+              className="btn-primary mobile-sticky-btn"
+              aria-label="Save Attendance"
+            >
+              <Save size={18} />
+              <span>{saving ? 'Saving...' : (hasUnsavedChanges ? 'Save Changes' : 'Save Attendance')}</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Confirmation modal for overwriting past records */}
       <ConfirmModal
