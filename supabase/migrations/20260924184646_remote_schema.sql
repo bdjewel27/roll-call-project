@@ -143,10 +143,7 @@ BEGIN
       NEW.raw_user_meta_data->>'full_name',
       split_part(NEW.email, '@', 1)
     ),
-    COALESCE(
-      (NEW.raw_user_meta_data->>'role')::public.user_role,
-      'teacher'::public.user_role
-    ),
+    'teacher'::public.user_role,
     NEW.raw_user_meta_data->>'phone',
     NEW.raw_user_meta_data->>'subject'
   )

@@ -477,83 +477,10 @@ export const dataService = {
         edgeErr.message?.includes('404') ||
         edgeErr.message?.includes('relay');
 
-      if (!isUnavailable) {
-        // Validation or business logic error from edge function (e.g. duplicate email)
-        throw edgeErr;
+      if (isUnavailable) {
+        throw new Error('Edge Function is required for secure teacher creation. Please ensure "manage-teachers" is deployed.');
       }
-
-      console.warn('[RollCall] manage-teachers edge function not available, using fallback:', edgeErr.message);
-
-      // Fallback: Create teacher account using isolated client so admin session is preserved
-      const authClient = createAuthClient();
-      const { data: authData, error: authError } = await authClient.auth.signUp({
-        email,
-        password: teacherData.password,
-        options: {
-          data: {
-            full_name: fullName,
-            role: 'teacher',
-            phone: teacherData.phone?.trim() || null,
-            subject: teacherData.subject?.trim() || null,
-          },
-        },
-      });
-
-      if (authError) {
-        throw authError;
-      }
-
-      const userId = authData?.user?.id;
-      if (!userId) {
-        throw new Error('Failed to create teacher in Supabase Auth: No user ID returned.');
-      }
-
-      if (authData.user.identities && authData.user.identities.length === 0) {
-        throw new Error('A user with this email address already exists in Supabase Auth.');
-      }
-
-      const profilePayload = {
-        id: userId,
-        full_name: fullName,
-        email: email,
-        phone: teacherData.phone?.trim() || null,
-        subject: teacherData.subject?.trim() || null,
-        role: 'teacher',
-      };
-
-      let { data: profileRow, error: profileError } = await supabase
-        .from('profiles')
-        .upsert(profilePayload, { onConflict: 'id' })
-        .select()
-        .maybeSingle();
-
-      if (profileError) {
-        console.warn('[RollCall] Note on profiles upsert:', profileError.message);
-        const { data: insertedRow, error: insertError } = await supabase
-          .from('profiles')
-          .insert([profilePayload])
-          .select()
-          .maybeSingle();
-
-        if (insertError) {
-          throw new Error(`Failed to create teacher profile: ${insertError.message || profileError.message}`);
-        }
-
-        profileRow = insertedRow;
-      }
-
-      if (!profileRow) {
-        throw new Error('Failed to create teacher profile: No profile record returned.');
-      }
-
-      return {
-        id: profileRow.id,
-        name: profileRow.full_name || fullName,
-        email: profileRow.email || email,
-        phone: profileRow.phone || teacherData.phone || '',
-        subject: profileRow.subject || teacherData.subject || '',
-        assignedClassIds: [],
-      };
+      throw edgeErr;
     }
   },
 
