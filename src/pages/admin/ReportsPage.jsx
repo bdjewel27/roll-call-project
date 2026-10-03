@@ -8,6 +8,7 @@ import { formatDate, getTodayDateString, getStudentAttendanceStatus } from '../.
 import { exportAttendanceHistoryCSV, exportStudentMetricsCSV } from '../../utils/csvExport';
 import { ATTENDANCE_BENCHMARK } from '../../constants/attendanceStatus';
 import { StudentAttendanceModal } from '../../components/attendance/StudentAttendanceModal';
+import { useLocation } from 'react-router-dom';
 import {
   BarChart3,
   Download,
@@ -20,12 +21,16 @@ import {
 
 export const ReportsPage = () => {
   const { showToast } = useToast();
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const initialView = location.state?.defaultView || (searchParams.get('view') === 'students' ? 'students' : 'sessions');
+
   const [classes, setClasses] = useState([]);
   const [selectedClassId, setSelectedClassId] = useState('ALL');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [historyLogs, setHistoryLogs] = useState([]);
-  const [reportView, setReportView] = useState('sessions');
+  const [reportView, setReportView] = useState(initialView);
   const [studentMetrics, setStudentMetrics] = useState([]);
   const [selectedStudentForModal, setSelectedStudentForModal] = useState(null);
 
@@ -490,32 +495,57 @@ export const ReportsPage = () => {
                       <span style={{ color: 'var(--status-leave-text)', fontWeight: 600 }}>{m.leave}</span>
                     </td>
                     <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <div
-                          style={{
-                            flex: 1,
-                            maxWidth: '80px',
-                            height: '6px',
-                            backgroundColor: 'var(--bg-subtle)',
-                            borderRadius: '9999px',
-                            overflow: 'hidden',
-                          }}
-                        >
+                      {m.totalSessions === 0 ? (
+                        <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                          N/A
+                        </span>
+                      ) : (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                           <div
                             style={{
-                              width: `${m.rate}%`,
-                              height: '100%',
-                              backgroundColor: m.rate < ATTENDANCE_BENCHMARK.AT_RISK_THRESHOLD ? 'var(--status-absent)' : 'var(--status-present)',
+                              flex: 1,
+                              maxWidth: '80px',
+                              height: '6px',
+                              backgroundColor: 'var(--bg-subtle)',
                               borderRadius: '9999px',
+                              overflow: 'hidden',
                             }}
-                          />
+                          >
+                            <div
+                              style={{
+                                width: `${m.rate}%`,
+                                height: '100%',
+                                backgroundColor: m.rate < ATTENDANCE_BENCHMARK.AT_RISK_THRESHOLD ? 'var(--status-absent)' : 'var(--status-present)',
+                                borderRadius: '9999px',
+                              }}
+                            />
+                          </div>
+                          <span style={{ fontWeight: 700, fontSize: '0.85rem' }}>{m.rate}%</span>
                         </div>
-                        <span style={{ fontWeight: 700, fontSize: '0.85rem' }}>{m.rate}%</span>
-                      </div>
+                      )}
                     </td>
                     <td>
                       {(() => {
                         const statusInfo = getStudentAttendanceStatus(m);
+                        if (statusInfo.hasNoSessions || m.totalSessions === 0) {
+                          return (
+                            <span
+                              style={{
+                                padding: '0.2rem 0.6rem',
+                                borderRadius: '9999px',
+                                fontSize: '0.725rem',
+                                fontWeight: 600,
+                                backgroundColor: 'var(--bg-subtle)',
+                                color: 'var(--text-secondary)',
+                                border: '1px solid var(--border-color)',
+                                whiteSpace: 'nowrap',
+                              }}
+                              title="No sessions recorded"
+                            >
+                              No sessions recorded
+                            </span>
+                          );
+                        }
                         return statusInfo.isAtRisk ? (
                           <span
                             style={{

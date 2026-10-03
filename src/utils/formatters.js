@@ -111,6 +111,21 @@ export const getStudentAttendanceStatus = (metric) => {
     ? metric.total
     : 0;
 
+  // New student with 0 sessions recorded
+  if (total === 0 && !metric.isAtRisk) {
+    return {
+      isAtRisk: false,
+      isBelowThreshold: false,
+      isConsecutiveAbsent: false,
+      consecutiveAbsentDays: 0,
+      hasNoSessions: true,
+      status: 'No sessions recorded',
+      reason: '',
+      label: 'No sessions recorded',
+      shortLabel: 'N/A',
+    };
+  }
+
   const rate = typeof metric.rate === 'number' ? metric.rate : 100;
   const consecutiveDays = typeof metric.consecutiveAbsentDays === 'number' ? metric.consecutiveAbsentDays : 0;
 
@@ -145,6 +160,7 @@ export const getStudentAttendanceStatus = (metric) => {
     isBelowThreshold,
     isConsecutiveAbsent,
     consecutiveAbsentDays: consecutiveDays,
+    hasNoSessions: false,
     status: isAtRisk ? 'At Risk' : 'Good Standing',
     reason,
     label,

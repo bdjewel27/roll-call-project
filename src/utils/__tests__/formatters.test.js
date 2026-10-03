@@ -232,15 +232,17 @@ describe('formatters utility', () => {
       expect(res.reason).toBe('Below 75% & 3+ Consecutive Absences');
     });
 
-    it('does not flag a student with 0 total sessions as at risk', () => {
+    it('correctly identifies a student with 0 total sessions as No sessions recorded (N/A)', () => {
       const res = getStudentAttendanceStatus({
         totalSessions: 0,
         rate: 0,
         consecutiveAbsentDays: 0,
       });
       expect(res.isAtRisk).toBe(false);
-      expect(res.status).toBe('Good Standing');
-      expect(res.label).toBe('Good Standing');
+      expect(res.hasNoSessions).toBe(true);
+      expect(res.status).toBe('No sessions recorded');
+      expect(res.label).toBe('No sessions recorded');
+      expect(res.shortLabel).toBe('N/A');
     });
   });
 });

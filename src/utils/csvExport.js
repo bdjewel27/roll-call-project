@@ -155,16 +155,19 @@ export const STUDENT_METRICS_CSV_HEADERS = [
 export const formatStudentMetricsRows = (studentMetrics) => {
   return (studentMetrics || []).map((m) => {
     const statusInfo = getStudentAttendanceStatus(m);
+    const totalSessions = typeof m.totalSessions === 'number' ? m.totalSessions : 0;
+    const rateDisplay = totalSessions === 0 ? 'N/A' : `${m.rate ?? 0}%`;
+
     return [
       m.student?.rollNo || '',
       m.student?.name || '',
       m.student?.classId || '',
-      typeof m.totalSessions === 'number' ? m.totalSessions : 0,
+      totalSessions,
       typeof m.present === 'number' ? m.present : 0,
       typeof m.absent === 'number' ? m.absent : 0,
       typeof m.late === 'number' ? m.late : 0,
       typeof m.leave === 'number' ? m.leave : 0,
-      `${m.rate ?? 0}%`,
+      rateDisplay,
       statusInfo.label,
     ];
   });

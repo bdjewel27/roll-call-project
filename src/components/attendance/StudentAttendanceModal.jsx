@@ -4,7 +4,7 @@ import { StatusBadge } from '../common/StatusBadge';
 import { StudentAvatar } from '../common/StudentAvatar';
 import { formatDate, getStudentAttendanceStatus } from '../../utils/formatters';
 import { ATTENDANCE_STATUS } from '../../constants/attendanceStatus';
-import { CheckCircle2, AlertTriangle, Calendar, FileText } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, Calendar, FileText, Clock } from 'lucide-react';
 
 export const StudentAttendanceModal = ({
   isOpen,
@@ -27,6 +27,12 @@ export const StudentAttendanceModal = ({
   const statusInfo = getStudentAttendanceStatus(studentData);
   const isAtRisk = statusInfo.isAtRisk;
   const isConsecutiveAbsent = statusInfo.isConsecutiveAbsent;
+  const totalSessions = typeof studentData.totalSessions === 'number'
+    ? studentData.totalSessions
+    : typeof studentData.total === 'number'
+    ? studentData.total
+    : 0;
+  const hasNoSessions = totalSessions === 0 || !!statusInfo.hasNoSessions;
 
   return (
     <Modal
@@ -88,10 +94,14 @@ export const StudentAttendanceModal = ({
               style={{
                 fontSize: '1.25rem',
                 fontWeight: 800,
-                color: isAtRisk ? 'var(--status-absent-text)' : 'var(--status-present-text)',
+                color: hasNoSessions
+                  ? 'var(--text-secondary)'
+                  : isAtRisk
+                  ? 'var(--status-absent-text)'
+                  : 'var(--status-present-text)',
               }}
             >
-              {studentData.rate}%
+              {hasNoSessions ? 'N/A' : `${studentData.rate}%`}
             </span>
             <span
               style={{
@@ -99,12 +109,26 @@ export const StudentAttendanceModal = ({
                 fontWeight: 700,
                 padding: '0.2rem 0.65rem',
                 borderRadius: '9999px',
-                backgroundColor: isAtRisk ? 'var(--status-absent-bg)' : 'var(--status-present-bg)',
-                color: isAtRisk ? 'var(--status-absent-text)' : 'var(--status-present-text)',
-                border: `1px solid ${isAtRisk ? 'var(--status-absent-border)' : 'var(--status-present-border)'}`,
+                backgroundColor: hasNoSessions
+                  ? 'var(--bg-subtle)'
+                  : isAtRisk
+                  ? 'var(--status-absent-bg)'
+                  : 'var(--status-present-bg)',
+                color: hasNoSessions
+                  ? 'var(--text-secondary)'
+                  : isAtRisk
+                  ? 'var(--status-absent-text)'
+                  : 'var(--status-present-text)',
+                border: `1px solid ${
+                  hasNoSessions
+                    ? 'var(--border-color)'
+                    : isAtRisk
+                    ? 'var(--status-absent-border)'
+                    : 'var(--status-present-border)'
+                }`,
               }}
             >
-              {isAtRisk ? `⚠ ${statusInfo.label}` : '✓ Good Standing'}
+              {hasNoSessions ? 'No sessions recorded' : isAtRisk ? `⚠ ${statusInfo.label}` : '✓ Good Standing'}
             </span>
           </div>
         </div>
@@ -174,7 +198,30 @@ export const StudentAttendanceModal = ({
             </span>
           </div>
 
-          {nonPresentSessions.length === 0 ? (
+          {hasNoSessions ? (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                padding: '1.25rem',
+                borderRadius: '8px',
+                backgroundColor: 'var(--bg-subtle)',
+                border: '1px solid var(--border-color)',
+                color: 'var(--text-secondary)',
+              }}
+            >
+              <Clock size={24} style={{ flexShrink: 0 }} />
+              <div>
+                <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)' }}>
+                  No sessions recorded
+                </div>
+                <div style={{ fontSize: '0.8rem', opacity: 0.9 }}>
+                  No attendance sessions have been conducted or recorded yet for this student during {period || studentData.period || studentData.periodDescription || 'the selected period'}.
+                </div>
+              </div>
+            </div>
+          ) : nonPresentSessions.length === 0 ? (
             <div
               style={{
                 display: 'flex',

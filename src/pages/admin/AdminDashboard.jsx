@@ -20,6 +20,7 @@ import {
   AlertCircle,
   AlertTriangle,
   RotateCcw,
+  ArrowRight,
 } from 'lucide-react';
 
 export const AdminDashboard = () => {
@@ -120,13 +121,24 @@ export const AdminDashboard = () => {
   const overallPct =
     breakdown.total > 0
       ? Math.round(((breakdown.present + breakdown.late) / breakdown.total) * 100)
-      : 0;
+      : null;
 
   const statsCards = [
     { title: 'Total Classes', value: loading ? '—' : classes.length, icon: School, color: 'var(--primary)', bg: 'var(--primary-light)' },
     { title: 'Registered Teachers', value: loading ? '—' : teachers.length, icon: Users, color: 'var(--status-leave-text)', bg: 'var(--status-leave-bg)' },
     { title: 'Enrolled Students', value: loading ? '—' : students.length, icon: GraduationCap, color: 'var(--status-present-text)', bg: 'var(--status-present-bg)' },
-    { title: "Today's Attendance Rate", value: loading ? '—' : `${overallPct}%`, icon: CalendarCheck, color: 'var(--status-late-text)', bg: 'var(--status-late-bg)' },
+    {
+      title: "Today's Attendance Rate",
+      value: loading ? '—' : markedClassesCount > 0 && overallPct !== null ? `${overallPct}%` : 'Pending',
+      unit: loading
+        ? undefined
+        : markedClassesCount > 0
+        ? `${markedClassesCount} of ${classes.length} classes`
+        : `0 of ${classes.length} classes submitted`,
+      icon: CalendarCheck,
+      color: markedClassesCount > 0 ? 'var(--status-late-text)' : 'var(--text-secondary)',
+      bg: markedClassesCount > 0 ? 'var(--status-late-bg)' : 'var(--bg-subtle)',
+    },
   ];
 
   return (
@@ -200,60 +212,203 @@ export const AdminDashboard = () => {
             ))}
           </div>
 
+          {/* Class Roll Call Status Table - Morning Priority View */}
+          <Card
+            title="Today's Class Roll Call Progress"
+            subtitle={
+              loading
+                ? "Loading classes..."
+                : markedClassesCount === 0
+                ? `No roll call submitted yet (0 of ${classes.length} classes submitted)`
+                : markedClassesCount === classes.length && classes.length > 0
+                ? `All ${classes.length} classes have submitted roll call today`
+                : `${markedClassesCount} of ${classes.length} classes submitted &bull; ${classes.length - markedClassesCount} pending`
+            }
+            extra={
+              !loading && classes.length > 0 ? (
+                <span
+                  style={{
+                    padding: '0.2rem 0.65rem',
+                    borderRadius: '9999px',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    backgroundColor:
+                      markedClassesCount === classes.length && classes.length > 0
+                        ? 'var(--status-present-bg)'
+                        : 'var(--status-late-bg)',
+                    color:
+                      markedClassesCount === classes.length && classes.length > 0
+                        ? 'var(--status-present-text)'
+                        : 'var(--status-late-text)',
+                    border: `1px solid ${
+                      markedClassesCount === classes.length && classes.length > 0
+                        ? 'var(--status-present-border)'
+                        : 'var(--status-late-border)'
+                    }`,
+                  }}
+                >
+                  {markedClassesCount} / {classes.length} Completed
+                </span>
+              ) : null
+            }
+          >
+            {loading ? (
+              <div style={{ padding: '2.5rem 1rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                Loading classes and roll call status...
+              </div>
+            ) : classAttendanceStatus.length === 0 ? (
+              <EmptyState
+                icon={School}
+                title="No classes created yet"
+                description="Add classes to begin tracking attendance."
+              />
+            ) : (
+              <div className="table-responsive">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Class Name</th>
+                      <th>Room</th>
+                      <th>Enrolled</th>
+                      <th>Assigned Teachers</th>
+                      <th>Roll Call Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {classAttendanceStatus.map((cls) => {
+                      const assignedTeachersList = teachers
+                        .filter((t) => (cls.assignedTeacherIds || []).includes(t.id))
+                        .map((t) => t.name);
+
+                      return (
+                        <tr key={cls.id}>
+                          <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{cls.name}</td>
+                          <td>{cls.room || 'Classroom'}</td>
+                          <td>{cls.studentCount || 0} {(cls.studentCount || 0) === 1 ? 'student' : 'students'}</td>
+                          <td>
+                            {assignedTeachersList.length > 0 ? (
+                              <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
+                                {assignedTeachersList.map((tName) => (
+                                  <span
+                                    key={tName}
+                                    style={{
+                                      fontSize: '0.75rem',
+                                      padding: '0.15rem 0.5rem',
+                                      borderRadius: '6px',
+                                      backgroundColor: 'var(--bg-subtle)',
+                                      color: 'var(--text-primary)',
+                                      border: '1px solid var(--border-color)',
+                                    }}
+                                  >
+                                    {tName}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : (
+                              <span style={{ fontSize: '0.8rem', color: 'var(--status-absent-text)' }}>
+                                No Teacher Assigned
+                              </span>
+                            )}
+                          </td>
+                          <td>
+                            <span className={`status-pill ${cls.isMarked ? 'status-pill-marked' : 'status-pill-pending'}`}>
+                              {cls.isMarked ? <CheckCircle2 size={13} /> : <Clock size={13} />}
+                              <span>{cls.isMarked ? 'Marked Today' : 'Pending Roll Call'}</span>
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Card>
+
           {/* Today's Status Breakdown */}
           <Card
             title="Today's Institution Attendance"
-            subtitle={loading ? "Loading today's attendance..." : `Recorded across ${markedClassesCount} of ${classes.length} active classes`}
+            subtitle={
+              loading
+                ? "Loading today's attendance..."
+                : markedClassesCount === 0
+                ? `No roll call submitted yet (0 of ${classes.length} classes submitted)`
+                : `Recorded across ${markedClassesCount} of ${classes.length} active classes`
+            }
           >
-            <div className="stat-tile-grid">
-              <div className={`stat-tile stat-tile-present ${!loading && breakdown.present > 0 ? 'active-present' : ''}`}>
-                <div className="stat-tile-header">
-                  <StatusBadge status="present" />
-                  <span className="stat-tile-pct">
-                    {loading ? '—' : `${breakdown.total > 0 ? Math.round((breakdown.present / breakdown.total) * 100) : 0}%`}
-                  </span>
+            {markedClassesCount === 0 ? (
+              <div
+                style={{
+                  padding: '2rem 1.5rem',
+                  textAlign: 'center',
+                  backgroundColor: 'var(--bg-subtle)',
+                  borderRadius: '10px',
+                  border: '1px dashed var(--border-color)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '0.6rem',
+                }}
+              >
+                <Clock size={28} style={{ color: 'var(--text-secondary)' }} />
+                <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)' }}>
+                  No roll call submitted yet
                 </div>
-                <div className="stat-tile-count">
-                  {loading ? '—' : breakdown.present} <span className="stat-tile-unit">{breakdown.present === 1 ? 'student' : 'students'}</span>
+                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', maxWidth: '420px' }}>
+                  0 of {classes.length} classes have recorded attendance for today. Live breakdown and statistics will appear as teachers submit morning roll calls.
                 </div>
               </div>
+            ) : (
+              <div className="stat-tile-grid">
+                <div className={`stat-tile stat-tile-present ${!loading && breakdown.present > 0 ? 'active-present' : ''}`}>
+                  <div className="stat-tile-header">
+                    <StatusBadge status="present" />
+                    <span className="stat-tile-pct">
+                      {loading ? '—' : `${breakdown.total > 0 ? Math.round((breakdown.present / breakdown.total) * 100) : 0}%`}
+                    </span>
+                  </div>
+                  <div className="stat-tile-count">
+                    {loading ? '—' : breakdown.present} <span className="stat-tile-unit">{breakdown.present === 1 ? 'student' : 'students'}</span>
+                  </div>
+                </div>
 
-              <div className={`stat-tile stat-tile-absent ${!loading && breakdown.absent > 0 ? 'active-absent' : ''}`}>
-                <div className="stat-tile-header">
-                  <StatusBadge status="absent" />
-                  <span className="stat-tile-pct">
-                    {loading ? '—' : `${breakdown.total > 0 ? Math.round((breakdown.absent / breakdown.total) * 100) : 0}%`}
-                  </span>
+                <div className={`stat-tile stat-tile-absent ${!loading && breakdown.absent > 0 ? 'active-absent' : ''}`}>
+                  <div className="stat-tile-header">
+                    <StatusBadge status="absent" />
+                    <span className="stat-tile-pct">
+                      {loading ? '—' : `${breakdown.total > 0 ? Math.round((breakdown.absent / breakdown.total) * 100) : 0}%`}
+                    </span>
+                  </div>
+                  <div className="stat-tile-count">
+                    {loading ? '—' : breakdown.absent} <span className="stat-tile-unit">{breakdown.absent === 1 ? 'student' : 'students'}</span>
+                  </div>
                 </div>
-                <div className="stat-tile-count">
-                  {loading ? '—' : breakdown.absent} <span className="stat-tile-unit">{breakdown.absent === 1 ? 'student' : 'students'}</span>
-                </div>
-              </div>
 
-              <div className={`stat-tile stat-tile-late ${!loading && breakdown.late > 0 ? 'active-late' : ''}`}>
-                <div className="stat-tile-header">
-                  <StatusBadge status="late" />
-                  <span className="stat-tile-pct">
-                    {loading ? '—' : `${breakdown.total > 0 ? Math.round((breakdown.late / breakdown.total) * 100) : 0}%`}
-                  </span>
+                <div className={`stat-tile stat-tile-late ${!loading && breakdown.late > 0 ? 'active-late' : ''}`}>
+                  <div className="stat-tile-header">
+                    <StatusBadge status="late" />
+                    <span className="stat-tile-pct">
+                      {loading ? '—' : `${breakdown.total > 0 ? Math.round((breakdown.late / breakdown.total) * 100) : 0}%`}
+                    </span>
+                  </div>
+                  <div className="stat-tile-count">
+                    {loading ? '—' : breakdown.late} <span className="stat-tile-unit">{breakdown.late === 1 ? 'student' : 'students'}</span>
+                  </div>
                 </div>
-                <div className="stat-tile-count">
-                  {loading ? '—' : breakdown.late} <span className="stat-tile-unit">{breakdown.late === 1 ? 'student' : 'students'}</span>
-                </div>
-              </div>
 
-              <div className={`stat-tile stat-tile-leave ${!loading && breakdown.leave > 0 ? 'active-leave' : ''}`}>
-                <div className="stat-tile-header">
-                  <StatusBadge status="leave" />
-                  <span className="stat-tile-pct">
-                    {loading ? '—' : `${breakdown.total > 0 ? Math.round((breakdown.leave / breakdown.total) * 100) : 0}%`}
-                  </span>
-                </div>
-                <div className="stat-tile-count">
-                  {loading ? '—' : breakdown.leave} <span className="stat-tile-unit">{breakdown.leave === 1 ? 'student' : 'students'}</span>
+                <div className={`stat-tile stat-tile-leave ${!loading && breakdown.leave > 0 ? 'active-leave' : ''}`}>
+                  <div className="stat-tile-header">
+                    <StatusBadge status="leave" />
+                    <span className="stat-tile-pct">
+                      {loading ? '—' : `${breakdown.total > 0 ? Math.round((breakdown.leave / breakdown.total) * 100) : 0}%`}
+                    </span>
+                  </div>
+                  <div className="stat-tile-count">
+                    {loading ? '—' : breakdown.leave} <span className="stat-tile-unit">{breakdown.leave === 1 ? 'student' : 'students'}</span>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </Card>
 
           {/* Proactive At-Risk & Consecutive Absence Alerts */}
@@ -307,7 +462,7 @@ export const AdminDashboard = () => {
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                {atRiskStudents.slice(0, 8).map((m) => {
+                {atRiskStudents.slice(0, 3).map((m) => {
                   const studentClass = classes.find((c) => c.id === m.student.classId);
                   return (
                     <div
@@ -419,84 +574,43 @@ export const AdminDashboard = () => {
                     </div>
                   );
                 })}
+
+                {atRiskStudents.length > 3 && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      paddingTop: '0.85rem',
+                      marginTop: '0.25rem',
+                      borderTop: '1px solid var(--border-color)',
+                      flexWrap: 'wrap',
+                      gap: '0.5rem',
+                    }}
+                  >
+                    <span style={{ fontSize: '0.825rem', color: 'var(--text-secondary)' }}>
+                      Showing top 3 of {atRiskStudents.length} at-risk students
+                    </span>
+                    <Link
+                      to="/admin/reports?view=students"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        fontSize: '0.85rem',
+                        fontWeight: 700,
+                        color: 'var(--primary)',
+                        textDecoration: 'none',
+                      }}
+                    >
+                      <span>View all {atRiskStudents.length} students</span>
+                      <ArrowRight size={14} />
+                    </Link>
+                  </div>
+                )}
               </div>
             )}
           </Card>
-
-          {/* Class Roll Call Status Table */}
-          <Card title="Today's Class Roll Call Progress" subtitle={loading ? "Loading classes..." : "Monitor whether teachers have submitted daily attendance"}>
-            {loading ? (
-              <div style={{ padding: '2.5rem 1rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                Loading classes and roll call status...
-              </div>
-            ) : classAttendanceStatus.length === 0 ? (
-              <EmptyState
-                icon={School}
-                title="No classes created yet"
-                description="Add classes to begin tracking attendance."
-              />
-            ) : (
-          <div className="table-responsive">
-            <table>
-              <thead>
-                <tr>
-                  <th>Class Name</th>
-                  <th>Room</th>
-                  <th>Enrolled</th>
-                  <th>Assigned Teachers</th>
-                  <th>Roll Call Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {classAttendanceStatus.map((cls) => {
-                  const assignedTeachersList = teachers
-                    .filter((t) => (cls.assignedTeacherIds || []).includes(t.id))
-                    .map((t) => t.name);
-
-                  return (
-                    <tr key={cls.id}>
-                      <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{cls.name}</td>
-                      <td>{cls.room || 'Classroom'}</td>
-                      <td>{cls.studentCount || 0} {(cls.studentCount || 0) === 1 ? 'student' : 'students'}</td>
-                      <td>
-                        {assignedTeachersList.length > 0 ? (
-                          <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
-                            {assignedTeachersList.map((tName) => (
-                              <span
-                                key={tName}
-                                style={{
-                                  fontSize: '0.75rem',
-                                  padding: '0.15rem 0.5rem',
-                                  borderRadius: '6px',
-                                  backgroundColor: 'var(--bg-subtle)',
-                                  color: 'var(--text-primary)',
-                                  border: '1px solid var(--border-color)',
-                                }}
-                              >
-                                {tName}
-                              </span>
-                            ))}
-                          </div>
-                        ) : (
-                          <span style={{ fontSize: '0.8rem', color: 'var(--status-absent-text)' }}>
-                            No Teacher Assigned
-                          </span>
-                        )}
-                      </td>
-                      <td>
-                        <span className={`status-pill ${cls.isMarked ? 'status-pill-marked' : 'status-pill-pending'}`}>
-                          {cls.isMarked ? <CheckCircle2 size={13} /> : <Clock size={13} />}
-                          <span>{cls.isMarked ? 'Marked Today' : 'Pending Roll Call'}</span>
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </Card>
 
       {/* Student Attendance Detail Modal */}
       <StudentAttendanceModal

@@ -212,180 +212,32 @@ export const TeacherDashboard = () => {
             <StatCard
               icon={TrendingUp}
               title="Average Attendance"
-              value={loading ? '—' : `${summaryStats.overallRate}%`}
-              iconColor="var(--primary)"
-              iconBg="var(--primary-light)"
+              value={
+                loading
+                  ? '—'
+                  : summaryStats.markedClasses > 0
+                  ? `${summaryStats.overallRate}%`
+                  : 'Pending'
+              }
+              unit={
+                !loading && summaryStats.markedClasses === 0
+                  ? `0 of ${summaryStats.totalClasses} submitted`
+                  : undefined
+              }
+              iconColor={
+                !loading && summaryStats.markedClasses > 0
+                  ? 'var(--primary)'
+                  : 'var(--text-secondary)'
+              }
+              iconBg={
+                !loading && summaryStats.markedClasses > 0
+                  ? 'var(--primary-light)'
+                  : 'var(--bg-subtle)'
+              }
             />
           </div>
 
-          {/* Proactive At-Risk & Consecutive Absence Alerts */}
-          <Card
-            title="Students at Risk"
-            subtitle="Students with attendance below 75% or absent for 3+ consecutive days"
-            extra={
-              atRiskStudents.length > 0 ? (
-                <span
-                  style={{
-                    padding: '0.2rem 0.65rem',
-                    borderRadius: '9999px',
-                    fontSize: '0.75rem',
-                    fontWeight: 700,
-                    backgroundColor: 'var(--status-absent-bg)',
-                    color: 'var(--status-absent-text)',
-                    border: '1px solid var(--status-absent-border)',
-                  }}
-                >
-                  {atRiskStudents.length} {atRiskStudents.length === 1 ? 'Student' : 'Students'}
-                </span>
-              ) : null
-            }
-          >
-            {loading ? (
-              <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '1rem' }}>
-                Analyzing student attendance patterns...
-              </p>
-            ) : atRiskStudents.length === 0 ? (
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.75rem',
-                  padding: '1rem 1.25rem',
-                  borderRadius: '10px',
-                  backgroundColor: 'var(--status-present-bg)',
-                  border: '1px solid var(--status-present-border)',
-                  color: 'var(--status-present-text)',
-                }}
-              >
-                <CheckCircle2 size={22} style={{ flexShrink: 0 }} />
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: '0.925rem' }}>
-                    All clear — no students are currently at risk
-                  </div>
-                  <div style={{ fontSize: '0.8rem', opacity: 0.9 }}>
-                    No students currently have attendance below 75% or have been absent for 3 or more consecutive days.
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                {atRiskStudents.map((m) => {
-                  const assignedClass = assignedClassesStatus.find((c) => c.id === m.student.classId);
-                  return (
-                    <div
-                      key={m.student.id}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '0.85rem 1.15rem',
-                        borderRadius: '10px',
-                        backgroundColor: 'var(--bg-subtle)',
-                        border: '1px solid var(--border-color)',
-                        flexWrap: 'wrap',
-                        gap: '0.75rem',
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                        <StudentAvatar student={m.student} size={40} shape="circle" />
-                        <div>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setSelectedStudentForModal({
-                                ...m,
-                                className: assignedClass?.name || 'Assigned Class',
-                              })
-                            }
-                            style={{
-                              background: 'none',
-                              border: 'none',
-                              padding: 0,
-                              font: 'inherit',
-                              fontWeight: 700,
-                              fontSize: '0.95rem',
-                              color: 'var(--text-primary)',
-                              textDecoration: 'underline',
-                              textUnderlineOffset: '2px',
-                              cursor: 'pointer',
-                              textAlign: 'left',
-                            }}
-                            title={`Click to view details for ${m.student.name}`}
-                          >
-                            {m.student.name}
-                          </button>
-                          <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.15rem' }}>
-                            Roll #{m.student.rollNo} &bull; {assignedClass?.name || 'Class'}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
-                        {(() => {
-                          const statusInfo = getStudentAttendanceStatus(m);
-                          return (
-                            <>
-                              {statusInfo.isConsecutiveAbsent && (
-                                <span
-                                  style={{
-                                    padding: '0.25rem 0.65rem',
-                                    borderRadius: '9999px',
-                                    fontSize: '0.75rem',
-                                    fontWeight: 700,
-                                    backgroundColor: 'var(--status-absent-bg)',
-                                    color: 'var(--status-absent-text)',
-                                    border: '1px solid var(--status-absent-border)',
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: '0.35rem',
-                                  }}
-                                >
-                                  <AlertTriangle size={13} />
-                                  <span>{statusInfo.consecutiveAbsentDays} Consecutive Absences</span>
-                                </span>
-                              )}
-
-                              {statusInfo.isBelowThreshold && (
-                                <span
-                                  style={{
-                                    padding: '0.25rem 0.65rem',
-                                    borderRadius: '9999px',
-                                    fontSize: '0.75rem',
-                                    fontWeight: 700,
-                                    backgroundColor: 'var(--status-late-bg)',
-                                    color: 'var(--status-late-text)',
-                                    border: '1px solid var(--status-late-border)',
-                                  }}
-                                >
-                                  {m.rate}% (Below 75%)
-                                </span>
-                              )}
-                            </>
-                          );
-                        })()}
-
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setSelectedStudentForModal({
-                              ...m,
-                              className: assignedClass?.name || 'Assigned Class',
-                            })
-                          }
-                          className="btn-secondary"
-                          style={{ padding: '0.4rem 0.75rem', fontSize: '0.8rem' }}
-                        >
-                          View History
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </Card>
-
-      {/* Today's Roll Call Tracker */}
+      {/* Today's Roll Call Tracker - Morning Priority View */}
       <Card
         title="Today's Roll Call Status"
         subtitle="Mark attendance or review recorded sessions for your assigned classes"
@@ -454,6 +306,206 @@ export const TeacherDashboard = () => {
             ))
           )}
         </div>
+      </Card>
+
+      {/* Proactive At-Risk & Consecutive Absence Alerts */}
+      <Card
+        title="Students at Risk"
+        subtitle="Students with attendance below 75% or absent for 3+ consecutive days"
+        extra={
+          atRiskStudents.length > 0 ? (
+            <span
+              style={{
+                padding: '0.2rem 0.65rem',
+                borderRadius: '9999px',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                backgroundColor: 'var(--status-absent-bg)',
+                color: 'var(--status-absent-text)',
+                border: '1px solid var(--status-absent-border)',
+              }}
+            >
+              {atRiskStudents.length} {atRiskStudents.length === 1 ? 'Student' : 'Students'}
+            </span>
+          ) : null
+        }
+      >
+        {loading ? (
+          <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '1rem' }}>
+            Analyzing student attendance patterns...
+          </p>
+        ) : atRiskStudents.length === 0 ? (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+              padding: '1rem 1.25rem',
+              borderRadius: '10px',
+              backgroundColor: 'var(--status-present-bg)',
+              border: '1px solid var(--status-present-border)',
+              color: 'var(--status-present-text)',
+            }}
+          >
+            <CheckCircle2 size={22} style={{ flexShrink: 0 }} />
+            <div>
+              <div style={{ fontWeight: 700, fontSize: '0.925rem' }}>
+                All clear — no students are currently at risk
+              </div>
+              <div style={{ fontSize: '0.8rem', opacity: 0.9 }}>
+                No students currently have attendance below 75% or have been absent for 3 or more consecutive days.
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            {atRiskStudents.slice(0, 3).map((m) => {
+              const assignedClass = assignedClassesStatus.find((c) => c.id === m.student.classId);
+              return (
+                <div
+                  key={m.student.id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '0.85rem 1.15rem',
+                    borderRadius: '10px',
+                    backgroundColor: 'var(--bg-subtle)',
+                    border: '1px solid var(--border-color)',
+                    flexWrap: 'wrap',
+                    gap: '0.75rem',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                    <StudentAvatar student={m.student} size={40} shape="circle" />
+                    <div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setSelectedStudentForModal({
+                            ...m,
+                            className: assignedClass?.name || 'Assigned Class',
+                          })
+                        }
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          padding: 0,
+                          font: 'inherit',
+                          fontWeight: 700,
+                          fontSize: '0.95rem',
+                          color: 'var(--text-primary)',
+                          textDecoration: 'underline',
+                          textUnderlineOffset: '2px',
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                        }}
+                        title={`Click to view details for ${m.student.name}`}
+                      >
+                        {m.student.name}
+                      </button>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.15rem' }}>
+                        Roll #{m.student.rollNo} &bull; {assignedClass?.name || 'Class'}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+                    {(() => {
+                      const statusInfo = getStudentAttendanceStatus(m);
+                      return (
+                        <>
+                          {statusInfo.isConsecutiveAbsent && (
+                            <span
+                              style={{
+                                padding: '0.25rem 0.65rem',
+                                borderRadius: '9999px',
+                                fontSize: '0.75rem',
+                                fontWeight: 700,
+                                backgroundColor: 'var(--status-absent-bg)',
+                                color: 'var(--status-absent-text)',
+                                border: '1px solid var(--status-absent-border)',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.35rem',
+                              }}
+                            >
+                              <AlertTriangle size={13} />
+                              <span>{statusInfo.consecutiveAbsentDays} Consecutive Absences</span>
+                            </span>
+                          )}
+
+                          {statusInfo.isBelowThreshold && (
+                            <span
+                              style={{
+                                padding: '0.25rem 0.65rem',
+                                borderRadius: '9999px',
+                                fontSize: '0.75rem',
+                                fontWeight: 700,
+                                backgroundColor: 'var(--status-late-bg)',
+                                color: 'var(--status-late-text)',
+                                border: '1px solid var(--status-late-border)',
+                              }}
+                            >
+                              {m.rate}% (Below 75%)
+                            </span>
+                          )}
+                        </>
+                      );
+                    })()}
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setSelectedStudentForModal({
+                          ...m,
+                          className: assignedClass?.name || 'Assigned Class',
+                        })
+                      }
+                      className="btn-secondary"
+                      style={{ padding: '0.4rem 0.75rem', fontSize: '0.8rem' }}
+                    >
+                      View History
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+
+            {atRiskStudents.length > 3 && (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  paddingTop: '0.85rem',
+                  marginTop: '0.25rem',
+                  borderTop: '1px solid var(--border-color)',
+                  flexWrap: 'wrap',
+                  gap: '0.5rem',
+                }}
+              >
+                <span style={{ fontSize: '0.825rem', color: 'var(--text-secondary)' }}>
+                  Showing top 3 of {atRiskStudents.length} at-risk students
+                </span>
+                <Link
+                  to="/teacher/reports"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    fontSize: '0.85rem',
+                    fontWeight: 700,
+                    color: 'var(--primary)',
+                    textDecoration: 'none',
+                  }}
+                >
+                  <span>View all {atRiskStudents.length} students &rarr;</span>
+                </Link>
+              </div>
+            )}
+          </div>
+        )}
       </Card>
 
       {/* Student Attendance Detail Modal */}

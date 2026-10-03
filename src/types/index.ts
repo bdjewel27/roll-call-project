@@ -211,6 +211,7 @@ export interface StudentAttendanceStatusInfo {
   isBelowThreshold: boolean;
   isConsecutiveAbsent: boolean;
   consecutiveAbsentDays: number;
+  hasNoSessions?: boolean;
   status: string;
   reason: string;
   label: string;

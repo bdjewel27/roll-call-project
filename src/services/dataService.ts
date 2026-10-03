@@ -1002,7 +1002,7 @@ export const dataService = {
       };
 
       const { total, present, absent, late, leave, sessions = [] } = entry;
-      const rate = total > 0 ? Math.round(((present + late) / total) * 100) : 100;
+      const rate = total > 0 ? Math.round(((present + late) / total) * 100) : 0;
       const consecutiveAbsentDays = computeConsecutiveAbsences(std.id, std.classId, sessions);
       const statusInfo: StudentAttendanceStatusInfo = getStudentAttendanceStatus({
         totalSessions: total,
@@ -1038,7 +1038,7 @@ export const dataService = {
           isActive: false,
         };
         const { total, present, absent, late, leave, sessions = [] } = entry;
-        const rate = total > 0 ? Math.round(((present + late) / total) * 100) : 100;
+        const rate = total > 0 ? Math.round(((present + late) / total) * 100) : 0;
         const consecutiveAbsentDays = computeConsecutiveAbsences(studentId, std.classId, sessions);
         const statusInfo: StudentAttendanceStatusInfo = getStudentAttendanceStatus({
           totalSessions: total,

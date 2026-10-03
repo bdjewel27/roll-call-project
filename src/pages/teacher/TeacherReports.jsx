@@ -94,12 +94,13 @@ export const TeacherReports = () => {
   };
 
   const atRiskCount = studentMetrics.filter((m) => m.isAtRisk).length;
+  const studentsWithSessions = studentMetrics.filter((m) => m.totalSessions > 0);
   const avgRate =
-    studentMetrics.length > 0
+    studentsWithSessions.length > 0
       ? Math.round(
-          studentMetrics.reduce((acc, m) => acc + m.rate, 0) / studentMetrics.length
+          studentsWithSessions.reduce((acc, m) => acc + m.rate, 0) / studentsWithSessions.length
         )
-      : 0;
+      : null;
 
   return (
     <div className="page-container">
@@ -135,7 +136,8 @@ export const TeacherReports = () => {
           size="compact"
           icon={TrendingUp}
           title="Overall Attendance"
-          value={`${avgRate}%`}
+          value={avgRate !== null ? `${avgRate}%` : 'N/A'}
+          unit={avgRate === null ? 'no sessions recorded' : undefined}
           iconColor="var(--primary)"
           iconBg="var(--primary-light)"
         />
@@ -247,32 +249,57 @@ export const TeacherReports = () => {
                       <span style={{ color: 'var(--status-leave-text)', fontWeight: 600 }}>{m.leave}</span>
                     </td>
                     <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <div
-                          style={{
-                            flex: 1,
-                            maxWidth: '80px',
-                            height: '6px',
-                            backgroundColor: 'var(--bg-subtle)',
-                            borderRadius: '9999px',
-                            overflow: 'hidden',
-                          }}
-                        >
+                      {m.totalSessions === 0 ? (
+                        <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                          N/A
+                        </span>
+                      ) : (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                           <div
                             style={{
-                              width: `${m.rate}%`,
-                              height: '100%',
-                              backgroundColor: m.rate < ATTENDANCE_BENCHMARK.AT_RISK_THRESHOLD ? 'var(--status-absent)' : 'var(--status-present)',
+                              flex: 1,
+                              maxWidth: '80px',
+                              height: '6px',
+                              backgroundColor: 'var(--bg-subtle)',
                               borderRadius: '9999px',
+                              overflow: 'hidden',
                             }}
-                          />
+                          >
+                            <div
+                              style={{
+                                width: `${m.rate}%`,
+                                height: '100%',
+                                backgroundColor: m.rate < ATTENDANCE_BENCHMARK.AT_RISK_THRESHOLD ? 'var(--status-absent)' : 'var(--status-present)',
+                                borderRadius: '9999px',
+                              }}
+                            />
+                          </div>
+                          <span style={{ fontWeight: 700, fontSize: '0.85rem' }}>{m.rate}%</span>
                         </div>
-                        <span style={{ fontWeight: 700, fontSize: '0.85rem' }}>{m.rate}%</span>
-                      </div>
+                      )}
                     </td>
                     <td>
                       {(() => {
                         const statusInfo = getStudentAttendanceStatus(m);
+                        if (statusInfo.hasNoSessions || m.totalSessions === 0) {
+                          return (
+                            <span
+                              style={{
+                                padding: '0.2rem 0.6rem',
+                                borderRadius: '9999px',
+                                fontSize: '0.725rem',
+                                fontWeight: 600,
+                                backgroundColor: 'var(--bg-subtle)',
+                                color: 'var(--text-secondary)',
+                                border: '1px solid var(--border-color)',
+                                whiteSpace: 'nowrap',
+                              }}
+                              title="No sessions recorded"
+                            >
+                              No sessions recorded
+                            </span>
+                          );
+                        }
                         return statusInfo.isAtRisk ? (
                           <span
                             style={{

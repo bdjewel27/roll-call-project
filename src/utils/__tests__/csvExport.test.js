@@ -239,6 +239,36 @@ describe('csvExport utility', () => {
         'At Risk (3+ Consecutive Absences)',
       ]);
     });
+
+    it('formats student with 0 total sessions as N/A and No sessions recorded', () => {
+      const metrics = [
+        {
+          student: { rollNo: '105', name: 'New Student', classId: 'cls-1' },
+          totalSessions: 0,
+          present: 0,
+          absent: 0,
+          late: 0,
+          leave: 0,
+          rate: 0,
+          isAtRisk: false,
+        },
+      ];
+
+      const rows = formatStudentMetricsRows(metrics);
+      expect(rows).toHaveLength(1);
+      expect(rows[0]).toEqual([
+        '105',
+        'New Student',
+        'cls-1',
+        0,
+        0,
+        0,
+        0,
+        0,
+        'N/A',
+        'No sessions recorded',
+      ]);
+    });
   });
 
   describe('downloadCSV & UTF-8 BOM verification', () => {
