@@ -110,7 +110,8 @@ export const TeacherReports = () => {
             My Attendance Reports
           </h1>
           <p className="page-subtitle">
-            Class-level performance statistics, student attendance rates, and data export
+            Class-level performance statistics, student attendance rates, and data export &bull;{' '}
+            <strong style={{ color: 'var(--text-primary)' }}>Period: All Time (Full History)</strong>
           </p>
         </div>
 
@@ -313,6 +314,7 @@ export const TeacherReports = () => {
         isOpen={!!selectedStudentForModal}
         onClose={() => setSelectedStudentForModal(null)}
         studentData={selectedStudentForModal}
+        period="Period: All Time (Full History)"
       />
     </div>
   );

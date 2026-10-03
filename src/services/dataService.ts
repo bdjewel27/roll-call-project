@@ -765,14 +765,6 @@ export const dataService = {
     if (eDate) {
       query = query.lte('date', eDate);
     }
-    if (!sDate && !eDate) {
-      const defaultPastDate = new Date();
-      defaultPastDate.setDate(defaultPastDate.getDate() - 90);
-      const y = defaultPastDate.getFullYear();
-      const m = String(defaultPastDate.getMonth() + 1).padStart(2, '0');
-      const d = String(defaultPastDate.getDate()).padStart(2, '0');
-      query = query.gte('date', `${y}-${m}-${d}`);
-    }
 
     const { data: sessions, error } = await query;
 
@@ -809,14 +801,30 @@ export const dataService = {
   },
 
   // Get student attendance metrics for reports
-  async getStudentAttendanceMetrics(classId: string | string[] | null = null): Promise<StudentAttendanceMetric[]> {
-    if (Array.isArray(classId) && classId.length === 0) {
+  async getStudentAttendanceMetrics(
+    classId: string | string[] | AttendanceFilterParams | null = null,
+    startDate: string | null = null,
+    endDate: string | null = null
+  ): Promise<StudentAttendanceMetric[]> {
+    let cId: string | string[] | null = null;
+    let sDate: string | null = startDate;
+    let eDate: string | null = endDate;
+
+    if (typeof classId === 'object' && classId !== null && !Array.isArray(classId)) {
+      cId = classId.classId ?? null;
+      sDate = classId.startDate ?? null;
+      eDate = classId.endDate ?? null;
+    } else {
+      cId = classId;
+    }
+
+    if (Array.isArray(cId) && cId.length === 0) {
       return [];
     }
 
-    const targetClass = classId && classId !== 'ALL' ? classId : null;
+    const targetClass = cId && cId !== 'ALL' ? cId : null;
     const students = await this.getStudents(targetClass);
-    const history = await this.getAttendanceHistory(targetClass);
+    const history = await this.getAttendanceHistory(targetClass, sDate, eDate);
 
     interface MetricEntry {
       total: number;

@@ -5,7 +5,7 @@ import { EmptyState } from '../../components/common/EmptyState';
 import { useToast } from '../../context/ToastContext';
 import { dataService } from '../../services/dataService';
 import { formatDate, getTodayDateString } from '../../utils/formatters';
-import { exportAttendanceHistoryCSV } from '../../utils/csvExport';
+import { exportAttendanceHistoryCSV, exportStudentMetricsCSV } from '../../utils/csvExport';
 import { ATTENDANCE_BENCHMARK } from '../../constants/attendanceStatus';
 import { StudentAttendanceModal } from '../../components/attendance/StudentAttendanceModal';
 import {
@@ -38,7 +38,11 @@ export const ReportsPage = () => {
           startDate || null,
           endDate || null
         ),
-        dataService.getStudentAttendanceMetrics(targetClass),
+        dataService.getStudentAttendanceMetrics(
+          targetClass,
+          startDate || null,
+          endDate || null
+        ),
       ]);
       setHistoryLogs(logs);
       setStudentMetrics(metrics);
@@ -74,6 +78,20 @@ export const ReportsPage = () => {
     fetch();
   }, [loadReports]);
 
+  // Dynamic period label for UI and exports
+  const periodDescription = useMemo(() => {
+    if (startDate && endDate) {
+      return `Period: ${formatDate(startDate)} – ${formatDate(endDate)}`;
+    }
+    if (startDate) {
+      return `Period: From ${formatDate(startDate)}`;
+    }
+    if (endDate) {
+      return `Period: Up to ${formatDate(endDate)}`;
+    }
+    return 'Period: All Time (Full History)';
+  }, [startDate, endDate]);
+
   // Aggregated analytics
   const metrics = useMemo(() => {
     let totalPresent = 0;
@@ -106,16 +124,34 @@ export const ReportsPage = () => {
     };
   }, [historyLogs]);
 
-  // Export Institutional CSV with format: Date, Class, Roll No, Student Name, Status, Remarks
+  // Export Institutional CSV
   const handleExportCSV = () => {
-    if (historyLogs.length === 0) {
-      showToast('No report logs available to export', 'error');
-      return;
-    }
+    const periodFilePart =
+      startDate && endDate
+        ? `_${startDate}_to_${endDate}`
+        : startDate
+        ? `_from_${startDate}`
+        : endDate
+        ? `_upto_${endDate}`
+        : '_all_time';
 
-    const filename = `School_Attendance_Report_${getTodayDateString()}.csv`;
-    exportAttendanceHistoryCSV(filename, historyLogs);
-    showToast('Institutional report exported to CSV successfully!', 'success');
+    if (reportView === 'sessions') {
+      if (historyLogs.length === 0) {
+        showToast('No report logs available to export', 'error');
+        return;
+      }
+      const filename = `School_Attendance_Sessions_${getTodayDateString()}${periodFilePart}.csv`;
+      exportAttendanceHistoryCSV(filename, historyLogs);
+      showToast('Session attendance report exported to CSV successfully!', 'success');
+    } else {
+      if (studentMetrics.length === 0) {
+        showToast('No student metrics available to export', 'error');
+        return;
+      }
+      const filename = `School_Student_Metrics_${getTodayDateString()}${periodFilePart}.csv`;
+      exportStudentMetricsCSV(filename, studentMetrics);
+      showToast('Student attendance performance exported to CSV successfully!', 'success');
+    }
   };
 
   return (
@@ -127,7 +163,8 @@ export const ReportsPage = () => {
             Institutional Reports & Analytics
           </h1>
           <p className="page-subtitle">
-            Multi-class historical attendance tracking, audit logs, and institutional CSV export
+            Multi-class historical attendance tracking, audit logs, and institutional CSV export &bull;{' '}
+            <strong style={{ color: 'var(--text-primary)' }}>{periodDescription}</strong>
           </p>
         </div>
 
@@ -141,7 +178,7 @@ export const ReportsPage = () => {
           }}
         >
           <Download size={16} />
-          <span>Export Institutional CSV</span>
+          <span>{reportView === 'sessions' ? 'Export Sessions CSV' : 'Export Students CSV'}</span>
         </button>
       </div>
 
@@ -257,8 +294,8 @@ export const ReportsPage = () => {
         title={reportView === 'sessions' ? 'Session Attendance Registry' : 'Student Performance Roster'}
         subtitle={
           reportView === 'sessions'
-            ? `Showing ${historyLogs.length} logged ${historyLogs.length === 1 ? 'session' : 'sessions'}`
-            : `Showing ${studentMetrics.length} enrolled ${studentMetrics.length === 1 ? 'student' : 'students'}`
+            ? `Showing ${historyLogs.length} logged ${historyLogs.length === 1 ? 'session' : 'sessions'} (${periodDescription})`
+            : `Showing ${studentMetrics.length} enrolled ${studentMetrics.length === 1 ? 'student' : 'students'} (${periodDescription})`
         }
         extra={
           <div className="filter-tabs-wrapper">
@@ -418,6 +455,7 @@ export const ReportsPage = () => {
                           setSelectedStudentForModal({
                             ...m,
                             className: currentClass?.name || 'Class Record',
+                            periodDescription,
                           });
                         }}
                         style={{
@@ -519,6 +557,7 @@ export const ReportsPage = () => {
         isOpen={!!selectedStudentForModal}
         onClose={() => setSelectedStudentForModal(null)}
         studentData={selectedStudentForModal}
+        period={periodDescription}
       />
     </div>
   );

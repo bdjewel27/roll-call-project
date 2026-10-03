@@ -10,6 +10,7 @@ export const StudentAttendanceModal = ({
   isOpen,
   onClose,
   studentData,
+  period,
 }) => {
   const closeBtnRef = useRef(null);
 
@@ -58,6 +59,26 @@ export const StudentAttendanceModal = ({
               <p style={{ margin: '0.2rem 0 0', fontSize: '0.825rem', color: 'var(--text-secondary)' }}>
                 Roll #{student.rollNo || '-'} &bull; {studentData.className || student.className || 'Class Record'}
               </p>
+              {(period || studentData.period || studentData.periodDescription) && (
+                <div
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    marginTop: '0.35rem',
+                    fontSize: '0.725rem',
+                    fontWeight: 600,
+                    color: 'var(--primary-text)',
+                    backgroundColor: 'var(--primary-light)',
+                    padding: '0.15rem 0.45rem',
+                    borderRadius: '4px',
+                    border: '1px solid var(--border-color)',
+                  }}
+                >
+                  <Calendar size={12} />
+                  <span>{period || studentData.period || studentData.periodDescription}</span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -171,7 +192,7 @@ export const StudentAttendanceModal = ({
                   Perfect Attendance (100% Present)
                 </div>
                 <div style={{ fontSize: '0.8rem', opacity: 0.9 }}>
-                  No records of absence, tardiness, or leave during the selected period.
+                  No records of absence, tardiness, or leave during {period || studentData.period || studentData.periodDescription || 'the selected period'}.
                 </div>
               </div>
             </div>
